@@ -83,7 +83,14 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         case 'BID_PLACED': {
           setCurrentAuction(payload.auction);
-          setBidHistory(prev => [payload.bid, ...prev]);
+          setBidHistory(prev => {
+            const incomingBid: AuctionBid = payload.bid;
+            if (!incomingBid) return prev;
+            if (prev.some(b => b.id === incomingBid.id || (b.auction_id === incomingBid.auction_id && b.team_id === incomingBid.team_id && b.amount === incomingBid.amount))) {
+              return prev;
+            }
+            return [incomingBid, ...prev];
+          });
           expiresAtRef.current = payload.expiresAt;
           setTimerSeconds(payload.timerSeconds || 20);
           setIsTimerRunning(true);
@@ -382,11 +389,16 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const expiresAt = Date.now() + duration * 1000;
     expiresAtRef.current = expiresAt;
 
+    // Calculate exact bid increment from current bid or starting bid
+    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : currentAuction.starting_bid;
+    const increment = Math.max(0, amount - prevAmount);
+
     const newBid: AuctionBid = {
       id: generateUUID(),
       auction_id: currentAuction.id,
       team_id: teamId,
       amount,
+      increment_amount: increment,
       bid_type: bidType,
       is_reverted: false,
       created_at: new Date().toISOString(),
@@ -404,7 +416,12 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     setCurrentAuction(updatedAuction);
-    setBidHistory(prev => [newBid, ...prev]);
+    setBidHistory(prev => {
+      if (prev.some(b => b.id === newBid.id || (b.auction_id === newBid.auction_id && b.team_id === newBid.team_id && b.amount === newBid.amount))) {
+        return prev;
+      }
+      return [newBid, ...prev];
+    });
     setTimerSeconds(duration);
     setIsTimerRunning(true);
     setLastActionMessage(`New Bid: ₹${amount.toLocaleString('en-IN')} by ${team.name}`);
@@ -499,13 +516,15 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Undo Last Bid
   const undoLastBid = (): { success: boolean; error?: string } => {
     if (!currentAuction) return { success: false, error: 'No active auction' };
-    const activeBids = bidHistory.filter(b => !b.is_reverted);
-    if (activeBids.length === 0) {
+    const sortedActiveBids = [...bidHistory.filter(b => !b.is_reverted)].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    if (sortedActiveBids.length === 0) {
       return { success: false, error: 'No active bids to undo' };
     }
 
-    const lastBid = activeBids[0];
-    const previousBid = activeBids[1] || null;
+    const lastBid = sortedActiveBids[0];
+    const previousBid = sortedActiveBids[1] || null;
 
     // Mark last bid reverted
     const updatedHistory = bidHistory.map(b => b.id === lastBid.id ? { ...b, is_reverted: true, reverted_at: new Date().toISOString() } : b);
@@ -551,11 +570,15 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return { success: false, error: `Amount exceeds ${team.name} balance of ₹${team.current_balance.toLocaleString('en-IN')}` };
     }
 
+    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : currentAuction.starting_bid;
+    const increment = Math.max(0, newAmount - prevAmount);
+
     const editedBid: AuctionBid = {
       id: 'bid_edit_' + Date.now(),
       auction_id: currentAuction.id,
       team_id: teamId,
       amount: newAmount,
+      increment_amount: increment,
       bid_type: 'EDITED',
       is_reverted: false,
       created_at: new Date().toISOString(),
@@ -565,7 +588,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       team_color: team.team_color
     };
 
-    const updatedHistory = [editedBid, ...bidHistory];
+    const updatedHistory = [editedBid, ...bidHistory.filter(b => b.id !== editedBid.id)];
     setBidHistory(updatedHistory);
 
     const updatedAuction: Auction = {

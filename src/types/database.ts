@@ -157,6 +157,7 @@ export interface AuctionBid {
   team_id: string;
   amount: number;
   bid_type: BidType;
+  increment_amount?: number;
   is_reverted: boolean;
   reverted_at?: string | null;
   notes?: string;

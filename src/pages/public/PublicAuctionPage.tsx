@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, Clock, Shield, Users, Trophy, Tv, Radio, ArrowRight, Sparkles, AlertCircle, Activity, Wifi, MonitorPlay } from 'lucide-react';
 import { useAuction } from '../../contexts/AuctionContext';
@@ -10,6 +10,22 @@ export const PublicAuctionPage: React.FC = () => {
   const { teams, players, tournament } = useTournament();
 
   const isUrgent = timerSeconds <= 5 && isTimerRunning;
+
+  // Defensive deduplication of bids to eliminate any dual-transport or re-render duplicates
+  const deduplicatedBids = useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenTuples = new Set<string>();
+    const list = [];
+    for (const b of bidHistory) {
+      if (!b || !b.id) continue;
+      const tupleKey = `${b.auction_id || ''}_${b.team_id}_${b.amount}`;
+      if (seenIds.has(b.id) || seenTuples.has(tupleKey)) continue;
+      seenIds.add(b.id);
+      seenTuples.add(tupleKey);
+      list.push(b);
+    }
+    return list;
+  }, [bidHistory]);
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-6 text-slate-950">
@@ -228,46 +244,67 @@ export const PublicAuctionPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
                     <Flame className="w-4 h-4 text-orange-500" />
-                    <span>Live Bid Log ({bidHistory.length})</span>
+                    <span>Live Bid Log ({deduplicatedBids.length})</span>
                   </h3>
                   <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
                     <Wifi className="w-3 h-3" /> Realtime
                   </span>
                 </div>
 
-                {bidHistory.length === 0 ? (
+                {deduplicatedBids.length === 0 ? (
                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="text-xs text-slate-500">No bids placed yet for this lot.</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">Opening bid: {formatINR(currentAuction?.starting_bid)}</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {bidHistory.map((bid, index) => (
-                      <div
-                        key={bid.id}
-                        className={`p-3 rounded-xl flex justify-between items-center text-xs border transition-all ${
-                          index === 0
-                            ? 'bg-lime-50 border-lime-300 text-slate-950 font-bold shadow-sm'
-                            : 'bg-slate-50 border-slate-100 text-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" 
-                            style={{ backgroundColor: bid.team_color || '#bef264' }} 
-                          />
-                          <span className="font-bold truncate max-w-[140px] sm:max-w-none">{bid.team_name || 'Team'}</span>
-                          {index === 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-lime-300 text-lime-950 text-[9px] font-black uppercase tracking-wider shrink-0">
-                              Highest
-                            </span>
-                          )}
+                    {deduplicatedBids.map((bid, index) => {
+                      const timeStr = bid.created_at
+                        ? new Date(bid.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                        : '';
+                      const displayInc = bid.increment_amount !== undefined && bid.increment_amount > 0
+                        ? bid.increment_amount
+                        : (bid.bid_type === 'QUICK_10K' ? 10000 : bid.bid_type === 'QUICK_20K' ? 20000 : bid.bid_type === 'QUICK_50K' ? 50000 : 0);
+
+                      return (
+                        <div
+                          key={bid.id}
+                          className={`p-3 rounded-xl flex justify-between items-center text-xs border transition-all ${
+                            index === 0
+                              ? 'bg-lime-50 border-lime-300 text-slate-950 font-bold shadow-sm'
+                              : 'bg-slate-50 border-slate-100 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <span 
+                              className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" 
+                              style={{ backgroundColor: bid.team_color || '#bef264' }} 
+                            />
+                            <span className="font-bold truncate max-w-[120px] sm:max-w-none">{bid.team_name || 'Team'}</span>
+                            
+                            {displayInc > 0 && (
+                              <span className="px-1.5 py-0.2 rounded bg-sky-100 text-sky-800 text-[9px] font-mono font-bold shrink-0">
+                                +{formatCompactINR(displayInc)}
+                              </span>
+                            )}
+
+                            {index === 0 && (
+                              <span className="px-1.5 py-0.5 rounded bg-lime-300 text-lime-950 text-[9px] font-black uppercase tracking-wider shrink-0">
+                                Highest
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {timeStr && (
+                              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline-block">
+                                {timeStr}
+                              </span>
+                            )}
+                            <span className="font-mono font-black text-xs sm:text-sm text-slate-950">{formatINR(bid.amount)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="font-mono font-black text-xs sm:text-sm text-slate-950">{formatINR(bid.amount)}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

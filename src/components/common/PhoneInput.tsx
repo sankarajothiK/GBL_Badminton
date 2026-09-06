@@ -49,6 +49,11 @@ export function parsePhoneNumber(raw: string): { countryCode: string; digits: st
 
   let sanitized = String(raw).trim();
 
+  // If raw contains the dummy placeholder '+91 98840 00000' or similar, treat it as empty
+  if (sanitized === '+91 98840 00000' || sanitized === '98840 00000' || sanitized === '9884000000') {
+    return { countryCode: '+91', digits: '' };
+  }
+
   // Handle scientific notation from Excel imports (e.g. 9.789237332E9)
   if (/^[0-9.]+e\+[0-9]+$/i.test(sanitized) || /^[0-9.]+e[0-9]+$/i.test(sanitized)) {
     const parsedNum = Math.round(Number(sanitized));

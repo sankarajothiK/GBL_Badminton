@@ -49,8 +49,13 @@ export const AdminAuctionHistory: React.FC = () => {
   });
 
   const handleExportCSV = () => {
-    // Transform history records into format for export
-    const exportable = bidHistory.map(b => ({
+    // Transform history records into format for export (strictly deduplicated)
+    const seenIds = new Set<string>();
+    const exportable = bidHistory.filter(b => {
+      if (!b || !b.id || seenIds.has(b.id)) return false;
+      seenIds.add(b.id);
+      return true;
+    }).map(b => ({
       ...b,
       playerName: players.find(p => p.id === b.auction_id)?.name || 'Player'
     }));

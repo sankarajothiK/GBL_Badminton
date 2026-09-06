@@ -71,28 +71,58 @@ const localBroadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel
   ? new BroadcastChannel('gbl_realtime_sync')
   : null;
 
+// Track recently processed broadcast IDs to eliminate dual-channel duplication
+const recentlyProcessedEventIds = new Map<string, number>();
+
+function isDuplicateEvent(eventId?: string): boolean {
+  if (!eventId) return false;
+  const now = Date.now();
+  // Cleanup entries older than 30 seconds
+  if (recentlyProcessedEventIds.size > 500) {
+    for (const [id, timestamp] of recentlyProcessedEventIds.entries()) {
+      if (now - timestamp > 30000) {
+        recentlyProcessedEventIds.delete(id);
+      }
+    }
+  }
+  if (recentlyProcessedEventIds.has(eventId)) {
+    return true;
+  }
+  recentlyProcessedEventIds.set(eventId, now);
+  return false;
+}
+
 /**
  * Universal Realtime Event Broadcaster & Listener
  * Transmits auction updates through both Supabase Realtime Channel AND local BroadcastChannel
+ * Includes strict event deduplication so multi-transport delivery never triggers duplicate state updates.
  */
 export const realtimeManager = {
   broadcast(eventType: string, payload: any) {
+    const eventId = payload?.__eventId || ('evt_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now());
+    const enrichedPayload = { ...payload, __eventId: eventId, timestamp: Date.now() };
+
+    // Record sender eventId locally to prevent re-processing if received back
+    isDuplicateEvent(eventId);
+
     // 1. Send locally to other browser tabs/windows (Projector, Team devices)
     if (localBroadcastChannel) {
       try {
-        localBroadcastChannel.postMessage({ type: eventType, payload, timestamp: Date.now() });
+        localBroadcastChannel.postMessage({ type: eventType, payload: enrichedPayload, timestamp: Date.now() });
       } catch (err) {
         console.warn('Local broadcast error:', err);
       }
     }
 
-    // 2. Broadcast via Supabase Realtime channel
+    // 2. Broadcast via Supabase Realtime channel (with self: false to avoid echoing to sender)
     try {
-      const channel = supabase.channel('gbl_auction_room');
+      const channel = supabase.channel('gbl_auction_room', {
+        config: { broadcast: { self: false } }
+      });
       channel.send({
         type: 'broadcast',
         event: eventType,
-        payload: { ...payload, timestamp: Date.now() }
+        payload: enrichedPayload
       }).catch(() => {});
     } catch {
       // Supabase realtime channel fallback
@@ -100,10 +130,20 @@ export const realtimeManager = {
   },
 
   subscribe(callback: (eventType: string, payload: any) => void): () => void {
+    const handleIncoming = (type: string, payload: any) => {
+      if (!type) return;
+      const eventId = payload?.__eventId;
+      if (eventId && isDuplicateEvent(eventId)) {
+        // Event already processed via parallel transport; ignore duplicate
+        return;
+      }
+      callback(type, payload);
+    };
+
     // 1. Listen on local BroadcastChannel
     const localListener = (event: MessageEvent) => {
       if (event.data && event.data.type) {
-        callback(event.data.type, event.data.payload);
+        handleIncoming(event.data.type, event.data.payload);
       }
     };
 
@@ -112,10 +152,12 @@ export const realtimeManager = {
     }
 
     // 2. Listen on Supabase Realtime Channel
-    const channel = supabase.channel('gbl_auction_room');
+    const channel = supabase.channel('gbl_auction_room', {
+      config: { broadcast: { self: false } }
+    });
     channel
       .on('broadcast', { event: '*' }, (message) => {
-        callback(message.event, message.payload);
+        handleIncoming(message.event, message.payload);
       })
       .subscribe();
 

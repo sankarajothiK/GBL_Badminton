@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Flame, 
   Clock, 
@@ -27,7 +27,7 @@ import { calculateMaxLegalBid } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import { TeamAllocationSummaryTable } from '../../components/admin/TeamAllocationSummaryTable';
-import { Player, Category, Team } from '../../types/database';
+import { Player, Category, Team, AuctionBid } from '../../types/database';
 
 export const AdminAuction: React.FC = () => {
   const { 
@@ -86,6 +86,48 @@ export const AdminAuction: React.FC = () => {
   const maxBidInfo = activeTeam 
     ? calculateMaxLegalBid(activeTeam, activeTeamSquad.length, settings, currentCategory || currentActiveCategory)
     : null;
+
+  // Round Bid History Sorting (default 'asc' for strict chronological order: 1st bid -> last) and Team Filter
+  const [historySortOrder, setHistorySortOrder] = useState<'asc' | 'desc'>('asc');
+  const [historyTeamFilter, setHistoryTeamFilter] = useState<string>('ALL');
+
+  // Defensive deduplication of bids to strictly guarantee zero duplicate records in UI
+  const deduplicatedBids = useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenTuples = new Set<string>();
+    const list: AuctionBid[] = [];
+    for (const b of bidHistory) {
+      if (!b || !b.id) continue;
+      const tupleKey = `${b.auction_id || ''}_${b.team_id}_${b.amount}`;
+      if (seenIds.has(b.id) || seenTuples.has(tupleKey)) continue;
+      seenIds.add(b.id);
+      seenTuples.add(tupleKey);
+      list.push(b);
+    }
+    return list;
+  }, [bidHistory]);
+
+  // Chronologically sorted bids
+  const sortedBids = useMemo(() => {
+    return [...deduplicatedBids].sort((a, b) => {
+      const tA = new Date(a.created_at).getTime() || 0;
+      const tB = new Date(b.created_at).getTime() || 0;
+      return historySortOrder === 'asc' ? tA - tB : tB - tA;
+    });
+  }, [deduplicatedBids, historySortOrder]);
+
+  // Filtered bids (by active team or ALL)
+  const displayedBids = useMemo(() => {
+    if (historyTeamFilter === 'ALL') return sortedBids;
+    return sortedBids.filter(b => b.team_id === historyTeamFilter);
+  }, [sortedBids, historyTeamFilter]);
+
+  // Find the highest active bid to highlight
+  const highestActiveBidId = useMemo(() => {
+    const active = deduplicatedBids.filter(b => !b.is_reverted);
+    if (active.length === 0) return null;
+    return [...active].sort((a, b) => b.amount - a.amount)[0]?.id || null;
+  }, [deduplicatedBids]);
 
   // Handle Starting Auction
   const handleStartAuction = () => {
@@ -421,44 +463,108 @@ export const AdminAuction: React.FC = () => {
 
           {/* LIVE BID HISTORY STREAM */}
           <div className="bg-gradient-to-b from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-700/60 rounded-3xl p-5 shadow-xl space-y-3">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-gbl-orange-500" />
-                <span>Round Bid History ({bidHistory.length})</span>
+                <span>Round Bid History ({displayedBids.length}{historyTeamFilter !== 'ALL' ? `/${deduplicatedBids.length}` : ''})</span>
               </h3>
-              <span className="text-[10px] text-slate-400">Chronological</span>
+              
+              <div className="flex items-center gap-2">
+                {/* Team Quick Filter */}
+                {activeTeam && (
+                  <button
+                    type="button"
+                    onClick={() => setHistoryTeamFilter(prev => prev === 'ALL' ? activeTeam.id : 'ALL')}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                      historyTeamFilter === activeTeam.id
+                        ? 'bg-gbl-orange-500/20 text-gbl-orange-400 border-gbl-orange-500/50'
+                        : 'bg-gbl-navy-950 text-slate-400 border-gbl-navy-800 hover:text-white'
+                    }`}
+                    title={historyTeamFilter === activeTeam.id ? 'Showing only this team. Click to show all' : 'Click to filter bids for selected team'}
+                  >
+                    {historyTeamFilter === activeTeam.id ? `Filter: ${activeTeam.short_name}` : 'All Teams'}
+                  </button>
+                )}
+
+                {/* Sort Order Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setHistorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-slate-400 hover:text-white bg-gbl-navy-950 border border-gbl-navy-800 transition-colors"
+                  title="Toggle Chronological (Oldest First) vs Newest First"
+                >
+                  {historySortOrder === 'asc' ? '⏱ Oldest First' : '⚡ Newest First'}
+                </button>
+              </div>
             </div>
 
-            {bidHistory.length === 0 ? (
-              <p className="text-xs text-slate-500 py-4 text-center">No bids recorded yet in this round.</p>
+            {displayedBids.length === 0 ? (
+              <p className="text-xs text-slate-500 py-4 text-center">
+                {historyTeamFilter !== 'ALL' ? `No bids recorded yet for ${activeTeam?.name}.` : 'No bids recorded yet in this round.'}
+              </p>
             ) : (
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                {bidHistory.map((bid, i) => (
-                  <div
-                    key={bid.id}
-                    className={`p-2.5 rounded-xl flex justify-between items-center text-xs border ${
-                      bid.is_reverted
-                        ? 'bg-rose-950/20 text-slate-500 line-through border-rose-900/30'
-                        : i === 0
-                        ? 'bg-gbl-orange-500/15 border-gbl-orange-500/40 text-white font-bold'
-                        : 'bg-gbl-navy-950 border-gbl-navy-800 text-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bid.team_color || '#FF5E00' }} />
-                      <span>{bid.team_name}</span>
-                      {bid.bid_type && bid.bid_type !== 'NORMAL' && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-gbl-navy-900 text-slate-400 uppercase">
-                          {bid.bid_type}
-                        </span>
-                      )}
-                      {bid.is_reverted && (
-                        <span className="text-[9px] text-rose-400 uppercase font-bold">(Reverted)</span>
-                      )}
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {displayedBids.map((bid, i) => {
+                  const isHighest = bid.id === highestActiveBidId;
+                  const timeFormatted = bid.created_at
+                    ? new Date(bid.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                    : '';
+
+                  // Compute genuine increment amount
+                  const displayIncrement = bid.increment_amount !== undefined && bid.increment_amount > 0
+                    ? bid.increment_amount
+                    : (bid.bid_type === 'QUICK_10K' ? 10000 : bid.bid_type === 'QUICK_20K' ? 20000 : bid.bid_type === 'QUICK_50K' ? 50000 : 0);
+
+                  return (
+                    <div
+                      key={bid.id}
+                      className={`p-2.5 rounded-xl flex justify-between items-center text-xs border transition-all ${
+                        bid.is_reverted
+                          ? 'bg-rose-950/20 text-slate-500 line-through border-rose-900/30'
+                          : isHighest
+                          ? 'bg-gbl-orange-500/15 border-gbl-orange-500/50 text-white font-bold shadow-md shadow-gbl-orange-500/10'
+                          : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: bid.team_color || '#FF5E00' }} />
+                        <span className="font-bold truncate max-w-[120px] sm:max-w-[150px]">{bid.team_name}</span>
+                        
+                        {/* Genuine Increment Amount Display */}
+                        {displayIncrement > 0 && !bid.is_reverted && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-sky-950/80 text-sky-400 border border-sky-800/40 shrink-0">
+                            +{formatCompactINR(displayIncrement)}
+                          </span>
+                        )}
+
+                        {bid.bid_type && bid.bid_type !== 'NORMAL' && !displayIncrement && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-gbl-navy-900 text-slate-400 uppercase shrink-0">
+                            {bid.bid_type}
+                          </span>
+                        )}
+
+                        {isHighest && !bid.is_reverted && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-black uppercase shrink-0">
+                            Highest
+                          </span>
+                        )}
+
+                        {bid.is_reverted && (
+                          <span className="text-[9px] text-rose-400 uppercase font-bold shrink-0">(Reverted)</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {timeFormatted && (
+                          <span className="text-[10px] text-slate-400 font-mono hidden sm:inline-block">
+                            {timeFormatted}
+                          </span>
+                        )}
+                        <span className="font-mono font-bold text-emerald-400">{formatINR(bid.amount)}</span>
+                      </div>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400">{formatINR(bid.amount)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

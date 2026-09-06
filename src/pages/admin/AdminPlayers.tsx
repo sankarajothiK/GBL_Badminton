@@ -84,7 +84,8 @@ export const AdminPlayers: React.FC = () => {
     setGender(p.gender);
     setAcademy(p.academy || '');
     setTshirtSize(p.tshirt_size || '');
-    setMobile(p.mobile || '');
+    const cleanPhone = p.mobile && p.mobile !== '+91 98840 00000' && p.mobile !== '98840 00000' ? p.mobile : '';
+    setMobile(cleanPhone);
     setSelectedCategories(p.eligible_category_names?.length ? p.eligible_category_names : ['Open']);
     setAchievements(p.achievements || '');
     setNotes(p.notes || '');
@@ -355,7 +356,7 @@ export const AdminPlayers: React.FC = () => {
                             <span className="font-bold text-white block text-sm">{player.name}</span>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               <span className="text-[10px] font-mono text-slate-400">{player.player_code}</span>
-                              {player.mobile && (
+                              {player.mobile && parsePhoneNumber(player.mobile).digits && (
                                 <span className="text-[10px] font-mono text-slate-400 bg-gbl-navy-900/80 px-1.5 py-0.5 rounded border border-gbl-navy-700/60">
                                   {parsePhoneNumber(player.mobile).countryCode} {parsePhoneNumber(player.mobile).digits}
                                 </span>
