@@ -53,6 +53,9 @@ export const AdminPlayers: React.FC = () => {
   // Delete Confirmation Modal
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
 
+  // Success Feedback Toast
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
   // Open Add Modal
@@ -164,6 +167,8 @@ export const AdminPlayers: React.FC = () => {
     }
 
     setIsModalOpen(false);
+    setSaveToast(`Player "${name.trim()}" successfully ${editingPlayerId ? 'updated' : 'created'}! Changes are live across all public pages.`);
+    setTimeout(() => setSaveToast(null), 5000);
   };
 
   // Handle CSV file selection for import
@@ -252,6 +257,14 @@ export const AdminPlayers: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Success Notification Banner */}
+      {saveToast && (
+        <div className="p-4 bg-emerald-950/60 border border-emerald-500/50 rounded-2xl flex items-center gap-3 text-xs text-emerald-300 shadow-lg animate-in fade-in duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="font-semibold">{saveToast}</span>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="bg-gbl-navy-900 border border-gbl-navy-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -551,22 +564,49 @@ export const AdminPlayers: React.FC = () => {
             />
           </div>
 
-          {/* Photo Upload with 10 MB Limit (Section 7 & 63) */}
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">
-              Profile Photo (JPG, PNG, WEBP — up to 10 MB)
+          {/* Photo Upload with 10 MB Limit and Direct URL support */}
+          <div className="space-y-2">
+            <label className="block text-slate-300 font-semibold">
+              Profile Photo (JPG, PNG, WEBP — up to 10 MB or Image URL)
             </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/jpg"
-              onChange={handlePhotoUpload}
-              className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700"
-            />
-            {uploading && <p className="text-[10px] text-gbl-orange-400 mt-1">Compressing & uploading image...</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  onChange={handlePhotoUpload}
+                  className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700 cursor-pointer"
+                />
+              </div>
+              <div>
+                <input
+                  type="url"
+                  placeholder="Or paste image URL (https://...)"
+                  value={photoUrl || ''}
+                  onChange={(e) => setPhotoUrl(e.target.value.trim() || null)}
+                  className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-gbl-orange-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            {uploading && <p className="text-[10px] text-gbl-orange-400">Compressing & uploading image...</p>}
             {photoUrl && (
-              <div className="mt-2 flex items-center gap-2">
-                <img src={photoUrl} alt="Preview" className="w-10 h-10 rounded-lg object-cover border border-gbl-navy-700" />
-                <span className="text-[10px] text-emerald-400 font-semibold">Photo ready</span>
+              <div className="mt-2 flex items-center justify-between p-2 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800">
+                <div className="flex items-center gap-2.5">
+                  <img src={photoUrl} alt="Preview" className="w-11 h-11 rounded-lg object-cover border border-gbl-navy-700" />
+                  <div>
+                    <span className="text-[10px] text-emerald-400 font-bold block">Photo Ready</span>
+                    <span className="text-[9px] text-slate-400 font-mono truncate max-w-[200px] block">
+                      {photoUrl.startsWith('data:') ? 'Custom Uploaded Image' : photoUrl}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrl(null)}
+                  className="text-[10px] px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 font-semibold"
+                >
+                  Remove Photo
+                </button>
               </div>
             )}
           </div>

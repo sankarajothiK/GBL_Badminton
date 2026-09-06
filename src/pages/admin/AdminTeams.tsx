@@ -13,6 +13,7 @@ export const AdminTeams: React.FC = () => {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -87,6 +88,8 @@ export const AdminTeams: React.FC = () => {
     });
 
     setEditingTeam(null);
+    setSaveToast(`Team "${teamName.trim()}" successfully updated! Changes are live across all pages.`);
+    setTimeout(() => setSaveToast(null), 5000);
   };
 
   const handleCreateTeam = async (e: React.FormEvent) => {
@@ -116,18 +119,30 @@ export const AdminTeams: React.FC = () => {
     });
 
     setIsAddModalOpen(false);
+    setSaveToast(`Team "${teamName.trim()}" successfully created!`);
+    setTimeout(() => setSaveToast(null), 5000);
   };
 
   const handleConfirmDelete = async () => {
     if (deletingTeamId) {
       await deleteTeam(deletingTeamId);
       setDeletingTeamId(null);
+      setSaveToast('Team deleted successfully.');
+      setTimeout(() => setSaveToast(null), 5000);
     }
   };
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl mx-auto">
       
+      {/* Toast Notification */}
+      {saveToast && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4">
+          <Check className="w-5 h-5" />
+          <span className="font-bold text-sm">{saveToast}</span>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

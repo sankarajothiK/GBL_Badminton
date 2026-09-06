@@ -16,7 +16,11 @@ import {
   Wifi,
   WifiOff,
   Eye,
-  EyeOff
+  EyeOff,
+  Copy,
+  Check,
+  CloudUpload,
+  Code
 } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -43,7 +47,8 @@ export const AdminSettings: React.FC = () => {
     cloudSyncMessage,
     testCloudConnection,
     updateCloudCredentials,
-    refreshCloudData
+    refreshCloudData,
+    pushLocalDataToCloud
   } = useTournament();
 
   const { role } = useAuth();
@@ -55,7 +60,10 @@ export const AdminSettings: React.FC = () => {
   const [showAnonKey, setShowAnonKey] = useState(false);
   const [isTestingCloud, setIsTestingCloud] = useState(false);
   const [isRefreshingCloud, setIsRefreshingCloud] = useState(false);
-  const [cloudFeedback, setCloudFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [isPushingCloud, setIsPushingCloud] = useState(false);
+  const [showSqlFix, setShowSqlFix] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [cloudFeedback, setCloudFeedback] = useState<{ success: boolean; message: string; rlsError?: boolean } | null>(null);
 
   // Settings form states
   const [timerSeconds, setTimerSeconds] = useState(settings.timer_seconds || 20);
@@ -111,6 +119,48 @@ export const AdminSettings: React.FC = () => {
     setIsRefreshingCloud(false);
     setFeedbackMsg('Latest data pulled from Central Cloud Database!');
     setTimeout(() => setFeedbackMsg(null), 3000);
+  };
+
+  const sqlFixCode = `-- GBL Badminton Premier League 2026: Enable Full Database Write & Realtime Access
+-- Run this once in your Supabase Dashboard -> SQL Editor to allow saving and realtime updates!
+
+ALTER TABLE tournaments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tournament_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE teams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE players DISABLE ROW LEVEL SECURITY;
+ALTER TABLE auctions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE auction_bids DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tournament_matches DISABLE ROW LEVEL SECURITY;
+ALTER TABLE standings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE gallery DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
+
+-- Grant public and authenticated permissions
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+`;
+
+  const handlePushLocalDataToCloud = async () => {
+    setIsPushingCloud(true);
+    setCloudFeedback(null);
+    const result = await pushLocalDataToCloud();
+    setIsPushingCloud(false);
+    setCloudFeedback(result);
+    if (result.rlsError) {
+      setShowSqlFix(true);
+    }
+    if (result.success) {
+      setFeedbackMsg(result.message);
+      setTimeout(() => setFeedbackMsg(null), 5000);
+    }
+  };
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(sqlFixCode);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 3000);
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -225,7 +275,16 @@ export const AdminSettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              disabled={isPushingCloud || !isCloudConnected}
+              onClick={handlePushLocalDataToCloud}
+              className="px-3.5 py-2 rounded-xl bg-gbl-orange-600 hover:bg-gbl-orange-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-md"
+            >
+              <CloudUpload className={`w-3.5 h-3.5 ${isPushingCloud ? 'animate-bounce' : ''}`} />
+              <span>{isPushingCloud ? 'Pushing Data...' : 'Push All Data to Cloud'}</span>
+            </button>
             <button
               type="button"
               disabled={isRefreshingCloud}
@@ -332,6 +391,66 @@ export const AdminSettings: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* 1-Click SQL Permissions & RLS Fix Card */}
+        <div className="pt-4 border-t border-gbl-navy-800">
+          <button
+            type="button"
+            onClick={() => setShowSqlFix(!showSqlFix)}
+            className="w-full p-3.5 rounded-2xl bg-gbl-navy-950/80 hover:bg-gbl-navy-800/80 border border-gbl-navy-700/80 flex items-center justify-between text-left transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-sky-500/20 text-sky-400">
+                <Code className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-xs text-white block">
+                  1-Click Supabase Permissions & RLS Fix
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  Run this SQL in Supabase SQL Editor if you see "Row-Level Security policy" errors or want cloud cross-device sync
+                </span>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-sky-400 hover:text-sky-300 shrink-0 ml-2">
+              {showSqlFix ? 'Hide Script' : 'View Script'}
+            </span>
+          </button>
+
+          {showSqlFix && (
+            <div className="mt-3 p-4 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs font-bold text-slate-300">
+                  Step 1: Copy script &bull; Step 2: Paste in Supabase SQL Editor &bull; Step 3: Click "Push All Data to Cloud"
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopySql}
+                  className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-md"
+                >
+                  {copiedSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSql ? 'Copied to Clipboard!' : 'Copy SQL Script'}</span>
+                </button>
+              </div>
+
+              <pre className="p-3 bg-black/60 border border-gbl-navy-800 rounded-xl text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-44 leading-relaxed">
+                {sqlFixCode}
+              </pre>
+
+              <div className="text-[11px] text-slate-400 flex items-center justify-between flex-wrap gap-2 pt-1">
+                <span>After running this script in Supabase, click <strong>"Push All Data to Cloud"</strong> above to sync all players & teams to cloud.</span>
+                <a
+                  href={`https://supabase.com/dashboard/project/${existingConfig.url.split('//')[1]?.split('.')[0] || '_'}/sql/new`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-400 hover:underline font-bold"
+                >
+                  Open Supabase SQL Editor &rarr;
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 1. AUCTION RULES & SQUAD LIMITS FORM */}
