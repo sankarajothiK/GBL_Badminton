@@ -393,4 +393,22 @@ INSERT INTO players (id, tournament_id, player_code, name, age, gender, mobile, 
 ('00000000-0000-0000-0002-000000000068', '00000000-0000-0000-0000-000000000001', 'GBL-068', 'CAPTAINS', 35, 'Male', '+91 98840 00000', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=600&q=80', '30', '{"35+","Jumbled","Super Doubles"}', 'Affiliated with 30. Registered for GBL 2026 Kovilpatti tournament.', 'UNSOLD', 68),
 ('00000000-0000-0000-0002-000000000069', '00000000-0000-0000-0000-000000000001', 'GBL-069', 'LITERARY', 35, 'Male', '+91 98840 00000', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=80', '31', '{"35+","Jumbled","Super Doubles"}', 'Affiliated with 31. Registered for GBL 2026 Kovilpatti tournament.', 'UNSOLD', 69);
 
+-- 11. Disable Row Level Security on all tables for seamless write/update from admin panel
+ALTER TABLE tournaments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tournament_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE teams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE players DISABLE ROW LEVEL SECURITY;
+ALTER TABLE auctions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE auction_bids DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tournament_matches DISABLE ROW LEVEL SECURITY;
+ALTER TABLE standings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE gallery DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
+
+-- 12. Grant permissions to public/anon role
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+
 -- SETUP COMPLETE!

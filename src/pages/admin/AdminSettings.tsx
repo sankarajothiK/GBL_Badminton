@@ -124,6 +124,19 @@ export const AdminSettings: React.FC = () => {
   const sqlFixCode = `-- GBL Badminton Premier League 2026: Enable Full Database Write & Realtime Access
 -- Run this once in your Supabase Dashboard -> SQL Editor to allow saving and realtime updates!
 
+-- 1. Create gallery table if missing
+CREATE TABLE IF NOT EXISTS gallery (
+    id TEXT PRIMARY KEY,
+    tournament_id UUID,
+    title VARCHAR(255),
+    image_url TEXT NOT NULL,
+    caption TEXT,
+    tag VARCHAR(50) DEFAULT 'General',
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Disable Row Level Security on all tables
 ALTER TABLE tournaments DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tournament_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
@@ -133,10 +146,10 @@ ALTER TABLE auctions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE auction_bids DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tournament_matches DISABLE ROW LEVEL SECURITY;
 ALTER TABLE standings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE gallery DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE gallery DISABLE ROW LEVEL SECURITY;
 
--- Grant public and authenticated permissions
+-- 3. Grant public and authenticated permissions
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
