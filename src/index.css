@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gbl-orange: #FF5E00;
+    --gbl-sky: #0284C7;
+    --gbl-gold: #F59E0B;
+    --gbl-navy: #0A1128;
+    --gbl-dark: #060B18;
+  }
+
+  body {
+    @apply bg-[#edf0eb] text-slate-950 antialiased selection:bg-lime-300 selection:text-lime-950 font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom dark sports scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #040814;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #19274E;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FF5E00;
+  }
+}
+
+@layer utilities {
+  .glow-orange {
+    box-shadow: 0 0 25px -5px rgba(255, 94, 0, 0.4);
+  }
+  .glow-emerald {
+    box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.4);
+  }
+  .glow-rose {
+    box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.5);
+  }
+  .glow-sky {
+    box-shadow: 0 0 25px -5px rgba(2, 132, 199, 0.4);
+  }
+  .glass-card {
+    background: linear-gradient(135deg, rgba(16, 28, 62, 0.6) 0%, rgba(10, 17, 40, 0.7) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .glass-panel {
+    background: rgba(8, 14, 30, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
