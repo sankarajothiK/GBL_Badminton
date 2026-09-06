@@ -7,7 +7,7 @@ import confetti from 'canvas-confetti';
 
 export const ProjectorPage: React.FC = () => {
   const { currentAuction, currentPlayer, currentCategory, highestTeam, timerSeconds, isTimerRunning, status } = useAuction();
-  const { teams, tournament } = useTournament();
+  const { teams, tournament, players } = useTournament();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Trigger celebratory confetti cannon when SOLD
@@ -255,27 +255,42 @@ export const ProjectorPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 sm:gap-2.5">
-          {teams.map((t) => (
-            <div
-              key={t.id}
-              className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all ${
-                t.id === highestTeam?.id
-                  ? 'bg-gbl-orange-500/20 border-gbl-orange-500 ring-2 ring-gbl-orange-500/40 shadow-lg'
-                  : 'bg-gbl-navy-900 border-gbl-navy-800'
-              }`}
-            >
-              <div 
-                className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black text-white mx-auto mb-1 sm:mb-1.5 shadow-md"
-                style={{ backgroundColor: t.team_color }}
+          {teams.map((t) => {
+            const squadCount = players.filter(p => p.sold_team_id === t.id).length;
+            const maxSlots = t.max_auction_slots || (t.owner_is_player !== false ? 5 : 6);
+            const isFull = squadCount >= maxSlots;
+            const isLeader = t.id === highestTeam?.id;
+
+            return (
+              <div
+                key={t.id}
+                className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all relative ${
+                  isLeader
+                    ? 'bg-gbl-orange-500/20 border-gbl-orange-500 ring-2 ring-gbl-orange-500/40 shadow-lg'
+                    : isFull
+                    ? 'bg-gbl-navy-950/60 border-gbl-navy-800/80 opacity-75'
+                    : 'bg-gbl-navy-900 border-gbl-navy-800'
+                }`}
               >
-                {t.short_name}
+                {isFull && (
+                  <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-rose-500 text-white text-[7px] font-black uppercase">
+                    FULL
+                  </span>
+                )}
+                <div 
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black text-white mx-auto mb-1 sm:mb-1.5 shadow-md"
+                  style={{ backgroundColor: t.team_color }}
+                >
+                  {t.short_name}
+                </div>
+                <p className="text-[10px] sm:text-[11px] font-bold text-white truncate">{t.name}</p>
+                <div className="flex items-center justify-between mt-0.5 px-0.5 text-[10px]">
+                  <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
+                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{maxSlots}</span>
+                </div>
               </div>
-              <p className="text-[10px] sm:text-[11px] font-bold text-white truncate">{t.name}</p>
-              <p className="text-[11px] sm:text-xs font-black text-emerald-400 font-mono mt-0.5">
-                {formatCompactINR(t.current_balance)}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </footer>
 

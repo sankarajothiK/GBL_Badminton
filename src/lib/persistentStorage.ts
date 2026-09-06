@@ -5,9 +5,9 @@
  */
 
 export const GBL_PLAYERS_STORAGE_KEY = 'gbl_players_v1';
-export const GBL_TEAMS_STORAGE_KEY = 'gbl_teams_v1';
-export const GBL_TOURNAMENT_STORAGE_KEY = 'gbl_tournament_v1';
-export const GBL_SETTINGS_STORAGE_KEY = 'gbl_settings_v1';
+export const GBL_TEAMS_STORAGE_KEY = 'gbl_teams_v2';
+export const GBL_TOURNAMENT_STORAGE_KEY = 'gbl_tournament_v2';
+export const GBL_SETTINGS_STORAGE_KEY = 'gbl_settings_v2';
 export const GBL_CATEGORIES_STORAGE_KEY = 'gbl_categories_v1';
 export const GBL_MATCHES_STORAGE_KEY = 'gbl_matches_v1';
 export const GBL_STANDINGS_STORAGE_KEY = 'gbl_standings_v1';

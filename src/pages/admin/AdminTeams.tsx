@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Shield, Edit2, Download, Upload, Users, Wallet, Plus, Check, Trash2 } from 'lucide-react';
+import { Shield, Edit2, Download, Upload, Users, Wallet, Plus, Check, Trash2, Lock } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { Team } from '../../types/database';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { exportTeamsCSV, exportSquadsCSV } from '../../lib/csv';
 import { uploadImage } from '../../lib/supabase';
-import { calculateMaxBid } from '../../lib/maxBid';
+import { calculateMaxBid, getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Modal } from '../../components/common/Modal';
 
 export const AdminTeams: React.FC = () => {
@@ -27,6 +27,7 @@ export const AdminTeams: React.FC = () => {
   const [description, setDescription] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [ownerPhotoUrl, setOwnerPhotoUrl] = useState<string | null>(null);
+  const [ownerIsPlayer, setOwnerIsPlayer] = useState<boolean>(true);
 
   const openAddModal = () => {
     setTeamName('');
@@ -37,6 +38,7 @@ export const AdminTeams: React.FC = () => {
     setDescription('');
     setLogoUrl(null);
     setOwnerPhotoUrl(null);
+    setOwnerIsPlayer(true);
     setUploadError(null);
     setIsAddModalOpen(true);
   };
@@ -51,6 +53,7 @@ export const AdminTeams: React.FC = () => {
     setDescription(team.description || '');
     setLogoUrl(team.logo_url || null);
     setOwnerPhotoUrl(team.owner_photo_url || null);
+    setOwnerIsPlayer(team.owner_is_player !== false);
     setUploadError(null);
   };
 
@@ -76,6 +79,12 @@ export const AdminTeams: React.FC = () => {
     e.preventDefault();
     if (!editingTeam) return;
 
+    const isPlaying = ownerIsPlayer;
+    const ownerPoints = isPlaying ? 100000 : 0;
+    const auctionBudget = isPlaying ? 400000 : 500000;
+    const maxSlots = isPlaying ? 5 : 6;
+    const newBalance = Math.max(0, auctionBudget - (editingTeam.total_spent || 0));
+
     await updateTeam(editingTeam.id, {
       name: teamName.trim(),
       short_name: shortName.trim().toUpperCase(),
@@ -84,7 +93,14 @@ export const AdminTeams: React.FC = () => {
       team_color: teamColor,
       description: description.trim(),
       logo_url: logoUrl,
-      owner_photo_url: ownerPhotoUrl
+      owner_photo_url: ownerPhotoUrl,
+      owner_is_player: isPlaying,
+      owner_points_allocation: ownerPoints,
+      owner_reserved_points: ownerPoints,
+      auction_budget: auctionBudget,
+      max_auction_slots: maxSlots,
+      total_squad_slots: 6,
+      current_balance: newBalance
     });
 
     setEditingTeam(null);
@@ -97,6 +113,10 @@ export const AdminTeams: React.FC = () => {
     if (!teamName.trim() || !shortName.trim()) return;
 
     const nextTeamNum = teams.length > 0 ? Math.max(...teams.map(t => t.team_number)) + 1 : 1;
+    const isPlaying = ownerIsPlayer;
+    const ownerPoints = isPlaying ? 100000 : 0;
+    const auctionBudget = isPlaying ? 400000 : 500000;
+    const maxSlots = isPlaying ? 5 : 6;
 
     await createTeam({
       tournament_id: '00000000-0000-0000-0000-000000000001',
@@ -111,11 +131,16 @@ export const AdminTeams: React.FC = () => {
       accent_color: '#FFFFFF',
       description: description.trim(),
       initial_budget: 500000,
-      owner_reserved_points: 30000,
-      current_balance: 470000,
+      owner_reserved_points: ownerPoints,
+      owner_points_allocation: ownerPoints,
+      current_balance: auctionBudget,
+      auction_budget: auctionBudget,
       total_spent: 0,
       is_active: true,
-      logo_url: logoUrl
+      logo_url: logoUrl,
+      owner_is_player: isPlaying,
+      max_auction_slots: maxSlots,
+      total_squad_slots: 6
     });
 
     setIsAddModalOpen(false);
@@ -180,12 +205,7 @@ export const AdminTeams: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {teams.map((team) => {
           const squad = players.filter(p => p.sold_team_id === team.id);
-          const maxBidInfo = calculateMaxBid({
-            balance: team.current_balance,
-            squadCount: squad.length,
-            totalAuctionSlots: 5,
-            reservePerSlot: 30000
-          });
+          const metrics = getTeamAuctionMetrics(team, squad.length, settings);
 
           return (
             <div
@@ -210,9 +230,20 @@ export const AdminTeams: React.FC = () => {
                     </div>
                   )}
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-gbl-orange-400 tracking-wider">
-                      Team #{team.team_number}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-bold text-gbl-orange-400 tracking-wider">
+                        Team #{team.team_number}
+                      </span>
+                      {metrics.ownerIsPlayer ? (
+                        <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold uppercase">
+                          Playing Owner
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[9px] font-bold uppercase">
+                          Non-Playing Owner
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-xl font-bold text-white">{team.name}</h3>
                     <p className="text-xs text-slate-400 mt-0.5">
                       Team Owner: <strong className="text-slate-200">{team.owner_name || 'Not assigned'}</strong>
@@ -246,19 +277,19 @@ export const AdminTeams: React.FC = () => {
                 <div className="bg-gbl-navy-950 p-2.5 rounded-xl border border-gbl-navy-800">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block">Available Points</span>
                   <span className="text-sm font-black text-emerald-400 font-mono mt-0.5 block">
-                    {formatINR(team.current_balance)}
+                    {formatINR(metrics.remainingBalance)}
                   </span>
                 </div>
                 <div className="bg-gbl-navy-950 p-2.5 rounded-xl border border-gbl-navy-800">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block">Total Spent</span>
                   <span className="text-sm font-black text-slate-300 font-mono mt-0.5 block">
-                    {formatINR(team.total_spent)}
+                    {formatINR(metrics.totalSpent)}
                   </span>
                 </div>
                 <div className="bg-gbl-navy-950 p-2.5 rounded-xl border border-gbl-navy-800">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block">Max Next Bid</span>
                   <span className="text-sm font-black text-amber-400 font-mono mt-0.5 block">
-                    {formatINR(maxBidInfo.maxBid)}
+                    {formatINR(metrics.maxLegalBid)}
                   </span>
                 </div>
               </div>
@@ -267,15 +298,15 @@ export const AdminTeams: React.FC = () => {
               <div className="p-3 bg-gbl-navy-950 rounded-xl border border-gbl-navy-800/80 text-[11px] text-slate-400 space-y-1">
                 <div className="flex justify-between">
                   <span>Total Budget:</span>
-                  <span className="font-mono text-white font-bold">{formatINR(team.initial_budget || 500000)}</span>
+                  <span className="font-mono text-white font-bold">{formatINR(metrics.totalPoints)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Owner Reserved Points:</span>
-                  <span className="font-mono text-amber-400 font-bold">{formatINR(team.owner_reserved_points || 30000)}</span>
+                  <span>Owner Allocation (Isolated):</span>
+                  <span className="font-mono text-amber-400 font-bold">{formatINR(metrics.ownerAllocation)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Active Reserved for Remaining ({Math.max(0, maxBidInfo.remainingAuctionSlots - 1)} slots):</span>
-                  <span className="font-mono text-sky-400 font-bold">{formatINR(maxBidInfo.reservedPoints)}</span>
+                  <span>Available Auction Budget:</span>
+                  <span className="font-mono text-sky-400 font-bold">{formatINR(metrics.auctionBudget)}</span>
                 </div>
               </div>
 
@@ -284,12 +315,12 @@ export const AdminTeams: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-sky-400" />
                   <span>
-                    <strong>{squad.length}</strong> / 5 Auctioned Players Acquired
+                    <strong>{squad.length}</strong> / {metrics.maxAuctionSlots} Auctioned Players Acquired
                   </span>
                 </div>
                 <div>
                   <span className="text-slate-300 font-semibold">
-                    Squad: <strong>{squad.length + 1}</strong> / 6 total (Owner + 5 Players)
+                    Squad: <strong>{squad.length + (metrics.ownerIsPlayer ? 1 : 0)}</strong> / 6 total
                   </span>
                 </div>
               </div>
@@ -358,6 +389,45 @@ export const AdminTeams: React.FC = () => {
                 className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Owner Player Status Toggle */}
+          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-slate-200 font-bold flex items-center gap-2">
+                <Users className="w-4 h-4 text-gbl-orange-400" />
+                <span>Owner Participating as Player?</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOwnerIsPlayer(true)}
+                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
+                    ownerIsPlayer
+                      ? 'bg-emerald-600 text-white shadow'
+                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Yes (Playing)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOwnerIsPlayer(false)}
+                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
+                    !ownerIsPlayer
+                      ? 'bg-sky-600 text-white shadow'
+                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  No (Non-Playing)
+                </button>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              {ownerIsPlayer
+                ? 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available to bid on 5 players.'
+                : 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 points allocated. Full ₹5,00,000 available to bid on 6 players.'}
+            </p>
           </div>
 
           <div>
@@ -481,6 +551,45 @@ export const AdminTeams: React.FC = () => {
                 className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Owner Player Status Toggle */}
+          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-slate-200 font-bold flex items-center gap-2">
+                <Users className="w-4 h-4 text-gbl-orange-400" />
+                <span>Owner Participating as Player?</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOwnerIsPlayer(true)}
+                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
+                    ownerIsPlayer
+                      ? 'bg-emerald-600 text-white shadow'
+                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Yes (Playing)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOwnerIsPlayer(false)}
+                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
+                    !ownerIsPlayer
+                      ? 'bg-sky-600 text-white shadow'
+                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  No (Non-Playing)
+                </button>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              {ownerIsPlayer
+                ? 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available to bid on 5 players.'
+                : 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 points allocated. Full ₹5,00,000 available to bid on 6 players.'}
+            </p>
           </div>
 
           <div>

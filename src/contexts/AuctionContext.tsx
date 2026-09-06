@@ -359,14 +359,21 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return { success: false, error: `Insufficient team balance. ${team.name} has only ₹${team.current_balance.toLocaleString('en-IN')}` };
     }
 
-    // Validation 3: Maximum legal bid calculation
+    // Validation 3: Maximum legal bid & squad lock calculation
     const currentSquadCount = players.filter(p => p.sold_team_id === teamId).length;
     const maxBidCalc = calculateMaxLegalBid(team, currentSquadCount, settings, currentCategory || undefined);
+
+    if (!maxBidCalc.isEligibleToBid) {
+      return {
+        success: false,
+        error: maxBidCalc.ineligibilityReason || `Team ${team.name} has completed their squad quota or cannot bid.`
+      };
+    }
 
     if (amount > maxBidCalc.maxLegalBid) {
       return {
         success: false,
-        error: `Bid exceeds maximum legal bid of ₹${maxBidCalc.maxLegalBid.toLocaleString('en-IN')} (Reserving ₹${maxBidCalc.totalReserveRequired.toLocaleString('en-IN')} for remaining ${maxBidCalc.remainingSlots} squad slots)`
+        error: `Bid exceeds maximum legal bid of ₹${maxBidCalc.maxLegalBid.toLocaleString('en-IN')} (Reserving ₹${maxBidCalc.totalReserveRequired.toLocaleString('en-IN')} for remaining ${maxBidCalc.remainingSlotsAfterThisBid} squad slots)`
       };
     }
 

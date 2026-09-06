@@ -6,33 +6,54 @@ export interface MaxBidResult {
   squadCount: number;
   requiredSlots: number;
   remainingSlots: number;
+  remainingSlotsAfterThisBid: number;
   reservePerSlot: number;
   totalReserveRequired: number;
   isEligibleToBid: boolean;
   ineligibilityReason?: string;
+  ownerIsPlayer: boolean;
+  ownerAllocation: number;
+  auctionBudget: number;
+  totalPoints: number;
+  totalSpent: number;
+}
+
+export interface TeamAuctionMetrics {
+  teamId: string;
+  teamName: string;
+  ownerName: string;
+  ownerIsPlayer: boolean;
+  totalPoints: number;
+  ownerAllocation: number;
+  auctionBudget: number;
+  playersBought: number;
+  maxAuctionSlots: number;
+  totalSquadSlots: number;
+  remainingSlots: number;
+  totalSpent: number;
+  remainingBalance: number;
+  maxLegalBid: number;
+  isLocked: boolean;
 }
 
 /**
- * GBL Tournament Budget & Reservation Engine
+ * GBL Tournament Budget & Owner Allocation Engine
  * 
  * Rules:
- * - Total Team Points: 5,00,000
- * - Team Owner Reserved Points: 30,000
- * - Usable Player Points: 4,70,000
- * - Maximum Roster: 6 members (1 Team Owner + 5 Auctioned Players)
- * - Required Auction Players: 5
- * - Reserve per remaining player: 30,000 points
- * 
- * Dynamic Maximum Bid Formula:
- * Remaining Players to Buy After This Bid = Math.max(0, 5 - (currentSquadCount + 1))
- * Required Minimum Balance = Remaining Players * 30,000
- * Maximum Bid = Math.max(0, currentBalance - Required Minimum Balance)
- * 
- * Example:
- * - Current Balance = 3,20,000
- * - Current Squad Count = 0 (or 1 with 4 to go):
- *   If 4 players remaining after purchase -> Required Minimum = 4 * 30,000 = 1,20,000
- *   Maximum Bid = 3,20,000 - 1,20,000 = 2,00,000
+ * - Each team receives ₹5,00,000 total auction points.
+ * - If Owner IS playing:
+ *     * Fixed owner allocation: ₹1,00,000 (occupies 1 roster slot).
+ *     * Available for player bidding: ₹4,00,000.
+ *     * Squad total: 6 players (1 Owner + 5 Auctioned Players).
+ *     * Required auction picks: 5 players.
+ * - If Owner is NOT playing (Tamilaga Asiriyar kootani warriors - Owner: jeevananthan):
+ *     * Owner allocation: ₹0 (occupies 0 roster slots).
+ *     * Available for player bidding: ₹5,00,000.
+ *     * Squad total: 6 players (0 Owner + 6 Auctioned Players).
+ *     * Required auction picks: 6 players.
+ * - Winning bids deduct ONLY from Available Auction Points.
+ * - Owner allocation (1,00,000 or 0) is isolated and NEVER deducted during bidding.
+ * - Teams reaching their quota (5 or 6) are locked from further bidding.
  */
 export function calculateMaxLegalBid(
   team: Team,
@@ -40,13 +61,19 @@ export function calculateMaxLegalBid(
   settings?: Partial<TournamentSettings>,
   currentCategory?: Category
 ): MaxBidResult {
-  const currentBalance = Number(team.current_balance ?? 470000);
-  
-  // Total auction player slots is strictly 5 (making 6 total members with Team Owner)
-  const maxAuctionPlayers = 5;
-  const reservePerSlot = 30000;
+  const totalPoints = team.initial_budget || 500000;
+  const ownerIsPlayer = team.owner_is_player !== false;
+  const ownerAllocation = team.owner_points_allocation !== undefined ? team.owner_points_allocation : (ownerIsPlayer ? 100000 : 0);
+  const auctionBudget = team.auction_budget || (totalPoints - ownerAllocation);
+  const currentBalance = Number(team.current_balance !== undefined ? team.current_balance : auctionBudget);
+  const totalSpent = Number(team.total_spent || 0);
 
-  // If team already reached 5 auctioned players (6 total with owner), squad is full
+  // Maximum auction players: 5 if owner is playing, 6 if owner is not playing
+  const maxAuctionPlayers = team.max_auction_slots || (ownerIsPlayer ? 5 : 6);
+  const reservePerSlot = Number(settings?.reserve_per_slot || 10000);
+  const remainingSlots = Math.max(0, maxAuctionPlayers - currentSquadCount);
+
+  // If team already reached their player limit, locked from bidding
   if (currentSquadCount >= maxAuctionPlayers) {
     return {
       maxLegalBid: 0,
@@ -54,15 +81,22 @@ export function calculateMaxLegalBid(
       squadCount: currentSquadCount,
       requiredSlots: maxAuctionPlayers,
       remainingSlots: 0,
+      remainingSlotsAfterThisBid: 0,
       reservePerSlot,
       totalReserveRequired: 0,
       isEligibleToBid: false,
-      ineligibilityReason: 'Team roster complete (5 players + 1 Team Owner = 6 members)'
+      ineligibilityReason: ownerIsPlayer 
+        ? 'Team roster complete (5 auctioned players + 1 playing owner = 6 members)' 
+        : 'Team roster complete (6 auctioned players acquired = 6 members)',
+      ownerIsPlayer,
+      ownerAllocation,
+      auctionBudget,
+      totalPoints,
+      totalSpent
     };
   }
 
-  // Number of player slots that MUST still be purchased AFTER buying this current candidate
-  // e.g. If currentSquadCount = 0, buying this player leaves 4 remaining players needed
+  // Slots that must still be purchased AFTER this bid
   const remainingSlotsAfterThisBid = Math.max(0, maxAuctionPlayers - (currentSquadCount + 1));
   const totalReserveRequired = remainingSlotsAfterThisBid * reservePerSlot;
 
@@ -75,7 +109,7 @@ export function calculateMaxLegalBid(
   let ineligibilityReason: string | undefined;
   if (!isEligibleToBid) {
     if (currentBalance <= 0) {
-      ineligibilityReason = 'Zero balance remaining';
+      ineligibilityReason = 'Zero auction balance remaining';
     } else if (maxLegalBid < startingBid) {
       ineligibilityReason = `Cannot meet starting bid (₹${startingBid.toLocaleString('en-IN')}) after reserving ₹${totalReserveRequired.toLocaleString('en-IN')} for ${remainingSlotsAfterThisBid} remaining player slot(s)`;
     }
@@ -86,11 +120,48 @@ export function calculateMaxLegalBid(
     currentBalance,
     squadCount: currentSquadCount,
     requiredSlots: maxAuctionPlayers,
-    remainingSlots: remainingSlotsAfterThisBid,
+    remainingSlots,
+    remainingSlotsAfterThisBid,
     reservePerSlot,
     totalReserveRequired,
     isEligibleToBid,
-    ineligibilityReason
+    ineligibilityReason,
+    ownerIsPlayer,
+    ownerAllocation,
+    auctionBudget,
+    totalPoints,
+    totalSpent
+  };
+}
+
+/**
+ * Calculates complete 7-point summary for any team
+ */
+export function getTeamAuctionMetrics(
+  team: Team,
+  playersBoughtCount: number,
+  settings?: Partial<TournamentSettings>,
+  currentCategory?: Category
+): TeamAuctionMetrics {
+  const maxBidInfo = calculateMaxLegalBid(team, playersBoughtCount, settings, currentCategory);
+  const isLocked = playersBoughtCount >= maxBidInfo.requiredSlots;
+
+  return {
+    teamId: team.id,
+    teamName: team.name,
+    ownerName: team.owner_name,
+    ownerIsPlayer: maxBidInfo.ownerIsPlayer,
+    totalPoints: maxBidInfo.totalPoints,
+    ownerAllocation: maxBidInfo.ownerAllocation,
+    auctionBudget: maxBidInfo.auctionBudget,
+    playersBought: playersBoughtCount,
+    maxAuctionSlots: maxBidInfo.requiredSlots,
+    totalSquadSlots: 6,
+    remainingSlots: maxBidInfo.remainingSlots,
+    totalSpent: maxBidInfo.totalSpent,
+    remainingBalance: maxBidInfo.currentBalance,
+    maxLegalBid: maxBidInfo.maxLegalBid,
+    isLocked
   };
 }
 
@@ -98,7 +169,7 @@ export function calculateMaxBid({
   balance,
   squadCount,
   totalAuctionSlots = 5,
-  reservePerSlot = 30000
+  reservePerSlot = 10000
 }: {
   balance: number;
   squadCount: number;

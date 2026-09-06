@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Wallet, Shield, Award, User } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { formatINR } from '../../lib/currency';
+import { getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
 
 export const TeamDetailPage: React.FC = () => {
@@ -23,7 +24,7 @@ export const TeamDetailPage: React.FC = () => {
   }
 
   const squad = players.filter(p => p.sold_team_id === team.id);
-  const totalSquadCost = squad.reduce((acc, p) => acc + (p.sold_price || 0), 0);
+  const metrics = getTeamAuctionMetrics(team, squad.length, settings);
 
   return (
     <div className="min-h-screen bg-gbl-navy-950 py-12 px-4 sm:px-6 lg:px-8">
@@ -51,10 +52,21 @@ export const TeamDetailPage: React.FC = () => {
                 {team.short_name}
               </div>
               <div>
-                <span className="text-xs font-bold text-gbl-orange-400 uppercase tracking-wider">
-                  Team #{team.team_number}
-                </span>
-                <h1 className="text-2xl sm:text-4xl font-black text-white font-sports uppercase tracking-tight">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gbl-orange-400 uppercase tracking-wider">
+                    Team #{team.team_number}
+                  </span>
+                  {metrics.ownerIsPlayer ? (
+                    <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">
+                      Playing Owner
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-bold uppercase">
+                      Non-Playing Owner
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl sm:text-4xl font-black text-white font-sports uppercase tracking-tight mt-1">
                   {team.name}
                 </h1>
                 <p className="text-xs text-slate-400 mt-1 max-w-lg">{team.description}</p>
@@ -69,20 +81,24 @@ export const TeamDetailPage: React.FC = () => {
             {/* Right: Budget Statistics Card */}
             <div className="bg-gbl-navy-950 border border-gbl-navy-800 p-4 rounded-2xl w-full md:w-auto min-w-[240px] space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Available Player Points:</span>
-                <span className="font-black text-emerald-400 font-mono text-base">{formatINR(team.current_balance)}</span>
+                <span className="text-slate-400">Available Auction Points:</span>
+                <span className="font-black text-emerald-400 font-mono text-base">{formatINR(metrics.remainingBalance)}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Owner Reserved Points:</span>
-                <span className="font-bold text-amber-400 font-mono">{formatINR(team.owner_reserved_points || 30000)}</span>
+                <span className="text-slate-400">Owner Allocation:</span>
+                <span className="font-bold text-amber-400 font-mono">
+                  {metrics.ownerAllocation > 0 ? formatINR(metrics.ownerAllocation) : '₹0 (Non-Playing)'}
+                </span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Total Spent on Players:</span>
-                <span className="font-bold text-white font-mono">{formatINR(totalSquadCost)}</span>
+                <span className="font-bold text-white font-mono">{formatINR(metrics.totalSpent)}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Roster Capacity:</span>
-                <span className="font-bold text-sky-400">{squad.length} / 5 Players ({squad.length + 1} / 6 Total)</span>
+                <span className="font-bold text-sky-400">
+                  {metrics.playersBought} / {metrics.maxAuctionSlots} Picks ({metrics.playersBought + (metrics.ownerIsPlayer ? 1 : 0)} / 6 Total)
+                </span>
               </div>
             </div>
 
@@ -95,7 +111,9 @@ export const TeamDetailPage: React.FC = () => {
             <div>
               <h2 className="text-xl font-bold text-white font-sports uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-5 h-5 text-gbl-orange-400" />
-                <span>OFFICIAL SQUAD ROSTER ({squad.length} Players + 1 Owner)</span>
+                <span>
+                  OFFICIAL SQUAD ROSTER ({metrics.playersBought} Players {metrics.ownerIsPlayer ? '+ 1 Playing Owner' : '(6 Auction Target)'})
+                </span>
               </h2>
             </div>
             <Link

@@ -26,6 +26,7 @@ import { formatINR, formatCompactINR } from '../../lib/currency';
 import { calculateMaxLegalBid } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
+import { TeamAllocationSummaryTable } from '../../components/admin/TeamAllocationSummaryTable';
 import { Player, Category, Team } from '../../types/database';
 
 export const AdminAuction: React.FC = () => {
@@ -616,29 +617,41 @@ export const AdminAuction: React.FC = () => {
           {teams.map((t) => {
             const isSelected = t.id === activeTeamId;
             const isLeader = t.id === highestTeam?.id;
+            const squadCount = players.filter(p => p.sold_team_id === t.id).length;
+            const maxSlots = t.max_auction_slots || (t.owner_is_player !== false ? 5 : 6);
+            const isLocked = squadCount >= maxSlots;
 
             return (
               <button
                 key={t.id}
-                onClick={() => setActiveTeamId(t.id)}
-                className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-between ${
-                  isSelected
+                onClick={() => !isLocked && setActiveTeamId(t.id)}
+                disabled={isLocked}
+                className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-between relative ${
+                  isLocked
+                    ? 'opacity-40 bg-slate-900 border-slate-800 cursor-not-allowed'
+                    : isSelected
                     ? 'ring-2 ring-gbl-orange-500 border-gbl-orange-500 bg-gbl-orange-500/20 scale-[1.03] shadow-lg shadow-gbl-orange-500/20'
                     : isLeader
                     ? 'bg-emerald-950/40 border-emerald-500/60'
                     : 'bg-gbl-navy-950 border-gbl-navy-800 hover:border-gbl-navy-700'
                 }`}
               >
+                {isLocked && (
+                  <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[8px] font-black uppercase shadow">
+                    FULL
+                  </span>
+                )}
                 <div 
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md mb-1.5"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md mb-1.5 shrink-0"
                   style={{ backgroundColor: t.team_color }}
                 >
                   {t.short_name}
                 </div>
                 <span className="text-[11px] font-bold text-white truncate w-full">{t.name}</span>
-                <span className="text-[10px] font-black text-emerald-400 font-mono mt-1">
-                  {formatCompactINR(t.current_balance)}
-                </span>
+                <div className="w-full flex items-center justify-between mt-1 text-[9px]">
+                  <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
+                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{maxSlots}</span>
+                </div>
               </button>
             );
           })}
@@ -700,7 +713,11 @@ export const AdminAuction: React.FC = () => {
 
       </div>
 
-      {/* CONFIRMATION MODAL: CANCEL SOLD */}
+      {/* 5. TEAM POINTS & OWNER ALLOCATION SUMMARY */}
+      <TeamAllocationSummaryTable
+        highlightTeamId={activeTeamId}
+        onSelectTeam={setActiveTeamId}
+      />
       <Modal
         isOpen={showCancelSoldModal}
         onClose={() => setShowCancelSoldModal(false)}

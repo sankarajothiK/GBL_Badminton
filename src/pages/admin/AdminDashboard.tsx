@@ -22,6 +22,7 @@ import { useAuction } from '../../contexts/AuctionContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { SetupWizard } from '../../components/admin/SetupWizard';
+import { TeamAllocationSummaryTable } from '../../components/admin/TeamAllocationSummaryTable';
 
 export const AdminDashboard: React.FC = () => {
   const { tournament, teams, players, categories, settings } = useTournament();
@@ -218,41 +219,8 @@ export const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* 10 TEAMS PURSE MONITOR */}
-      <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 shadow-xl space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-bold text-white font-sports uppercase tracking-wider flex items-center gap-2">
-            <Shield className="w-4 h-4 text-gbl-orange-500" />
-            <span>10 Team Purse Balances</span>
-          </h2>
-          <Link to="/admin/teams" className="text-xs text-gbl-orange-400 hover:underline font-semibold">
-            Manage Teams →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {teams.map((t) => {
-            const squad = players.filter(p => p.sold_team_id === t.id);
-            return (
-              <div key={t.id} className="bg-gbl-navy-950 border border-gbl-navy-800/80 p-3.5 rounded-2xl flex flex-col justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] text-white"
-                    style={{ backgroundColor: t.team_color }}
-                  >
-                    {t.short_name}
-                  </div>
-                  <span className="text-xs font-bold text-white truncate w-full">{t.name}</span>
-                </div>
-                <div className="mt-3 pt-2 border-t border-gbl-navy-800/60 flex justify-between items-center text-xs">
-                  <span className="text-[10px] text-slate-400">{squad.length} players</span>
-                  <span className="font-extrabold text-emerald-400 font-mono">{formatCompactINR(t.current_balance)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* 10 TEAMS PURSE & OWNER ALLOCATION SUMMARY */}
+      <TeamAllocationSummaryTable />
 
     </div>
   );

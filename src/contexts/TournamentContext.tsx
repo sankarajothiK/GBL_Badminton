@@ -154,12 +154,29 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saveStoredData(GBL_TOURNAMENT_STORAGE_KEY, tData);
         }
         if (sData) {
-          setSettings(sData);
-          saveStoredData(GBL_SETTINGS_STORAGE_KEY, sData);
+          if (sData.owner_reserved_points === 30000) {
+            const updatedSettings = { ...sData, initial_budget: 500000, owner_reserved_points: 100000, reserve_per_slot: 10000, required_squad_slots: 6 };
+            setSettings(updatedSettings);
+            saveStoredData(GBL_SETTINGS_STORAGE_KEY, updatedSettings);
+            supabase.from('tournament_settings').upsert(updatedSettings).then(undefined, console.warn);
+          } else {
+            setSettings(sData);
+            saveStoredData(GBL_SETTINGS_STORAGE_KEY, sData);
+          }
         }
         if (tmData && tmData.length > 0) {
-          setTeams(tmData);
-          saveStoredData(GBL_TEAMS_STORAGE_KEY, tmData);
+          const isOldDummyTeams = tmData.some((t: any) => t.name === 'Gulf Smashers' || t.name === 'Gulf Thunderbolts');
+          if (isOldDummyTeams) {
+            console.info('[TournamentContext] Upgrading outdated mock teams in Central DB to official 10 teams.');
+            setTeams(initialTeams);
+            saveStoredData(GBL_TEAMS_STORAGE_KEY, initialTeams);
+            supabase.from('teams').upsert(initialTeams).then(undefined, console.warn);
+          } else {
+            setTeams(tmData);
+            saveStoredData(GBL_TEAMS_STORAGE_KEY, tmData);
+          }
+        } else {
+          supabase.from('teams').upsert(initialTeams).then(undefined, console.warn);
         }
         if (pData && pData.length > 0) {
           setPlayers(pData);

@@ -106,7 +106,7 @@ export const TeamBiddingPortal: React.FC = () => {
         <div className="bg-gradient-to-b from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-lg">
           <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-black tracking-wider block">Squad Slots</span>
           <span className="text-lg sm:text-2xl font-black text-white font-mono mt-0.5 block">
-            {squad.length} / {settings.required_squad_slots || 7}
+            {squad.length} / {maxBidResult.requiredSlots}
           </span>
         </div>
 
@@ -202,10 +202,17 @@ export const TeamBiddingPortal: React.FC = () => {
                 </span>
               </div>
 
+              {!maxBidResult.isEligibleToBid && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{maxBidResult.ineligibilityReason}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-3 gap-2 sm:gap-3.5">
                 <button
                   onClick={() => handleBidClick(10000)}
-                  disabled={status !== 'LIVE' || isHighestBidder}
+                  disabled={status !== 'LIVE' || isHighestBidder || !maxBidResult.isEligibleToBid}
                   className="py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-sky-500 to-sky-700 hover:from-sky-400 hover:to-sky-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black text-xs sm:text-lg font-mono shadow-xl transition-all active:scale-95 border border-sky-400/30 min-h-[50px] flex items-center justify-center"
                 >
                   +₹10,000
@@ -213,7 +220,7 @@ export const TeamBiddingPortal: React.FC = () => {
 
                 <button
                   onClick={() => handleBidClick(20000)}
-                  disabled={status !== 'LIVE' || isHighestBidder}
+                  disabled={status !== 'LIVE' || isHighestBidder || !maxBidResult.isEligibleToBid}
                   className="py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black text-xs sm:text-lg font-mono shadow-xl transition-all active:scale-95 border border-amber-400/30 min-h-[50px] flex items-center justify-center"
                 >
                   +₹20,000
@@ -221,7 +228,7 @@ export const TeamBiddingPortal: React.FC = () => {
 
                 <button
                   onClick={() => handleBidClick(50000)}
-                  disabled={status !== 'LIVE' || isHighestBidder}
+                  disabled={status !== 'LIVE' || isHighestBidder || !maxBidResult.isEligibleToBid}
                   className="py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-gbl-orange-500 to-gbl-orange-700 hover:from-gbl-orange-400 hover:to-gbl-orange-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black text-xs sm:text-lg font-mono shadow-xl transition-all active:scale-95 border border-gbl-orange-400/30 min-h-[50px] flex items-center justify-center"
                 >
                   +₹50,000

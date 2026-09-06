@@ -100,6 +100,12 @@ export interface Team {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Owner & Auction Allocation Rules
+  owner_is_player?: boolean;
+  owner_points_allocation?: number;
+  auction_budget?: number;
+  max_auction_slots?: number;
+  total_squad_slots?: number;
 }
 
 export interface Player {
