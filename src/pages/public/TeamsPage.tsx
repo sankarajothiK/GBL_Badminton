@@ -96,15 +96,25 @@ export const TeamsPage: React.FC = () => {
               <div>
                 {/* Crest & Count */}
                 <div className="flex items-start justify-between">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-base shadow-md group-hover:scale-105 transition-transform"
-                    style={{ backgroundColor: team.team_color }}
-                  >
-                    {team.short_name}
-                  </div>
+                  {team.logo_url ? (
+                    <div className="w-13 h-13 rounded-xl p-1 bg-slate-900 border border-slate-200 shadow-md group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={team.logo_url} 
+                        alt={team.name} 
+                        className="w-full h-full object-contain" 
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-base shadow-md group-hover:scale-105 transition-transform"
+                      style={{ backgroundColor: team.team_color }}
+                    >
+                      {team.short_name}
+                    </div>
+                  )}
                   <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
-                    <span>{squad.length} / 5 Players</span>
+                    <span>{squad.length} / {team.max_auction_slots || (team.owner_is_player !== false ? 5 : 6)} Picks</span>
                   </span>
                 </div>
 

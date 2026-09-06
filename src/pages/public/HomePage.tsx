@@ -429,9 +429,15 @@ export const HomePage: React.FC = () => {
               <div key={team.id} className="bg-white p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[9px] font-black tracking-tight ${badgeColor}`}>
-                      {initials}
-                    </div>
+                    {team.logo_url ? (
+                      <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-900 border border-slate-200 p-0.5 flex items-center justify-center overflow-hidden">
+                        <img src={team.logo_url} alt={team.name} className="h-full w-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[9px] font-black tracking-tight ${badgeColor}`}>
+                        {initials}
+                      </div>
+                    )}
                     <span className="truncate text-xs font-black text-slate-950">{team.name}</span>
                   </div>
 

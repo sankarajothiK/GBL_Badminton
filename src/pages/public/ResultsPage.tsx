@@ -101,9 +101,15 @@ export const ResultsPage: React.FC = () => {
                       isWinner1 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
                     }`}>
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team1?.team_color || '#333' }}>
-                          {team1?.short_name || 'T1'}
-                        </div>
+                        {team1?.logo_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src={team1.logo_url} alt={team1.name} className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team1?.team_color || '#333' }}>
+                            {team1?.short_name || 'T1'}
+                          </div>
+                        )}
                         <span className="text-xs sm:text-sm font-bold truncate">{team1?.name || 'Team 1'}</span>
                         {isWinner1 && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />}
                       </div>
@@ -119,9 +125,15 @@ export const ResultsPage: React.FC = () => {
                       isWinner2 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
                     }`}>
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team2?.team_color || '#333' }}>
-                          {team2?.short_name || 'T2'}
-                        </div>
+                        {team2?.logo_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src={team2.logo_url} alt={team2.name} className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team2?.team_color || '#333' }}>
+                            {team2?.short_name || 'T2'}
+                          </div>
+                        )}
                         <span className="text-xs sm:text-sm font-bold truncate">{team2?.name || 'Team 2'}</span>
                         {isWinner2 && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />}
                       </div>

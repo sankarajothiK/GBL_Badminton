@@ -454,20 +454,50 @@ export const AdminTeams: React.FC = () => {
             />
           </div>
 
-          {/* Photo Upload */}
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">Upload Team Logo (up to 10 MB)</label>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              onChange={(e) => handleImageUpload(e, 'logo')}
-              className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700"
-            />
-            {uploading && <p className="text-[10px] text-gbl-orange-400 mt-1">Processing image...</p>}
+          {/* Team Logo Upload & Direct URL */}
+          <div className="space-y-2">
+            <label className="block text-slate-300 font-semibold">
+              Team Logo (JPG, PNG, WEBP, SVG — up to 10 MB or Image URL)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={(e) => handleImageUpload(e, 'logo')}
+                  className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700 cursor-pointer"
+                />
+              </div>
+              <div>
+                <input
+                  type="url"
+                  placeholder="Or paste image URL (https://... or /gbl-logo.png)"
+                  value={logoUrl || ''}
+                  onChange={(e) => setLogoUrl(e.target.value.trim() || null)}
+                  className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-gbl-orange-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            {uploading && <p className="text-[10px] text-gbl-orange-400">Processing & compressing image...</p>}
+            
             {logoUrl && (
-              <div className="mt-2 flex items-center gap-2">
-                <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-lg object-cover border border-gbl-navy-700" />
-                <span className="text-[10px] text-emerald-400 font-semibold">Logo uploaded</span>
+              <div className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800">
+                <div className="flex items-center gap-3">
+                  <img src={logoUrl} alt="Logo preview" className="w-12 h-12 rounded-xl object-contain bg-slate-900 border border-gbl-navy-700 p-0.5" />
+                  <div>
+                    <span className="text-xs text-emerald-400 font-bold block">Logo Active &amp; Ready</span>
+                    <span className="text-[10px] text-slate-400 font-mono truncate max-w-[220px] block">
+                      {logoUrl.startsWith('data:') ? 'Custom Uploaded Image' : logoUrl}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl(null)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 text-xs font-semibold"
+                >
+                  Remove
+                </button>
               </div>
             )}
           </div>
@@ -614,6 +644,54 @@ export const AdminTeams: React.FC = () => {
               placeholder="Team motto or background"
               className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
             />
+          </div>
+
+          {/* Team Logo Upload & Direct URL */}
+          <div className="space-y-2">
+            <label className="block text-slate-300 font-semibold">
+              Team Logo (JPG, PNG, WEBP, SVG — up to 10 MB or Image URL)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={(e) => handleImageUpload(e, 'logo')}
+                  className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700 cursor-pointer"
+                />
+              </div>
+              <div>
+                <input
+                  type="url"
+                  placeholder="Or paste image URL (https://... or /gbl-logo.png)"
+                  value={logoUrl || ''}
+                  onChange={(e) => setLogoUrl(e.target.value.trim() || null)}
+                  className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-gbl-orange-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            {uploading && <p className="text-[10px] text-gbl-orange-400">Processing & compressing image...</p>}
+            
+            {logoUrl && (
+              <div className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800">
+                <div className="flex items-center gap-3">
+                  <img src={logoUrl} alt="Logo preview" className="w-12 h-12 rounded-xl object-contain bg-slate-900 border border-gbl-navy-700 p-0.5" />
+                  <div>
+                    <span className="text-xs text-emerald-400 font-bold block">Logo Active &amp; Ready</span>
+                    <span className="text-[10px] text-slate-400 font-mono truncate max-w-[220px] block">
+                      {logoUrl.startsWith('data:') ? 'Custom Uploaded Image' : logoUrl}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl(null)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 text-xs font-semibold"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">

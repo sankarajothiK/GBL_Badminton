@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Settings, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings, Save, CheckCircle2, AlertCircle, Image } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { PhoneInput } from '../../components/common/PhoneInput';
+import { uploadImage } from '../../lib/supabase';
 
 export const AdminTournament: React.FC = () => {
   const { tournament, updateTournament } = useTournament();
@@ -9,6 +10,8 @@ export const AdminTournament: React.FC = () => {
   const [name, setName] = useState(tournament.name);
   const [shortName, setShortName] = useState(tournament.short_name);
   const [season, setSeason] = useState(tournament.season);
+  const [logoUrl, setLogoUrl] = useState(tournament.logo_url || '/gbl-logo.png');
+  const [bannerUrl, setBannerUrl] = useState(tournament.banner_url || '');
   const [venue, setVenue] = useState(tournament.venue);
   const [tournamentDates, setTournamentDates] = useState(tournament.tournament_dates);
   const [auctionDate, setAuctionDate] = useState(tournament.auction_date);
@@ -22,9 +25,21 @@ export const AdminTournament: React.FC = () => {
   const [socialFacebook, setSocialFacebook] = useState(tournament.social_facebook);
   const [socialYoutube, setSocialYoutube] = useState(tournament.social_youtube);
   const [description, setDescription] = useState(tournament.description);
+  const [uploading, setUploading] = useState(false);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const res = await uploadImage(file, 'tournament');
+    setUploading(false);
+    if (res.url) {
+      setLogoUrl(res.url);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +48,8 @@ export const AdminTournament: React.FC = () => {
       name,
       short_name: shortName,
       season,
+      logo_url: logoUrl,
+      banner_url: bannerUrl,
       venue,
       tournament_dates: tournamentDates,
       auction_date: auctionDate,
@@ -110,6 +127,50 @@ export const AdminTournament: React.FC = () => {
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
             />
+          </div>
+
+          {/* Tournament Logo & Banner Upload */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Tournament Logo (Emblem)</label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={handleLogoUpload}
+                  className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gbl-navy-800 file:text-white hover:file:bg-gbl-navy-700 cursor-pointer"
+                />
+                <input
+                  type="url"
+                  placeholder="Or image URL (e.g. /gbl-logo.png)"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value.trim())}
+                  className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-gbl-orange-500 focus:outline-none"
+                />
+                {logoUrl && (
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800">
+                    <img src={logoUrl} alt="Tournament Logo" className="w-10 h-10 object-contain rounded-lg bg-slate-900 border border-gbl-navy-700 p-0.5" />
+                    <span className="text-[10px] text-emerald-400 font-semibold">Active Tournament Logo</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Tournament Hero Banner URL</label>
+              <input
+                type="url"
+                placeholder="https://images.unsplash.com/..."
+                value={bannerUrl}
+                onChange={(e) => setBannerUrl(e.target.value.trim())}
+                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
+              />
+              {bannerUrl && (
+                <div className="mt-2 rounded-xl overflow-hidden border border-gbl-navy-800 h-14">
+                  <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

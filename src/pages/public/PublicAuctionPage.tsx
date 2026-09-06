@@ -188,12 +188,18 @@ export const PublicAuctionPage: React.FC = () => {
                   <div className="flex items-center gap-3 overflow-hidden">
                     {highestTeam ? (
                       <>
-                        <div 
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-xs shadow-md shrink-0"
-                          style={{ backgroundColor: highestTeam.team_color }}
-                        >
-                          {highestTeam.short_name}
-                        </div>
+                        {highestTeam.logo_url ? (
+                          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 p-0.5 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                            <img src={highestTeam.logo_url} alt={highestTeam.name} className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-xs shadow-md shrink-0"
+                            style={{ backgroundColor: highestTeam.team_color }}
+                          >
+                            {highestTeam.short_name}
+                          </div>
+                        )}
                         <div className="overflow-hidden">
                           <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block">
                             LEADING TEAM

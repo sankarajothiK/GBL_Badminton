@@ -78,12 +78,18 @@ export const StandingsPage: React.FC = () => {
                     {/* Team */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0"
-                          style={{ backgroundColor: team?.team_color || '#333' }}
-                        >
-                          {team?.short_name || 'GBL'}
-                        </div>
+                        {team?.logo_url ? (
+                          <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-200 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src={team.logo_url} alt={team.name} className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0"
+                            style={{ backgroundColor: team?.team_color || '#333' }}
+                          >
+                            {team?.short_name || 'GBL'}
+                          </div>
+                        )}
                         <div>
                           <p className="font-bold text-slate-950 text-sm">{team?.name || 'Team'}</p>
                           <p className="text-[11px] text-slate-400">Owner: {team?.owner_name}</p>

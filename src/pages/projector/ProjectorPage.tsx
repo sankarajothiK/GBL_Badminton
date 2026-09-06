@@ -198,12 +198,18 @@ export const ProjectorPage: React.FC = () => {
                   <div className="flex items-center gap-3 sm:gap-5">
                     {highestTeam ? (
                       <>
-                        <div 
-                          className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-lg shadow-xl shrink-0"
-                          style={{ backgroundColor: highestTeam.team_color }}
-                        >
-                          {highestTeam.short_name}
-                        </div>
+                        {highestTeam.logo_url ? (
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gbl-navy-950 border-2 border-gbl-orange-500/50 p-1 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                            <img src={highestTeam.logo_url} alt={highestTeam.name} className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div 
+                            className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-lg shadow-xl shrink-0"
+                            style={{ backgroundColor: highestTeam.team_color }}
+                          >
+                            {highestTeam.short_name}
+                          </div>
+                        )}
                         <div>
                           <span className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400 block">
                             CURRENT HIGHEST BIDDER
@@ -280,12 +286,18 @@ export const ProjectorPage: React.FC = () => {
                     FULL
                   </span>
                 )}
-                <div 
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black text-white mx-auto mb-1 sm:mb-1.5 shadow-md"
-                  style={{ backgroundColor: t.team_color }}
-                >
-                  {t.short_name}
-                </div>
+                {t.logo_url ? (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gbl-navy-950 border border-gbl-navy-700 p-0.5 mx-auto mb-1 sm:mb-1.5 flex items-center justify-center overflow-hidden">
+                    <img src={t.logo_url} alt={t.name} className="w-full h-full object-contain" />
+                  </div>
+                ) : (
+                  <div 
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black text-white mx-auto mb-1 sm:mb-1.5 shadow-md"
+                    style={{ backgroundColor: t.team_color }}
+                  >
+                    {t.short_name}
+                  </div>
+                )}
                 <p className="text-[10px] sm:text-[11px] font-bold text-white truncate">{t.name}</p>
                 <div className="flex items-center justify-between mt-0.5 px-0.5 text-[10px]">
                   <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>

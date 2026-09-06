@@ -55,12 +55,18 @@ export const TeamBiddingPortal: React.FC = () => {
       {/* Team Header Strip */}
       <div className="bg-gradient-to-r from-gbl-navy-900 via-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-700/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div className="flex items-center gap-3 sm:gap-4 text-left w-full sm:w-auto">
-          <div 
-            className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-xl shadow-xl shrink-0 border border-white/20"
-            style={{ backgroundColor: activeTeam.team_color }}
-          >
-            {activeTeam.short_name}
-          </div>
+          {activeTeam.logo_url ? (
+            <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gbl-navy-950 border border-white/20 p-1 flex items-center justify-center overflow-hidden shadow-xl shrink-0">
+              <img src={activeTeam.logo_url} alt={activeTeam.name} className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <div 
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-xl shadow-xl shrink-0 border border-white/20"
+              style={{ backgroundColor: activeTeam.team_color }}
+            >
+              {activeTeam.short_name}
+            </div>
+          )}
           <div className="overflow-hidden">
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gbl-orange-500/10 border border-gbl-orange-500/30 text-gbl-orange-400 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">
               <span>TEAM CONSOLE</span>

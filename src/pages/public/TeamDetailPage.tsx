@@ -45,12 +45,22 @@ export const TeamDetailPage: React.FC = () => {
             
             {/* Left: Emblem & Details */}
             <div className="flex items-center gap-5">
-              <div 
-                className="w-20 h-20 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-xl shrink-0"
-                style={{ backgroundColor: team.team_color }}
-              >
-                {team.short_name}
-              </div>
+              {team.logo_url ? (
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-700 p-1.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={team.logo_url} 
+                    alt={team.name} 
+                    className="w-full h-full object-contain rounded-xl" 
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-xl shrink-0"
+                  style={{ backgroundColor: team.team_color }}
+                >
+                  {team.short_name}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-gbl-orange-400 uppercase tracking-wider">

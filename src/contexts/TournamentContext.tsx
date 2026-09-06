@@ -53,6 +53,26 @@ function generateUUID(): string {
   });
 }
 
+/**
+ * Filter team payload to strictly valid Supabase table columns, avoiding PGRST204 column not found errors
+ */
+function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
+  const allowedCols = [
+    'id', 'tournament_id', 'team_number', 'name', 'short_name', 'logo_url',
+    'owner_name', 'owner_photo_url', 'captain_name', 'captain_photo_url',
+    'team_color', 'accent_color', 'description', 'initial_budget',
+    'owner_reserved_points', 'current_balance', 'total_spent', 'is_active',
+    'created_at', 'updated_at'
+  ];
+  const sanitized: Record<string, any> = {};
+  for (const key of allowedCols) {
+    if (key in team && (team as any)[key] !== undefined) {
+      sanitized[key] = (team as any)[key];
+    }
+  }
+  return sanitized;
+}
+
 interface TournamentContextType {
   tournament: Tournament;
   settings: TournamentSettings;
@@ -165,18 +185,45 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         }
         if (tmData && tmData.length > 0) {
-          const isOldDummyTeams = tmData.some((t: any) => t.name === 'Gulf Smashers' || t.name === 'Gulf Thunderbolts');
-          if (isOldDummyTeams) {
-            console.info('[TournamentContext] Upgrading outdated mock teams in Central DB to official 10 teams.');
-            setTeams(initialTeams);
-            saveStoredData(GBL_TEAMS_STORAGE_KEY, initialTeams);
-            supabase.from('teams').upsert(initialTeams).then(undefined, console.warn);
-          } else {
-            setTeams(tmData);
-            saveStoredData(GBL_TEAMS_STORAGE_KEY, tmData);
-          }
-        } else {
-          supabase.from('teams').upsert(initialTeams).then(undefined, console.warn);
+          setTeams(prevTeams => {
+            const merged = tmData.map((cloudTeam: any) => {
+              const localTeam = prevTeams.find(lt => lt.id === cloudTeam.id || lt.team_number === cloudTeam.team_number);
+              if (!localTeam) return cloudTeam as Team;
+
+              const bestLogo = localTeam.logo_url || cloudTeam.logo_url || null;
+              const bestOwnerPhoto = localTeam.owner_photo_url || cloudTeam.owner_photo_url || null;
+
+              const localIsNewer = localTeam.updated_at && cloudTeam.updated_at
+                ? new Date(localTeam.updated_at).getTime() > new Date(cloudTeam.updated_at).getTime()
+                : false;
+
+              if (localIsNewer) {
+                supabase.from('teams').update(sanitizeTeamForDb(localTeam)).eq('id', cloudTeam.id).then(undefined, console.warn);
+                return { ...cloudTeam, ...localTeam, logo_url: bestLogo };
+              }
+
+              const mergedTeam: Team = {
+                ...localTeam,
+                ...cloudTeam,
+                logo_url: bestLogo,
+                owner_photo_url: bestOwnerPhoto,
+                owner_is_player: localTeam.owner_is_player !== undefined ? localTeam.owner_is_player : (cloudTeam.owner_reserved_points > 0),
+                owner_points_allocation: cloudTeam.owner_reserved_points ?? localTeam.owner_points_allocation ?? 0,
+                auction_budget: (cloudTeam.initial_budget || 500000) - (cloudTeam.owner_reserved_points ?? 0),
+                max_auction_slots: (cloudTeam.owner_reserved_points > 0 || localTeam.owner_is_player !== false) ? 5 : 6,
+                total_squad_slots: 6
+              };
+
+              if (localTeam.logo_url && !cloudTeam.logo_url) {
+                supabase.from('teams').update({ logo_url: localTeam.logo_url }).eq('id', cloudTeam.id).then(undefined, console.warn);
+              }
+
+              return mergedTeam;
+            });
+
+            saveStoredData(GBL_TEAMS_STORAGE_KEY, merged);
+            return merged;
+          });
         }
         if (pData && pData.length > 0) {
           setPlayers(pData);
@@ -391,9 +438,12 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         await supabase.from('categories').upsert(categories);
       }
 
-      // 4. Push teams
+      // 4. Push teams (sanitized)
       if (teams.length > 0) {
-        await supabase.from('teams').upsert(teams);
+        const sanitizedTeams = teams.map(t => sanitizeTeamForDb(t));
+        for (const st of sanitizedTeams) {
+          await supabase.from('teams').upsert(st);
+        }
       }
 
       // 5. Push players in chunks (batching to avoid payload size limit)
@@ -486,9 +536,13 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (updatedTeam) {
       try {
-        await supabase.from('teams').upsert(updatedTeam);
+        const payload = sanitizeTeamForDb(updatedTeam);
+        const { error } = await supabase.from('teams').update(payload).eq('id', teamId);
+        if (error) {
+          console.warn('Database sync error on updateTeam:', error.message);
+        }
       } catch (e) {
-        console.warn('Database sync error on updateTeam:', e);
+        console.warn('Database sync exception on updateTeam:', e);
       }
     }
   };
@@ -511,9 +565,13 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logAuditAction('TEAM_CREATED', { name: newTeam.name });
 
     try {
-      await supabase.from('teams').upsert(newTeam);
+      const payload = sanitizeTeamForDb(newTeam);
+      const { error } = await supabase.from('teams').insert(payload);
+      if (error) {
+        console.warn('Database sync error on createTeam:', error.message);
+      }
     } catch (e) {
-      console.warn('Database sync error on createTeam:', e);
+      console.warn('Database sync exception on createTeam:', e);
     }
   };
 
