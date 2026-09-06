@@ -45,16 +45,19 @@ export const ProjectorPage: React.FC = () => {
       <header className="flex justify-between items-center z-10 border-b border-gbl-navy-800/80 pb-4 sm:pb-5 gap-3">
         {/* GBL Logo & Title */}
         <div className="flex items-center gap-3 sm:gap-5">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-gbl-orange-500 via-gbl-orange-600 to-amber-500 p-0.5 flex items-center justify-center shadow-[0_0_30px_rgba(255,94,0,0.4)] shrink-0">
-            <div className="w-full h-full bg-gbl-navy-950 rounded-[14px] flex items-center justify-center">
-              <span className="font-black text-xl sm:text-2xl text-gbl-orange-500 font-sports">GBL</span>
-            </div>
-          </div>
+          <img 
+            src="/gbl-logo.png" 
+            alt="GBL Official Logo" 
+            className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl object-cover bg-gbl-navy-950 border-2 border-amber-500/50 p-0.5 shadow-[0_0_35px_rgba(255,150,0,0.4)] shrink-0" 
+          />
           <div>
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sports uppercase leading-none">
-              GULF OIL BADMINTON PREMIER LEAGUE
-            </h1>
-            <p className="text-[10px] sm:text-xs text-gbl-orange-400 font-black uppercase tracking-widest mt-1">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-xl sm:text-2xl text-gbl-orange-500 font-sports">GBL</span>
+              <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sports uppercase leading-none">
+                GULF OIL BADMINTON PREMIER LEAGUE
+              </h1>
+            </div>
+            <p className="text-[10px] sm:text-xs text-gbl-orange-400 font-black uppercase tracking-widest mt-1.5">
               OFFICIAL LIVE PLAYER AUCTION • {tournament.season} • ARENA PROJECTOR
             </p>
           </div>

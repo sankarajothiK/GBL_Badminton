@@ -38,13 +38,15 @@ export const AdminLoginPage: React.FC = () => {
     <div className="min-h-screen bg-[#edf0eb] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-slate-950">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         {/* Emblem */}
-        <div className="w-16 h-16 rounded-2xl bg-[#122023] p-0.5 mx-auto shadow-xl flex items-center justify-center">
-          <div className="w-full h-full bg-lime-300 rounded-[14px] flex items-center justify-center text-lime-950">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
+        <div className="flex justify-center mb-2">
+          <img 
+            src="/gbl-logo.png" 
+            alt="GBL Official Logo" 
+            className="w-20 h-20 rounded-2xl object-contain bg-[#122023] border-2 border-amber-500/40 p-1 shadow-2xl" 
+          />
         </div>
 
-        <h2 className="mt-4 text-3xl font-black text-slate-950 tracking-[-0.05em] uppercase">
+        <h2 className="mt-3 text-3xl font-black text-slate-950 tracking-[-0.05em] uppercase">
           GBL Admin Command
         </h2>
         <p className="mt-1 text-xs text-slate-500 font-semibold">

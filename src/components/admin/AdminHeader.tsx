@@ -46,15 +46,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, actio
     <header className="bg-gbl-navy-950/80 backdrop-blur-md border-b border-gbl-navy-800 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 sticky top-0 z-40">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-xl md:text-2xl font-black text-white font-sports tracking-wide">{title}</h1>
+          <img 
+            src="/gbl-logo.png" 
+            alt="GBL Logo" 
+            className="w-9 h-9 rounded-xl object-contain bg-gbl-navy-900 border border-amber-500/30 p-0.5 shadow-sm shrink-0" 
+          />
+          <div>
+            <h1 className="text-xl md:text-2xl font-black text-white font-sports tracking-wide leading-tight">{title}</h1>
+            {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          </div>
           {status === 'LIVE' && (
-            <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold animate-pulse flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold animate-pulse flex items-center gap-1.5 ml-2">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
               LIVE AUCTION ({timerSeconds}s)
             </span>
           )}
         </div>
-        {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

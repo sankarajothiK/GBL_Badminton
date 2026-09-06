@@ -43,12 +43,12 @@ export const AdminSidebar: React.FC = () => {
     <aside className="w-64 bg-gbl-navy-950 border-r border-gbl-navy-800 flex flex-col shrink-0 min-h-screen">
       {/* Brand Header */}
       <div className="p-5 border-b border-gbl-navy-800 flex items-center justify-between">
-        <Link to="/admin" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-gbl-orange-500 to-amber-500 p-0.5 flex items-center justify-center">
-            <div className="w-full h-full bg-gbl-navy-950 rounded-[6px] flex items-center justify-center">
-              <span className="font-extrabold text-xs text-gbl-orange-500 font-sports">GBL</span>
-            </div>
-          </div>
+        <Link to="/admin" className="flex items-center gap-2.5 group">
+          <img
+            src="/gbl-logo.png"
+            alt="GBL Official Logo"
+            className="w-10 h-10 rounded-xl object-contain bg-gbl-navy-900 border border-amber-500/30 p-0.5 shadow-md shrink-0 group-hover:scale-105 transition-transform"
+          />
           <div>
             <h1 className="text-white font-extrabold text-sm tracking-tight font-sports">GBL ADMIN</h1>
             <p className="text-[10px] text-gbl-orange-400 font-semibold tracking-wider uppercase">Command Center</p>

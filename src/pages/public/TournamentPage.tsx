@@ -16,6 +16,13 @@ export const TournamentPage: React.FC = () => {
         
         {/* Header */}
         <div className="text-center space-y-3">
+          <div className="flex justify-center mb-1">
+            <img 
+              src="/gbl-logo.png" 
+              alt="GBL Official Logo" 
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover bg-gbl-navy-950 border-2 border-amber-500/50 p-1 shadow-2xl shadow-amber-500/10" 
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gbl-orange-500/10 border border-gbl-orange-500/30 text-gbl-orange-400 text-xs font-black uppercase tracking-wider">
             <span>OFFICIAL TOURNAMENT GUIDE & DOSSIER</span>
           </div>

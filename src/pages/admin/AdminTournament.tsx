@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
+import { PhoneInput } from '../../components/common/PhoneInput';
 
 export const AdminTournament: React.FC = () => {
   const { tournament, updateTournament } = useTournament();
@@ -184,12 +185,11 @@ export const AdminTournament: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Contact Phone Number</label>
-              <input
-                type="text"
+              <PhoneInput
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
+                onChange={(fullVal) => setContactPhone(fullVal)}
+                label="Contact Phone Number (10 Digits)"
+                variant="dark"
               />
             </div>
             <div>

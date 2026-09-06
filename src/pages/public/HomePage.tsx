@@ -72,9 +72,9 @@ export const HomePage: React.FC = () => {
       {/* 1. HERO COMMAND BANNER */}
       <section className="relative overflow-hidden rounded-[28px] bg-[#122023] px-6 py-7 sm:px-9 sm:py-9 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl text-left">
-          <div className="mb-4 sm:mb-5 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.23em] text-lime-300">
-            <span className="h-2 w-2 rounded-full bg-lime-300" />
-            Live tournament command center
+          <div className="mb-4 sm:mb-5 flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.23em] text-lime-300">
+            <img src="/gbl-logo.png" alt="GBL" className="w-6 h-6 rounded-lg object-contain bg-black/40 border border-amber-500/30 p-0.5" />
+            <span>GBL OFFICIAL TOURNAMENT COMMAND CENTER</span>
           </div>
           
           <h2 className="max-w-xl text-4xl sm:text-6xl font-black leading-[0.95] tracking-[-0.08em]">
@@ -107,14 +107,16 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Geometric Rings & Season 04 Badge */}
+        {/* Geometric Rings & Official GBL Tournament Emblem */}
         <div className="absolute -right-10 -top-28 h-[420px] w-[420px] rounded-full border-[54px] border-lime-300/10 pointer-events-none" />
         <div className="absolute -right-24 -bottom-48 h-[520px] w-[520px] rounded-full border border-white/10 pointer-events-none" />
-        <div className="absolute right-8 top-9 hidden h-32 w-32 rotate-12 rounded-[32px] border border-lime-300/20 bg-lime-300/10 lg:block pointer-events-none">
-          <div className="flex h-full flex-col items-center justify-center">
-            <span className="text-5xl font-black tracking-[-0.1em] text-lime-300">04</span>
-            <span className="text-[9px] font-black uppercase tracking-widest text-lime-100/60">season</span>
-          </div>
+        
+        <div className="absolute right-6 sm:right-10 top-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none">
+          <img 
+            src="/gbl-logo.png" 
+            alt="Gulf Oil Badminton Premier League" 
+            className="w-44 h-44 lg:w-56 lg:h-56 object-contain drop-shadow-[0_0_40px_rgba(255,165,0,0.35)] rounded-3xl"
+          />
         </div>
       </section>
 

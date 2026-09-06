@@ -141,13 +141,12 @@ export const Navbar: React.FC = () => {
           {/* GBL Brand Crest */}
           <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
             <div className="relative">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-gbl-orange-500 via-amber-500 to-sky-500 p-0.5 shadow-lg group-hover:scale-105 transition-all">
-                <div className="w-full h-full bg-gbl-navy-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center flex-col">
-                  <span className="font-black text-xs sm:text-sm tracking-tighter text-gbl-orange-400 font-sports">GBL</span>
-                  <span className="text-[7px] sm:text-[8px] font-black text-sky-400 tracking-widest -mt-0.5 sm:-mt-1 uppercase">2026</span>
-                </div>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-sky-500 border-2 border-gbl-navy-950 flex items-center justify-center shadow-md">
+              <img
+                src="/gbl-logo.png"
+                alt="GBL Official Logo"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover bg-gbl-navy-950 p-0.5 border border-amber-500/40 shadow-lg shadow-amber-500/10 group-hover:scale-105 transition-all"
+              />
+              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-gbl-orange-500 border-2 border-gbl-navy-950 flex items-center justify-center shadow-md">
                 <Zap className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-white" />
               </div>
             </div>

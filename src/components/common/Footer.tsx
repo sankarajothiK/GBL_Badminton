@@ -14,11 +14,11 @@ export const Footer: React.FC = () => {
           {/* Brand & Mission */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gbl-orange-500 to-amber-500 p-0.5 flex items-center justify-center">
-                <div className="w-full h-full bg-gbl-navy-950 rounded-[10px] flex items-center justify-center">
-                  <span className="font-extrabold text-xs text-gbl-orange-500 font-sports">GBL</span>
-                </div>
-              </div>
+              <img 
+                src="/gbl-logo.png" 
+                alt="GBL Official Logo" 
+                className="w-12 h-12 rounded-xl object-contain bg-gbl-navy-900 border border-amber-500/40 p-0.5 shadow-lg shrink-0" 
+              />
               <div>
                 <h3 className="text-white font-extrabold text-lg tracking-tight font-sports">GBL PREMIER LEAGUE</h3>
                 <p className="text-xs text-gbl-orange-400 font-semibold">{tournament.season}</p>

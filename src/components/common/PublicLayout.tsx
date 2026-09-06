@@ -91,9 +91,11 @@ export const PublicLayout: React.FC = () => {
         {/* Brand Header */}
         <div className="flex items-center justify-between px-3">
           <Link to="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-lime-300 text-lime-950 shadow-[0_0_0_5px_rgba(190,242,100,.08)]">
-              <Zap className="w-5 h-5 fill-current" />
-            </div>
+            <img 
+              src="/gbl-logo.png" 
+              alt="GBL Official Logo" 
+              className="w-10 h-10 rounded-xl object-contain bg-[#122023] border border-amber-500/40 p-0.5 shadow-md shrink-0" 
+            />
             <div className="text-left">
               <div className="text-lg font-black tracking-[-0.08em]">
                 GBL<span className="text-lime-300">.</span>
@@ -217,7 +219,7 @@ export const PublicLayout: React.FC = () => {
         
         {/* Sticky Top Header */}
         <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-[#edf0eb]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button 
               onClick={() => setMobileMenuOpen(true)}
               className="grid h-10 w-10 place-items-center rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200/60 lg:hidden"
@@ -225,10 +227,17 @@ export const PublicLayout: React.FC = () => {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="text-left">
-              <p className="text-xs font-bold text-slate-500">GBL / Season 04</p>
-              <h1 className="text-xl font-black tracking-[-0.05em] text-slate-950">{getPageTitle()}</h1>
-            </div>
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+              <img 
+                src="/gbl-logo.png" 
+                alt="GBL Official Logo" 
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain bg-[#122023] border border-amber-500/30 p-0.5 shadow-sm shrink-0 group-hover:scale-105 transition-transform" 
+              />
+              <div className="text-left">
+                <p className="text-xs font-bold text-slate-500">GBL / Season 2026</p>
+                <h1 className="text-xl font-black tracking-[-0.05em] text-slate-950">{getPageTitle()}</h1>
+              </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">

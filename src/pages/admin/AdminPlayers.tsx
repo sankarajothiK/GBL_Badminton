@@ -19,6 +19,7 @@ import { exportPlayersCSV, validatePlayerImportCSV, ImportValidationRow } from '
 import { uploadImage } from '../../lib/supabase';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
+import { PhoneInput, parsePhoneNumber } from '../../components/common/PhoneInput';
 
 export const AdminPlayers: React.FC = () => {
   const { players, teams, categories, createPlayer, updatePlayer, deletePlayer, importPlayersList } = useTournament();
@@ -127,6 +128,14 @@ export const AdminPlayers: React.FC = () => {
     if (!name.trim()) {
       setFormError('Player name is required.');
       return;
+    }
+
+    if (mobile.trim()) {
+      const parsedMobile = parsePhoneNumber(mobile);
+      if (parsedMobile.digits.length > 0 && parsedMobile.digits.length < 10) {
+        setFormError(`Mobile number must be exactly 10 digits (${parsedMobile.digits.length}/10 entered).`);
+        return;
+      }
     }
 
     if (editingPlayerId) {
@@ -346,6 +355,11 @@ export const AdminPlayers: React.FC = () => {
                             <span className="font-bold text-white block text-sm">{player.name}</span>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               <span className="text-[10px] font-mono text-slate-400">{player.player_code}</span>
+                              {player.mobile && (
+                                <span className="text-[10px] font-mono text-slate-400 bg-gbl-navy-900/80 px-1.5 py-0.5 rounded border border-gbl-navy-700/60">
+                                  {parsePhoneNumber(player.mobile).countryCode} {parsePhoneNumber(player.mobile).digits}
+                                </span>
+                              )}
                               {player.academy && (
                                 <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/10 text-amber-300 font-semibold border border-amber-500/30">
                                   {player.academy}
@@ -475,13 +489,11 @@ export const AdminPlayers: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Mobile Number (Private)</label>
-              <input
-                type="tel"
+              <PhoneInput
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="+91 98844..."
-                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
+                onChange={(fullVal) => setMobile(fullVal)}
+                label="Mobile Number (Private - 10 Digits)"
+                variant="dark"
               />
             </div>
           </div>

@@ -6,7 +6,7 @@ export const initialTournament: Tournament = {
   name: 'Gulf Oil Badminton Premier League',
   short_name: 'GBL',
   season: 'Season 2026',
-  logo_url: '/favicon.svg',
+  logo_url: '/gbl-logo.png',
   banner_url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=80',
   description: 'Gokulam Presents Gulf Oil Badminton Premier League – Kovilpatti. Featuring high-intensity player auctions, 10 competitive teams, and championship clashes.',
   venue: 'Gulf Sports Arena, Kovilpatti, Tamil Nadu',
