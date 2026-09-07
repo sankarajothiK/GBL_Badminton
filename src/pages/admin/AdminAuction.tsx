@@ -75,7 +75,11 @@ export const AdminAuction: React.FC = () => {
   
   // Section 50: Only allow categories for which the player is eligible!
   const eligibleCategories = chosenPlayer
-    ? categories.filter(c => chosenPlayer.eligible_category_names.some(ec => ec.toLowerCase() === c.name.toLowerCase()))
+    ? categories.filter(c => chosenPlayer.eligible_category_names.some(ec => {
+        const eLow = ec.toLowerCase().trim();
+        const cLow = c.name.toLowerCase().trim();
+        return eLow === cLow || cLow.startsWith(eLow) || eLow.startsWith(cLow);
+      }))
     : categories;
 
   const currentActiveCategory = categories.find(c => c.name.toLowerCase() === selectedCategoryName.toLowerCase()) || eligibleCategories[0] || categories[0];
@@ -724,8 +728,8 @@ export const AdminAuction: React.FC = () => {
             const isSelected = t.id === activeTeamId;
             const isLeader = t.id === highestTeam?.id;
             const squadCount = players.filter(p => p.sold_team_id === t.id).length;
-            const maxSlots = t.max_auction_slots || (t.owner_is_player !== false ? 5 : 6);
-            const isLocked = squadCount >= maxSlots;
+            const totalSlots = t.total_squad_slots || 6;
+            const isLocked = squadCount >= totalSlots;
 
             return (
               <button
@@ -756,7 +760,7 @@ export const AdminAuction: React.FC = () => {
                 <span className="text-[11px] font-bold text-white truncate w-full">{t.name}</span>
                 <div className="w-full flex items-center justify-between mt-1 text-[9px]">
                   <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
-                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{maxSlots}</span>
+                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{totalSlots}</span>
                 </div>
               </button>
             );

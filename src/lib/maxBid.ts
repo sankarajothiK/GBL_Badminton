@@ -63,23 +63,28 @@ export function calculateMaxLegalBid(
 ): MaxBidResult {
   const totalPoints = team.initial_budget || 500000;
   const ownerIsPlayer = team.owner_is_player !== false;
-  const ownerAllocation = team.owner_points_allocation !== undefined ? team.owner_points_allocation : (ownerIsPlayer ? 100000 : 0);
+  // Dynamic Owner Allocation: OPEN (1,00,000), Normal (30,000), or No-Play (0)
+  const ownerAllocation = team.owner_points_allocation !== undefined
+    ? team.owner_points_allocation
+    : (team.owner_reserved_points !== undefined ? team.owner_reserved_points : (ownerIsPlayer ? 30000 : 0));
   const auctionBudget = team.auction_budget || (totalPoints - ownerAllocation);
   const currentBalance = Number(team.current_balance !== undefined ? team.current_balance : auctionBudget);
   const totalSpent = Number(team.total_spent || 0);
 
-  // Maximum auction players: 5 if owner is playing, 6 if owner is not playing
-  const maxAuctionPlayers = team.max_auction_slots || (ownerIsPlayer ? 5 : 6);
+  // Total squad quota: exactly 6 members for every team
+  const totalSquadTarget = team.total_squad_slots || 6;
   const reservePerSlot = Number(settings?.reserve_per_slot || 10000);
-  const remainingSlots = Math.max(0, maxAuctionPlayers - currentSquadCount);
+  
+  // Remaining squad slots to be filled
+  const remainingSlots = Math.max(0, totalSquadTarget - currentSquadCount);
 
-  // If team already reached their player limit, locked from bidding
-  if (currentSquadCount >= maxAuctionPlayers) {
+  // If team has reached 6 members, locked from bidding
+  if (currentSquadCount >= totalSquadTarget) {
     return {
       maxLegalBid: 0,
       currentBalance,
       squadCount: currentSquadCount,
-      requiredSlots: maxAuctionPlayers,
+      requiredSlots: totalSquadTarget,
       remainingSlots: 0,
       remainingSlotsAfterThisBid: 0,
       reservePerSlot,
@@ -97,13 +102,13 @@ export function calculateMaxLegalBid(
   }
 
   // Slots that must still be purchased AFTER this bid
-  const remainingSlotsAfterThisBid = Math.max(0, maxAuctionPlayers - (currentSquadCount + 1));
+  const remainingSlotsAfterThisBid = Math.max(0, totalSquadTarget - (currentSquadCount + 1));
   const totalReserveRequired = remainingSlotsAfterThisBid * reservePerSlot;
 
   // Dynamic Maximum Legal Bid
   const maxLegalBid = Math.max(0, currentBalance - totalReserveRequired);
 
-  const startingBid = currentCategory?.starting_bid ?? 0;
+  const startingBid = currentCategory?.starting_bid ?? 30000;
   const isEligibleToBid = maxLegalBid >= startingBid && maxLegalBid > 0;
 
   let ineligibilityReason: string | undefined;
@@ -119,7 +124,7 @@ export function calculateMaxLegalBid(
     maxLegalBid,
     currentBalance,
     squadCount: currentSquadCount,
-    requiredSlots: maxAuctionPlayers,
+    requiredSlots: totalSquadTarget,
     remainingSlots,
     remainingSlotsAfterThisBid,
     reservePerSlot,
@@ -144,7 +149,9 @@ export function getTeamAuctionMetrics(
   currentCategory?: Category
 ): TeamAuctionMetrics {
   const maxBidInfo = calculateMaxLegalBid(team, playersBoughtCount, settings, currentCategory);
-  const isLocked = playersBoughtCount >= maxBidInfo.requiredSlots;
+  const totalSquadSlots = team.total_squad_slots || 6;
+  const isLocked = playersBoughtCount >= totalSquadSlots;
+  const maxAuctionSlots = maxBidInfo.ownerIsPlayer ? 5 : 6;
 
   return {
     teamId: team.id,
@@ -155,8 +162,8 @@ export function getTeamAuctionMetrics(
     ownerAllocation: maxBidInfo.ownerAllocation,
     auctionBudget: maxBidInfo.auctionBudget,
     playersBought: playersBoughtCount,
-    maxAuctionSlots: maxBidInfo.requiredSlots,
-    totalSquadSlots: 6,
+    maxAuctionSlots,
+    totalSquadSlots,
     remainingSlots: maxBidInfo.remainingSlots,
     totalSpent: maxBidInfo.totalSpent,
     remainingBalance: maxBidInfo.currentBalance,

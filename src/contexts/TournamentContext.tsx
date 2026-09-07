@@ -174,15 +174,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saveStoredData(GBL_TOURNAMENT_STORAGE_KEY, tData);
         }
         if (sData) {
-          if (sData.owner_reserved_points === 30000) {
-            const updatedSettings = { ...sData, initial_budget: 500000, owner_reserved_points: 100000, reserve_per_slot: 10000, required_squad_slots: 6 };
-            setSettings(updatedSettings);
-            saveStoredData(GBL_SETTINGS_STORAGE_KEY, updatedSettings);
-            supabase.from('tournament_settings').upsert(updatedSettings).then(undefined, console.warn);
-          } else {
-            setSettings(sData);
-            saveStoredData(GBL_SETTINGS_STORAGE_KEY, sData);
-          }
+          setSettings(sData);
+          saveStoredData(GBL_SETTINGS_STORAGE_KEY, sData);
         }
         if (tmData && tmData.length > 0) {
           setTeams(prevTeams => {
@@ -193,24 +186,21 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               const bestLogo = localTeam.logo_url || cloudTeam.logo_url || null;
               const bestOwnerPhoto = localTeam.owner_photo_url || cloudTeam.owner_photo_url || null;
 
-              const localIsNewer = localTeam.updated_at && cloudTeam.updated_at
-                ? new Date(localTeam.updated_at).getTime() > new Date(cloudTeam.updated_at).getTime()
-                : false;
-
-              if (localIsNewer) {
-                supabase.from('teams').update(sanitizeTeamForDb(localTeam)).eq('id', cloudTeam.id).then(undefined, console.warn);
-                return { ...cloudTeam, ...localTeam, logo_url: bestLogo };
-              }
+              const isNoPlayTeam = cloudTeam.team_number === 4;
+              const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? cloudTeam.owner_reserved_points : 30000);
+              const auctionBudget = (cloudTeam.initial_budget || 500000) - ownerPoints;
 
               const mergedTeam: Team = {
                 ...localTeam,
                 ...cloudTeam,
                 logo_url: bestLogo,
                 owner_photo_url: bestOwnerPhoto,
-                owner_is_player: localTeam.owner_is_player !== undefined ? localTeam.owner_is_player : (cloudTeam.owner_reserved_points > 0),
-                owner_points_allocation: cloudTeam.owner_reserved_points ?? localTeam.owner_points_allocation ?? 0,
-                auction_budget: (cloudTeam.initial_budget || 500000) - (cloudTeam.owner_reserved_points ?? 0),
-                max_auction_slots: (cloudTeam.owner_reserved_points > 0 || localTeam.owner_is_player !== false) ? 5 : 6,
+                owner_is_player: !isNoPlayTeam,
+                owner_points_allocation: ownerPoints,
+                owner_reserved_points: ownerPoints,
+                auction_budget: auctionBudget,
+                current_balance: cloudTeam.current_balance !== undefined ? cloudTeam.current_balance : auctionBudget,
+                max_auction_slots: isNoPlayTeam ? 6 : 5,
                 total_squad_slots: 6
               };
 
@@ -961,25 +951,52 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Granular Tournament Reset
   const resetTournamentData = async (scope: 'auction' | 'teams' | 'players' | 'results' | 'everything') => {
     if (scope === 'auction' || scope === 'everything') {
-      // Reset all players to UNSOLD
+      const ownerPlayerMap: Record<string, { teamId: string; price: number }> = {
+        'GBL-039': { teamId: '20000000-0000-0000-0000-000000000005', price: 100000 },
+        'GBL-042': { teamId: '20000000-0000-0000-0000-000000000007', price: 100000 },
+        'GBL-001': { teamId: '20000000-0000-0000-0000-000000000010', price: 100000 },
+        'GBL-038': { teamId: '20000000-0000-0000-0000-000000000001', price: 30000 },
+        'GBL-070': { teamId: '20000000-0000-0000-0000-000000000002', price: 30000 },
+        'GBL-071': { teamId: '20000000-0000-0000-0000-000000000003', price: 30000 },
+        'GBL-064': { teamId: '20000000-0000-0000-0000-000000000006', price: 30000 },
+        'GBL-012': { teamId: '20000000-0000-0000-0000-000000000008', price: 30000 },
+        'GBL-022': { teamId: '20000000-0000-0000-0000-000000000009', price: 30000 }
+      };
+
+      // Reset players: Preserve allocated owners as SOLD, others to UNSOLD
       setPlayers(prev => {
-        const next = prev.map(p => ({
-          ...p,
-          auction_status: 'UNSOLD' as const,
-          sold_price: null,
-          sold_team_id: null
-        }));
+        const next = prev.map(p => {
+          const ownerInfo = ownerPlayerMap[p.player_code];
+          if (ownerInfo) {
+            return {
+              ...p,
+              auction_status: 'SOLD' as const,
+              sold_price: ownerInfo.price,
+              sold_team_id: ownerInfo.teamId
+            };
+          }
+          return {
+            ...p,
+            auction_status: 'UNSOLD' as const,
+            sold_price: null,
+            sold_team_id: null
+          };
+        });
         saveStoredData(GBL_PLAYERS_STORAGE_KEY, next);
         return next;
       });
 
-      // Reset team balances back to initial budget
+      // Reset team balances back to their designated auction budget
       setTeams(prev => {
-        const next = prev.map(t => ({
-          ...t,
-          current_balance: t.initial_budget || 500000,
-          total_spent: 0
-        }));
+        const next = prev.map(t => {
+          const ownerDed = t.owner_reserved_points ?? (t.team_number === 4 ? 0 : 30000);
+          const auctionBudget = t.auction_budget ?? ((t.initial_budget || 500000) - ownerDed);
+          return {
+            ...t,
+            current_balance: auctionBudget,
+            total_spent: 0
+          };
+        });
         saveStoredData(GBL_TEAMS_STORAGE_KEY, next);
         return next;
       });

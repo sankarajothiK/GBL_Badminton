@@ -28,6 +28,7 @@ export const AdminTeams: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [ownerPhotoUrl, setOwnerPhotoUrl] = useState<string | null>(null);
   const [ownerIsPlayer, setOwnerIsPlayer] = useState<boolean>(true);
+  const [ownerTier, setOwnerTier] = useState<'OPEN' | 'NORMAL' | 'NONE'>('NORMAL');
 
   const openAddModal = () => {
     setTeamName('');
@@ -39,6 +40,7 @@ export const AdminTeams: React.FC = () => {
     setLogoUrl(null);
     setOwnerPhotoUrl(null);
     setOwnerIsPlayer(true);
+    setOwnerTier('NORMAL');
     setUploadError(null);
     setIsAddModalOpen(true);
   };
@@ -53,7 +55,11 @@ export const AdminTeams: React.FC = () => {
     setDescription(team.description || '');
     setLogoUrl(team.logo_url || null);
     setOwnerPhotoUrl(team.owner_photo_url || null);
-    setOwnerIsPlayer(team.owner_is_player !== false);
+    
+    const isPlaying = team.owner_is_player !== false && team.team_number !== 4;
+    const tier = !isPlaying ? 'NONE' : ((team.owner_points_allocation === 100000 || team.owner_reserved_points === 100000) ? 'OPEN' : 'NORMAL');
+    setOwnerIsPlayer(isPlaying);
+    setOwnerTier(tier);
     setUploadError(null);
   };
 
@@ -79,9 +85,9 @@ export const AdminTeams: React.FC = () => {
     e.preventDefault();
     if (!editingTeam) return;
 
-    const isPlaying = ownerIsPlayer;
-    const ownerPoints = isPlaying ? 100000 : 0;
-    const auctionBudget = isPlaying ? 400000 : 500000;
+    const isPlaying = ownerTier !== 'NONE';
+    const ownerPoints = ownerTier === 'OPEN' ? 100000 : (ownerTier === 'NORMAL' ? 30000 : 0);
+    const auctionBudget = 500000 - ownerPoints;
     const maxSlots = isPlaying ? 5 : 6;
     const newBalance = Math.max(0, auctionBudget - (editingTeam.total_spent || 0));
 
@@ -113,9 +119,9 @@ export const AdminTeams: React.FC = () => {
     if (!teamName.trim() || !shortName.trim()) return;
 
     const nextTeamNum = teams.length > 0 ? Math.max(...teams.map(t => t.team_number)) + 1 : 1;
-    const isPlaying = ownerIsPlayer;
-    const ownerPoints = isPlaying ? 100000 : 0;
-    const auctionBudget = isPlaying ? 400000 : 500000;
+    const isPlaying = ownerTier !== 'NONE';
+    const ownerPoints = ownerTier === 'OPEN' ? 100000 : (ownerTier === 'NORMAL' ? 30000 : 0);
+    const auctionBudget = 500000 - ownerPoints;
     const maxSlots = isPlaying ? 5 : 6;
 
     await createTeam({
@@ -315,12 +321,16 @@ export const AdminTeams: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-sky-400" />
                   <span>
-                    <strong>{squad.length}</strong> / {metrics.maxAuctionSlots} Auctioned Players Acquired
+                    Squad: <strong>{squad.length}</strong> / {team.total_squad_slots || 6} Members
                   </span>
                 </div>
                 <div>
                   <span className="text-slate-300 font-semibold">
-                    Squad: <strong>{squad.length + (metrics.ownerIsPlayer ? 1 : 0)}</strong> / 6 total
+                    {metrics.ownerIsPlayer ? (
+                      <span className="text-emerald-400 font-bold">Playing Owner</span>
+                    ) : (
+                      <span className="text-sky-400 font-bold">Non-Playing Owner</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -391,42 +401,56 @@ export const AdminTeams: React.FC = () => {
             </div>
           </div>
 
-          {/* Owner Player Status Toggle */}
-          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-slate-200 font-bold flex items-center gap-2">
+          {/* Owner Player Status Toggle (3-Tier) */}
+          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2.5">
+            <label className="text-slate-200 font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-gbl-orange-400" />
-                <span>Owner Participating as Player?</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOwnerIsPlayer(true)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
-                    ownerIsPlayer
-                      ? 'bg-emerald-600 text-white shadow'
-                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Yes (Playing)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOwnerIsPlayer(false)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
-                    !ownerIsPlayer
-                      ? 'bg-sky-600 text-white shadow'
-                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  No (Non-Playing)
-                </button>
-              </div>
+                <span>Owner Allocation Tier</span>
+              </span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('OPEN'); setOwnerIsPlayer(true); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'OPEN'
+                    ? 'bg-emerald-600 text-white shadow ring-2 ring-emerald-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>OPEN Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹1,00,000</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('NORMAL'); setOwnerIsPlayer(true); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'NORMAL'
+                    ? 'bg-amber-600 text-white shadow ring-2 ring-amber-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>Normal Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹30,000</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('NONE'); setOwnerIsPlayer(false); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'NONE'
+                    ? 'bg-sky-600 text-white shadow ring-2 ring-sky-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>No-Play Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹0 Ded.</span>
+              </button>
             </div>
             <p className="text-[11px] text-slate-400">
-              {ownerIsPlayer
-                ? 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available to bid on 5 players.'
-                : 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 points allocated. Full ₹5,00,000 available to bid on 6 players.'}
+              {ownerTier === 'OPEN' && 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available for 5 auction picks.'}
+              {ownerTier === 'NORMAL' && 'Fixed ₹30,000 points allocated to Owner (1 roster slot). Remaining ₹4,70,000 available for 5 auction picks.'}
+              {ownerTier === 'NONE' && 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 deducted. Full ₹5,00,000 available for 6 auction picks.'}
             </p>
           </div>
 
@@ -583,42 +607,56 @@ export const AdminTeams: React.FC = () => {
             </div>
           </div>
 
-          {/* Owner Player Status Toggle */}
-          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-slate-200 font-bold flex items-center gap-2">
+          {/* Owner Player Status Toggle (3-Tier) */}
+          <div className="p-3.5 bg-gbl-navy-950 border border-gbl-navy-700 rounded-2xl space-y-2.5">
+            <label className="text-slate-200 font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-gbl-orange-400" />
-                <span>Owner Participating as Player?</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOwnerIsPlayer(true)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
-                    ownerIsPlayer
-                      ? 'bg-emerald-600 text-white shadow'
-                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Yes (Playing)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOwnerIsPlayer(false)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors ${
-                    !ownerIsPlayer
-                      ? 'bg-sky-600 text-white shadow'
-                      : 'bg-gbl-navy-900 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  No (Non-Playing)
-                </button>
-              </div>
+                <span>Owner Allocation Tier</span>
+              </span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('OPEN'); setOwnerIsPlayer(true); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'OPEN'
+                    ? 'bg-emerald-600 text-white shadow ring-2 ring-emerald-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>OPEN Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹1,00,000</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('NORMAL'); setOwnerIsPlayer(true); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'NORMAL'
+                    ? 'bg-amber-600 text-white shadow ring-2 ring-amber-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>Normal Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹30,000</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOwnerTier('NONE'); setOwnerIsPlayer(false); }}
+                className={`p-2 rounded-xl font-bold text-xs flex flex-col items-center justify-center text-center transition-all ${
+                  ownerTier === 'NONE'
+                    ? 'bg-sky-600 text-white shadow ring-2 ring-sky-400'
+                    : 'bg-gbl-navy-900 text-slate-400 hover:text-white border border-gbl-navy-800'
+                }`}
+              >
+                <span>No-Play Owner</span>
+                <span className="text-[10px] font-mono opacity-80">₹0 Ded.</span>
+              </button>
             </div>
             <p className="text-[11px] text-slate-400">
-              {ownerIsPlayer
-                ? 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available to bid on 5 players.'
-                : 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 points allocated. Full ₹5,00,000 available to bid on 6 players.'}
+              {ownerTier === 'OPEN' && 'Fixed ₹1,00,000 points allocated to Owner (1 roster slot). Remaining ₹4,00,000 available for 5 auction picks.'}
+              {ownerTier === 'NORMAL' && 'Fixed ₹30,000 points allocated to Owner (1 roster slot). Remaining ₹4,70,000 available for 5 auction picks.'}
+              {ownerTier === 'NONE' && 'Non-Playing Owner (e.g. Tamilaga Asiriyar kootani warriors). ₹0 deducted. Full ₹5,00,000 available for 6 auction picks.'}
             </p>
           </div>
 

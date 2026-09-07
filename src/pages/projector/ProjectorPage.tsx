@@ -266,8 +266,8 @@ export const ProjectorPage: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 sm:gap-2.5">
           {teams.map((t) => {
             const squadCount = players.filter(p => p.sold_team_id === t.id).length;
-            const maxSlots = t.max_auction_slots || (t.owner_is_player !== false ? 5 : 6);
-            const isFull = squadCount >= maxSlots;
+            const totalSlots = t.total_squad_slots || 6;
+            const isFull = squadCount >= totalSlots;
             const isLeader = t.id === highestTeam?.id;
 
             return (
@@ -301,7 +301,7 @@ export const ProjectorPage: React.FC = () => {
                 <p className="text-[10px] sm:text-[11px] font-bold text-white truncate">{t.name}</p>
                 <div className="flex items-center justify-between mt-0.5 px-0.5 text-[10px]">
                   <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
-                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{maxSlots}</span>
+                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{totalSlots}</span>
                 </div>
               </div>
             );

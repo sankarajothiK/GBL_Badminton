@@ -259,22 +259,35 @@ export const TeamBiddingPortal: React.FC = () => {
       <div className="bg-gradient-to-b from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-3 sm:space-y-4 relative z-10 shadow-xl">
         <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
           <Users className="w-4 h-4 text-gbl-orange-500" />
-          <span>ROSTER ({squad.length} / {settings.required_squad_slots})</span>
+          <span>ROSTER ({squad.length} / {activeTeam.total_squad_slots || settings.required_squad_slots || 6})</span>
         </h3>
 
         {squad.length === 0 ? (
           <p className="text-xs text-slate-500 py-4 sm:py-6 text-center">No players acquired yet by this team.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-            {squad.map(p => (
-              <div key={p.id} className="p-3 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 flex justify-between items-center text-xs">
-                <div>
-                  <span className="font-bold text-white text-xs sm:text-sm">{p.name}</span>
-                  <p className="text-[10px] sm:text-[11px] text-slate-400">{p.eligible_category_names.join(', ')}</p>
+            {squad.map(p => {
+              const isOwner = activeTeam.owner_name && p.name.toLowerCase().includes(activeTeam.owner_name.toLowerCase());
+              return (
+                <div key={p.id} className="p-3 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 flex justify-between items-center text-xs">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-white text-xs sm:text-sm">{p.name}</span>
+                      {isOwner && (
+                        <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/30">
+                          Owner
+                        </span>
+                      )}
+                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase border border-emerald-500/30">
+                        SOLD
+                      </span>
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400">{p.eligible_category_names.join(', ')}</p>
+                  </div>
+                  <span className="font-mono font-black text-emerald-400 text-xs sm:text-sm">{formatINR(p.sold_price)}</span>
                 </div>
-                <span className="font-mono font-black text-emerald-400 text-xs sm:text-sm">{formatINR(p.sold_price)}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

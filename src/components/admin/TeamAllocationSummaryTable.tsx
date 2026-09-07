@@ -51,12 +51,16 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
           )}
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 text-slate-300">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Playing Owner (₹1L + 5 Slots)</span>
+            <span>OPEN Owner (₹1L + 5 Slots)</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 text-slate-300">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>Normal Owner (₹30k + 5 Slots)</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-sky-400"></span>
             <span>Non-Playing (₹0 + 6 Slots)</span>
           </div>
@@ -72,7 +76,7 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
               <th className="py-3 px-2 text-right">Total Points</th>
               <th className="py-3 px-2 text-right">Owner Alloc.</th>
               <th className="py-3 px-2 text-right">Available Auction</th>
-              <th className="py-3 px-2 text-center">Players Bought</th>
+              <th className="py-3 px-2 text-center">Total Squad</th>
               <th className="py-3 px-2 text-center">Remaining Slots</th>
               <th className="py-3 px-2 text-right">Total Spent</th>
               <th className="py-3 px-2 text-right">Remaining Balance</th>
@@ -108,12 +112,18 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                           <span>Owner: {m.ownerName || 'None'}</span>
                           {m.ownerIsPlayer ? (
-                            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-semibold border border-emerald-500/30">
-                              Playing
-                            </span>
+                            m.ownerAllocation === 100000 ? (
+                              <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-semibold border border-emerald-500/30">
+                                OPEN (₹1L)
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-semibold border border-amber-500/30">
+                                Normal (₹30k)
+                              </span>
+                            )
                           ) : (
                             <span className="px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 text-[9px] font-semibold border border-sky-500/30">
-                              Non-Play
+                              No-Play (₹0)
                             </span>
                           )}
                         </div>
@@ -126,10 +136,10 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
                     {formatINR(m.totalPoints)}
                   </td>
 
-                  {/* Owner Allocation (1,00,000 or 0) */}
+                  {/* Owner Allocation (1,00,000 / 30,000 / 0) */}
                   <td className="py-3 px-2 text-right font-mono font-bold">
                     {m.ownerAllocation > 0 ? (
-                      <span className="text-amber-400">
+                      <span className={m.ownerAllocation === 100000 ? 'text-emerald-400' : 'text-amber-400'}>
                         {formatINR(m.ownerAllocation)}
                       </span>
                     ) : (
@@ -137,12 +147,12 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
                     )}
                   </td>
 
-                  {/* Available Auction Points (4,00,000 or 5,00,000) */}
+                  {/* Available Auction Points (4,00,000 / 4,70,000 / 5,00,000) */}
                   <td className="py-3 px-2 text-right font-mono font-black text-sky-400">
                     {formatINR(m.auctionBudget)}
                   </td>
 
-                  {/* Players Bought (e.g. 2 / 5 or 3 / 6) */}
+                  {/* Total Squad (e.g. 1 / 6 or 0 / 6) */}
                   <td className="py-3 px-2 text-center">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-mono font-bold ${
@@ -151,7 +161,7 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
                           : 'bg-gbl-navy-950 text-white border border-gbl-navy-800'
                       }`}
                     >
-                      {m.playersBought} / {m.maxAuctionSlots}
+                      {m.playersBought} / {m.totalSquadSlots}
                     </span>
                   </td>
 

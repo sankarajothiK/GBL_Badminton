@@ -107,7 +107,7 @@ export const TeamDetailPage: React.FC = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Roster Capacity:</span>
                 <span className="font-bold text-sky-400">
-                  {metrics.playersBought} / {metrics.maxAuctionSlots} Picks ({metrics.playersBought + (metrics.ownerIsPlayer ? 1 : 0)} / 6 Total)
+                  {squad.length} / {team.total_squad_slots || 6} Members
                 </span>
               </div>
             </div>
@@ -122,7 +122,7 @@ export const TeamDetailPage: React.FC = () => {
               <h2 className="text-xl font-bold text-white font-sports uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-5 h-5 text-gbl-orange-400" />
                 <span>
-                  OFFICIAL SQUAD ROSTER ({metrics.playersBought} Players {metrics.ownerIsPlayer ? '+ 1 Playing Owner' : '(6 Auction Target)'})
+                  OFFICIAL SQUAD ROSTER ({squad.length} / {team.total_squad_slots || 6} Members)
                 </span>
               </h2>
             </div>
@@ -143,30 +143,44 @@ export const TeamDetailPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {squad.map((player) => (
-                <div
-                  key={player.id}
-                  className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-2xl p-4 flex flex-col justify-between shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={player.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
-                      alt={player.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-gbl-navy-700"
-                    />
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-slate-400">{player.player_code}</span>
-                      <h4 className="text-sm font-bold text-white">{player.name}</h4>
-                      <p className="text-[11px] text-slate-400">{player.age} yrs • {player.eligible_category_names.join(', ')}</p>
+              {squad.map((player) => {
+                const isOwnerPlayer = team.owner_name && player.name.toLowerCase().includes(team.owner_name.toLowerCase());
+                return (
+                  <div
+                    key={player.id}
+                    className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-2xl p-4 flex flex-col justify-between shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={player.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
+                        alt={player.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-gbl-navy-700 shrink-0"
+                      />
+                      <div className="overflow-hidden">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono font-bold text-slate-400">{player.player_code}</span>
+                          {isOwnerPlayer && (
+                            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/30">
+                              Owner
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-bold text-white truncate">{player.name}</h4>
+                        <p className="text-[11px] text-slate-400 truncate">{player.age ? `${player.age} yrs • ` : ''}{player.eligible_category_names.join(', ')}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-gbl-navy-800 flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black tracking-wider uppercase">
+                          SOLD
+                        </span>
+                      </div>
+                      <span className="font-black text-emerald-400 font-mono text-sm">{formatINR(player.sold_price)}</span>
                     </div>
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-gbl-navy-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Purchased:</span>
-                    <span className="font-black text-emerald-400 font-mono">{formatINR(player.sold_price)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

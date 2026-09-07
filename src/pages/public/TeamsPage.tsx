@@ -114,7 +114,7 @@ export const TeamsPage: React.FC = () => {
                   )}
                   <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
-                    <span>{squad.length} / {team.max_auction_slots || (team.owner_is_player !== false ? 5 : 6)} Picks</span>
+                    <span>{squad.length} / {team.total_squad_slots || 6} Members</span>
                   </span>
                 </div>
 
