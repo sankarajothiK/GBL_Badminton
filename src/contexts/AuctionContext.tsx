@@ -674,7 +674,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     const nextP = unsoldPlayers[0];
-    const categoryName = nextP.eligible_category_names[0] || 'OPEN';
+    const categoryName = nextP.auction_category || 'NON-MEDALLIST';
     const cat = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) || categories[0];
     startAuction(nextP, cat);
   };

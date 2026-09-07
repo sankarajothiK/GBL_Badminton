@@ -13,7 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
-import { Player, OFFICIAL_PLAYER_CATEGORIES } from '../../types/database';
+import { Player, ELIGIBLE_CATEGORIES, AUCTION_CATEGORIES, AuctionCategory, EligibleCategory } from '../../types/database';
 import { formatINR } from '../../lib/currency';
 import { exportPlayersCSV, validatePlayerImportCSV, ImportValidationRow } from '../../lib/csv';
 import { uploadImage } from '../../lib/supabase';
@@ -25,8 +25,9 @@ export const AdminPlayers: React.FC = () => {
   const { players, teams, categories, createPlayer, updatePlayer, deletePlayer, importPlayersList } = useTournament();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
+  const [selectedAuctionCatFilter, setSelectedAuctionCatFilter] = useState<'ALL' | AuctionCategory | 'SOLD_OWNERS'>('ALL');
+  const [selectedEligibleFilter, setSelectedEligibleFilter] = useState<string>('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
 
   // Create / Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +39,8 @@ export const AdminPlayers: React.FC = () => {
   const [academy, setAcademy] = useState('');
   const [tshirtSize, setTshirtSize] = useState('');
   const [mobile, setMobile] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Open']);
+  const [auctionCategory, setAuctionCategory] = useState<AuctionCategory>('NON-MEDALLIST');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Super Doubles']);
   const [achievements, setAchievements] = useState('');
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -68,7 +70,8 @@ export const AdminPlayers: React.FC = () => {
     setAcademy('');
     setTshirtSize('');
     setMobile('');
-    setSelectedCategories(['Open']);
+    setAuctionCategory('NON-MEDALLIST');
+    setSelectedCategories(['Super Doubles']);
     setAchievements('');
     setNotes('');
     setPhotoUrl(null);
@@ -86,7 +89,8 @@ export const AdminPlayers: React.FC = () => {
     setTshirtSize(p.tshirt_size || '');
     const cleanPhone = p.mobile && p.mobile !== '+91 98840 00000' && p.mobile !== '98840 00000' ? p.mobile : '';
     setMobile(cleanPhone);
-    setSelectedCategories(p.eligible_category_names?.length ? p.eligible_category_names : ['Open']);
+    setAuctionCategory(p.auction_category || 'NON-MEDALLIST');
+    setSelectedCategories(p.eligible_category_names?.length ? p.eligible_category_names : ['Super Doubles']);
     setAchievements(p.achievements || '');
     setNotes(p.notes || '');
     setPhotoUrl(p.photo_url || null);
@@ -147,6 +151,7 @@ export const AdminPlayers: React.FC = () => {
         academy: academy.trim() || undefined,
         tshirt_size: tshirtSize.trim() || undefined,
         mobile: mobile.trim(),
+        auction_category: auctionCategory,
         eligible_category_names: selectedCategories,
         achievements: achievements.trim(),
         notes: notes.trim(),
@@ -163,6 +168,7 @@ export const AdminPlayers: React.FC = () => {
         academy: academy.trim() || undefined,
         tshirt_size: tshirtSize.trim() || undefined,
         mobile: mobile.trim(),
+        auction_category: auctionCategory,
         eligible_category_ids: [],
         eligible_category_names: selectedCategories,
         achievements: achievements.trim(),
@@ -216,6 +222,13 @@ export const AdminPlayers: React.FC = () => {
     }
   };
 
+  // Category Counts
+  const unsoldPool = players.filter(p => p.auction_status !== 'SOLD');
+  const openCount = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'OPEN').length;
+  const nonMedalCount = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'NON-MEDALLIST').length;
+  const age35Count = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === '35+ AGE').length;
+  const soldOwnersCount = players.filter(p => p.auction_status === 'SOLD').length;
+
   // Filtering
   const filteredPlayers = players.filter(p => {
     const term = searchTerm.toLowerCase();
@@ -223,11 +236,22 @@ export const AdminPlayers: React.FC = () => {
                           p.name.toLowerCase().includes(term) ||
                           p.player_code.toLowerCase().includes(term) ||
                           (p.academy && p.academy.toLowerCase().includes(term));
-    const matchesCat = selectedCategoryFilter === 'ALL' ||
-                       p.eligible_category_names?.some(c => c.toLowerCase() === selectedCategoryFilter.toLowerCase());
+    
+    // Auction category filter tab
+    let matchesAuctionCat = true;
+    if (selectedAuctionCatFilter === 'ALL') {
+      matchesAuctionCat = selectedStatusFilter !== 'ALL' || p.auction_status !== 'SOLD';
+    } else if (selectedAuctionCatFilter === 'SOLD_OWNERS') {
+      matchesAuctionCat = p.auction_status === 'SOLD';
+    } else {
+      matchesAuctionCat = (p.auction_category || 'NON-MEDALLIST') === selectedAuctionCatFilter && p.auction_status !== 'SOLD';
+    }
+
+    const matchesEligible = selectedEligibleFilter === 'ALL' ||
+                            p.eligible_category_names?.some(c => c.toLowerCase() === selectedEligibleFilter.toLowerCase());
     const matchesStatus = selectedStatusFilter === 'ALL' ||
                           p.auction_status === selectedStatusFilter;
-    return matchesSearch && matchesCat && matchesStatus;
+    return matchesSearch && matchesAuctionCat && matchesEligible && matchesStatus;
   });
 
   return (
@@ -237,7 +261,7 @@ export const AdminPlayers: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-white font-sports tracking-wide">PLAYER ROSTER & ELIGIBILITY</h1>
-          <p className="text-xs text-slate-400">Manage registered athletes, multiple category assignments, and 10 MB photo uploads</p>
+          <p className="text-xs text-slate-400">Manage registered athletes, auction categories, eligibility rules, and 10 MB photo uploads</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -276,6 +300,70 @@ export const AdminPlayers: React.FC = () => {
         </div>
       )}
 
+      {/* Auction Category Bidding Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setSelectedAuctionCatFilter('ALL')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 flex items-center gap-2 ${
+            selectedAuctionCatFilter === 'ALL'
+              ? 'bg-gbl-orange-600 text-white border-gbl-orange-500 shadow-lg shadow-gbl-orange-600/30'
+              : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>Active Pool ({unsoldPool.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedAuctionCatFilter('OPEN')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 ${
+            selectedAuctionCatFilter === 'OPEN'
+              ? 'bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-yellow-300 border-yellow-400 shadow-lg shadow-yellow-500/20'
+              : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
+          }`}
+        >
+          ⚡ OPEN ({openCount})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedAuctionCatFilter('NON-MEDALLIST')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 ${
+            selectedAuctionCatFilter === 'NON-MEDALLIST'
+              ? 'bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-yellow-300 border-yellow-400 shadow-lg shadow-yellow-500/20'
+              : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
+          }`}
+        >
+          🛡 NON-MEDALLIST ({nonMedalCount})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedAuctionCatFilter('35+ AGE')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 ${
+            selectedAuctionCatFilter === '35+ AGE'
+              ? 'bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-yellow-300 border-yellow-400 shadow-lg shadow-yellow-500/20'
+              : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
+          }`}
+        >
+          🏆 35+ AGE ({age35Count})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedAuctionCatFilter('SOLD_OWNERS')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 flex items-center gap-1.5 ${
+            selectedAuctionCatFilter === 'SOLD_OWNERS'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-600/30'
+              : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
+          }`}
+        >
+          <span>👑 Pre-Allocated Owners ({soldOwnersCount})</span>
+        </button>
+      </div>
+
       {/* Filter & Search Bar */}
       <div className="bg-gbl-navy-900 border border-gbl-navy-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-80">
@@ -291,12 +379,12 @@ export const AdminPlayers: React.FC = () => {
 
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
           <select
-            value={selectedCategoryFilter}
-            onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+            value={selectedEligibleFilter}
+            onChange={(e) => setSelectedEligibleFilter(e.target.value)}
             className="bg-gbl-navy-950 border border-gbl-navy-700 text-xs rounded-xl px-3 py-2 text-white focus:outline-none"
           >
-            <option value="ALL">All Official Categories</option>
-            {OFFICIAL_PLAYER_CATEGORIES.map(c => (
+            <option value="ALL">All Eligible Categories</option>
+            {ELIGIBLE_CATEGORIES.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -326,6 +414,7 @@ export const AdminPlayers: React.FC = () => {
               <tr>
                 <th className="p-4">Player & Academy</th>
                 <th className="p-4 text-center">Age / Gender</th>
+                <th className="p-4 text-center">Auction Category</th>
                 <th className="p-4">Eligible Categories</th>
                 <th className="p-4 text-center">Auction Status</th>
                 <th className="p-4 text-right">Sold Details</th>
@@ -335,7 +424,7 @@ export const AdminPlayers: React.FC = () => {
             <tbody className="divide-y divide-gbl-navy-800 font-medium">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
                     No players found matching your criteria.
                   </td>
                 </tr>
@@ -375,12 +464,18 @@ export const AdminPlayers: React.FC = () => {
                         {player.age} yrs • {player.gender}
                       </td>
 
+                      <td className="p-4 text-center">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/50 shadow-sm shadow-yellow-500/10">
+                          {player.auction_category || 'NON-MEDALLIST'}
+                        </span>
+                      </td>
+
                       <td className="p-4">
-                        <div className="flex flex-wrap gap-1">
-                          {player.eligible_category_names.map((c) => (
-                            <Badge key={c} variant="orange" size="sm">
+                        <div className="flex flex-wrap gap-1 max-w-[260px]">
+                          {player.eligible_category_names?.map((c) => (
+                            <span key={c} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-950/70 text-sky-300 border border-sky-800/50">
                               {c}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       </td>
@@ -538,13 +633,45 @@ export const AdminPlayers: React.FC = () => {
             </div>
           </div>
 
-          {/* Eligible Categories (Multi-select) */}
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1.5">
-              Eligible Categories (Select all categories this player is qualified for):
-            </label>
+          {/* 1. AUCTION CATEGORY (Bidding Tier) */}
+          <div className="bg-gbl-navy-950/80 p-3.5 rounded-2xl border border-gbl-navy-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-slate-200 font-black uppercase text-[11px] tracking-wider">
+                1. Auction Bidding Category (Exactly 1) *
+              </label>
+              <span className="text-[10px] text-amber-400 font-semibold">Sets starting bid in live auction</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {AUCTION_CATEGORIES.map((cat) => {
+                const isSelected = auctionCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setAuctionCategory(cat)}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all text-center ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-amber-500/25 via-yellow-400/35 to-amber-500/25 text-yellow-300 border-yellow-400 shadow-lg shadow-yellow-500/10 scale-[1.02]'
+                        : 'bg-gbl-navy-900 border-gbl-navy-800 text-slate-400 hover:text-white hover:border-gbl-navy-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. PLAYER ELIGIBLE CATEGORIES (Match Qualification) */}
+          <div className="bg-gbl-navy-950/80 p-3.5 rounded-2xl border border-gbl-navy-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-slate-200 font-black uppercase text-[11px] tracking-wider">
+                2. Player Eligible Categories (Select All That Apply) *
+              </label>
+              <span className="text-[10px] text-sky-400 font-semibold">{selectedCategories.length} Selected</span>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {OFFICIAL_PLAYER_CATEGORIES.map((catName) => {
+              {ELIGIBLE_CATEGORIES.map((catName) => {
                 const isSelected = selectedCategories.some(
                   c => c.toLowerCase().trim() === catName.toLowerCase().trim()
                 );
@@ -553,13 +680,18 @@ export const AdminPlayers: React.FC = () => {
                     key={catName}
                     type="button"
                     onClick={() => toggleCategory(catName)}
-                    className={`p-2.5 rounded-xl border text-left text-xs font-semibold transition-all ${
+                    className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
                       isSelected
-                        ? 'bg-gbl-orange-500/20 border-gbl-orange-500 text-white shadow-sm'
-                        : 'bg-gbl-navy-950 border-gbl-navy-800 text-slate-400 hover:text-white hover:border-gbl-navy-700'
+                        ? 'bg-sky-500/20 border-sky-400 text-sky-300 shadow-sm'
+                        : 'bg-gbl-navy-900 border-gbl-navy-800 text-slate-400 hover:text-white hover:border-gbl-navy-700'
                     }`}
                   >
-                    <span className="block truncate">{catName}</span>
+                    <span className="truncate">{catName}</span>
+                    <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] shrink-0 ml-1 ${
+                      isSelected ? 'bg-sky-400 text-slate-950 font-black' : 'border border-slate-700'
+                    }`}>
+                      {isSelected ? '✓' : ''}
+                    </span>
                   </button>
                 );
               })}

@@ -73,6 +73,31 @@ function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
   return sanitized;
 }
 
+/**
+ * Filter player payload to strictly valid Supabase table columns, avoiding PGRST204 column not found errors
+ * while embedding auction_category tag inside notes for dual persistence across devices.
+ */
+function sanitizePlayerForDb(player: Partial<Player>): Record<string, any> {
+  const allowedCols = [
+    'id', 'tournament_id', 'player_code', 'name', 'age', 'gender', 'mobile',
+    'photo_url', 'academy', 'tshirt_size', 'payment_status', 'eligible_category_ids',
+    'eligible_category_names', 'achievements', 'notes', 'registration_status',
+    'auction_status', 'sold_price', 'sold_team_id', 'auction_order',
+    'created_at', 'updated_at'
+  ];
+  const sanitized: Record<string, any> = {};
+  for (const key of allowedCols) {
+    if (key in player && (player as any)[key] !== undefined) {
+      sanitized[key] = (player as any)[key];
+    }
+  }
+  if (player.auction_category) {
+    let cleanNotes = (sanitized.notes || '').replace(/\[AUCTION_CATEGORY:[^\]]+\]\s*/g, '').trim();
+    sanitized.notes = `[AUCTION_CATEGORY:${player.auction_category}] ${cleanNotes}`.trim();
+  }
+  return sanitized;
+}
+
 interface TournamentContextType {
   tournament: Tournament;
   settings: TournamentSettings;
@@ -216,8 +241,22 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           });
         }
         if (pData && pData.length > 0) {
-          setPlayers(pData);
-          saveStoredData(GBL_PLAYERS_STORAGE_KEY, pData);
+          const hydratedPlayers = pData.map((cloudP: any) => {
+            let cat = cloudP.auction_category;
+            if (!cat && cloudP.notes) {
+              const m = cloudP.notes.match(/\[AUCTION_CATEGORY:([^\]]+)\]/);
+              if (m) cat = m[1].trim();
+            }
+            if (!cat) {
+              cat = 'NON-MEDALLIST';
+            }
+            return {
+              ...cloudP,
+              auction_category: cat
+            };
+          });
+          setPlayers(hydratedPlayers);
+          saveStoredData(GBL_PLAYERS_STORAGE_KEY, hydratedPlayers);
         }
         if (cData && cData.length > 0) {
           setCategories(cData);
@@ -440,7 +479,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (players.length > 0) {
         const chunkSize = 20;
         for (let i = 0; i < players.length; i += chunkSize) {
-          const chunk = players.slice(i, i + chunkSize);
+          const chunk = players.slice(i, i + chunkSize).map(p => sanitizePlayerForDb(p));
           const { error: pErr } = await supabase.from('players').upsert(chunk);
           if (pErr) {
             if (pErr.code === '42501' || pErr.message?.includes('row-level security')) {
@@ -604,7 +643,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logAuditAction('PLAYER_CREATED', { player: newPlayer.name, code: newPlayer.player_code });
 
     try {
-      await supabase.from('players').upsert(newPlayer);
+      const payload = sanitizePlayerForDb(newPlayer);
+      await supabase.from('players').upsert(payload);
     } catch (e) {
       console.warn('Database sync error on createPlayer:', e);
     }
@@ -630,7 +670,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (updatedPlayer) {
       try {
-        const { error } = await supabase.from('players').upsert(updatedPlayer);
+        const payload = sanitizePlayerForDb(updatedPlayer);
+        const { error } = await supabase.from('players').upsert(payload);
         if (error) {
           console.warn('Supabase player upsert notice:', error.message);
         }

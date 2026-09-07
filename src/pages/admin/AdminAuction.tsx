@@ -18,7 +18,9 @@ import {
   ExternalLink,
   Volume2,
   Zap,
-  Sparkles
+  Sparkles,
+  Search,
+  X
 } from 'lucide-react';
 import { useAuction } from '../../contexts/AuctionContext';
 import { useTournament } from '../../contexts/TournamentContext';
@@ -60,6 +62,8 @@ export const AdminAuction: React.FC = () => {
   // Selection states
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('');
+  const [playerSearchQuery, setPlayerSearchQuery] = useState<string>('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [activeTeamId, setActiveTeamId] = useState<string>(teams[0]?.id || '');
   const [customBidAmount, setCustomBidAmount] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,17 +76,42 @@ export const AdminAuction: React.FC = () => {
 
   // Selected player object
   const chosenPlayer = players.find(p => p.id === selectedPlayerId) || currentPlayer || players.find(p => p.auction_status === 'UNSOLD');
-  
-  // Section 50: Only allow categories for which the player is eligible!
-  const eligibleCategories = chosenPlayer
-    ? categories.filter(c => chosenPlayer.eligible_category_names.some(ec => {
-        const eLow = ec.toLowerCase().trim();
-        const cLow = c.name.toLowerCase().trim();
-        return eLow === cLow || cLow.startsWith(eLow) || eLow.startsWith(cLow);
-      }))
-    : categories;
 
-  const currentActiveCategory = categories.find(c => c.name.toLowerCase() === selectedCategoryName.toLowerCase()) || eligibleCategories[0] || categories[0];
+  // Normalizer for player codes (e.g. 'GBL 00025', 'gbl25', '25', '025' -> '25')
+  const normalizePlayerCode = (val: string) => {
+    return val.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/^gbl0*/, '').replace(/^0+/, '');
+  };
+
+  // Instant player search results supporting ID formats & names
+  const searchResults = useMemo(() => {
+    if (!playerSearchQuery.trim()) {
+      return players.filter(p => p.auction_status === 'UNSOLD').slice(0, 10);
+    }
+    const q = playerSearchQuery.trim().toLowerCase();
+    const normQ = normalizePlayerCode(q);
+
+    return players.filter(p => {
+      if (p.name.toLowerCase().includes(q)) return true;
+      if (p.player_code.toLowerCase().includes(q)) return true;
+      const normP = normalizePlayerCode(p.player_code);
+      if (normQ && (normP === normQ || normP.includes(normQ))) return true;
+      if (p.academy && p.academy.toLowerCase().includes(q)) return true;
+      return false;
+    }).slice(0, 12);
+  }, [playerSearchQuery, players]);
+
+  const handleSelectSearchedPlayer = (player: Player) => {
+    setSelectedPlayerId(player.id);
+    setSelectedCategoryName(player.auction_category || 'NON-MEDALLIST');
+    setPlayerSearchQuery(`${player.player_code} - ${player.name}`);
+    setIsSearchOpen(false);
+  };
+  
+  // Category resolution: Auction Category determines default opening bid
+  const playerAuctionCat = chosenPlayer?.auction_category || 'NON-MEDALLIST';
+  const currentActiveCategory = categories.find(c => c.name.toUpperCase() === (selectedCategoryName || playerAuctionCat).toUpperCase()) 
+    || categories.find(c => c.name.toUpperCase() === playerAuctionCat.toUpperCase())
+    || categories[0];
 
   // Active Team object & Max Legal Bid Calculation (Section 10)
   const activeTeam = teams.find(t => t.id === activeTeamId) || teams[0];
@@ -291,25 +320,74 @@ export const AdminAuction: React.FC = () => {
             </span>
           </div>
 
-          {/* Quick Player Switcher if not Live */}
+          {/* Instant Player ID / Name Search (No Forced Sequence!) */}
           {status !== 'LIVE' && (
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Player for Auction:</label>
-              <select
-                value={selectedPlayerId || (chosenPlayer?.id || '')}
-                onChange={(e) => {
-                  setSelectedPlayerId(e.target.value);
-                  const p = players.find(x => x.id === e.target.value);
-                  if (p && p.eligible_category_names.length > 0) {
-                    setSelectedCategoryName(p.eligible_category_names[0]);
-                  }
-                }}
-                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 text-xs rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gbl-orange-500 font-medium"
-              >
-                {players.filter(p => p.auction_status === 'UNSOLD').map(p => (
-                  <option key={p.id} value={p.id}>{p.player_code} - {p.name} ({p.eligible_category_names.join(', ')})</option>
-                ))}
-              </select>
+            <div className="relative space-y-1.5">
+              <label className="block text-[11px] font-black text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Search Player ID / Name:</span>
+                <span className="text-[10px] text-amber-400 font-semibold">Instant Staging</span>
+              </label>
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search Player ID (e.g. GBL 00025, 25) or Name..."
+                  value={playerSearchQuery}
+                  onChange={(e) => {
+                    setPlayerSearchQuery(e.target.value);
+                    setIsSearchOpen(true);
+                  }}
+                  onFocus={() => setIsSearchOpen(true)}
+                  className="w-full bg-gbl-navy-950 border border-gbl-navy-700 text-xs rounded-xl pl-10 pr-8 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-gbl-orange-500 font-medium"
+                />
+                {playerSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlayerSearchQuery('');
+                      setIsSearchOpen(false);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Search Dropdown */}
+              {isSearchOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-gbl-navy-900 border border-gbl-navy-700 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-gbl-navy-800">
+                  {searchResults.length === 0 ? (
+                    <div className="p-3 text-center text-slate-500 text-xs">
+                      {playerSearchQuery.trim() ? 'No matching player found.' : 'Type player ID or name.'}
+                    </div>
+                  ) : (
+                    searchResults.map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSelectSearchedPlayer(p)}
+                        className="w-full p-2.5 text-left hover:bg-gbl-navy-800 flex items-center justify-between gap-2.5 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img
+                            src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                            alt={p.name}
+                            className="w-8 h-8 rounded-lg object-cover shrink-0 border border-gbl-navy-700"
+                          />
+                          <div className="min-w-0">
+                            <span className="font-bold text-white text-xs block truncate">{p.name}</span>
+                            <span className="text-[10px] font-mono text-slate-400">{p.player_code} • Age {p.age}</span>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/40 shrink-0">
+                          {p.auction_category || 'NON-MEDALLIST'}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -335,29 +413,54 @@ export const AdminAuction: React.FC = () => {
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 font-semibold">
                   Age: {chosenPlayer.age} Yrs | Gender: {chosenPlayer.gender}
+                  {chosenPlayer.academy && ` • ${chosenPlayer.academy}`}
                 </p>
               </div>
 
-              {/* Category selection */}
-              <div className="space-y-2 bg-gbl-navy-950/80 p-4 rounded-2xl border border-gbl-navy-800">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                  Auction Category (Eligible Tiers Only):
-                </label>
+              {/* Prominent Golden Auction Category Badge */}
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/25 via-yellow-400/35 to-amber-500/25 text-yellow-300 border border-yellow-500/60 shadow-lg shadow-yellow-500/15">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                  <span>AUCTION CATEGORY: {chosenPlayer.auction_category || currentActiveCategory.name}</span>
+                </span>
+              </div>
+
+              {/* Separate Eligible Categories Section */}
+              <div className="space-y-1.5 bg-gbl-navy-950/80 p-3.5 rounded-2xl border border-gbl-navy-800">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                  Eligible Categories (Match Qualifications):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {chosenPlayer.eligible_category_names?.map(ec => (
+                    <span key={ec} className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-sky-950/80 text-sky-300 border border-sky-800/50">
+                      {ec}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Opening Bid Category Tier Selector */}
+              <div className="space-y-2 bg-gbl-navy-950/80 p-3.5 rounded-2xl border border-gbl-navy-800">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    Opening Bid Tier:
+                  </label>
+                  <span className="text-xs font-black text-emerald-400 font-mono">
+                    {formatINR(currentActiveCategory.starting_bid)}
+                  </span>
+                </div>
                 <select
                   disabled={status === 'LIVE'}
-                  value={selectedCategoryName || currentCategory?.name || eligibleCategories[0]?.name || ''}
+                  value={selectedCategoryName || chosenPlayer.auction_category || currentCategory?.name || 'OPEN'}
                   onChange={(e) => setSelectedCategoryName(e.target.value)}
-                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 text-xs font-bold rounded-xl px-3.5 py-2 text-gbl-orange-400 focus:outline-none focus:border-gbl-orange-500 disabled:opacity-60"
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 text-xs font-bold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gbl-orange-500 disabled:opacity-60"
                 >
-                  {eligibleCategories.map(cat => (
+                  {categories.map(cat => (
                     <option key={cat.id} value={cat.name}>
                       {cat.name} (Starts at {formatINR(cat.starting_bid)})
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-slate-400">
-                  Opening Bid: <strong className="text-white font-mono">{formatINR(currentActiveCategory.starting_bid)}</strong>
-                </p>
               </div>
 
               {chosenPlayer.achievements && (
@@ -413,25 +516,36 @@ export const AdminAuction: React.FC = () => {
 
             {/* Leading Team Banner */}
             <div className="mt-7 pt-6 border-t border-gbl-navy-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 {highestTeam ? (
                   <>
-                    <div 
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-base shadow-xl"
-                      style={{ backgroundColor: highestTeam.team_color }}
-                    >
-                      {highestTeam.short_name}
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Leading Team</span>
-                      <h4 className="text-lg font-black text-white font-sports leading-tight">{highestTeam.name}</h4>
-                      <p className="text-xs text-slate-400">Remaining Wallet: <span className="font-mono text-emerald-400 font-bold">{formatINR(highestTeam.current_balance)}</span></p>
+                    {highestTeam.logo_url ? (
+                      <div className="w-16 h-16 rounded-2xl bg-gbl-navy-950 border-2 border-gbl-orange-500/60 p-1.5 shadow-2xl shrink-0 flex items-center justify-center overflow-hidden">
+                        <img src={highestTeam.logo_url} alt={highestTeam.name} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div 
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-2xl shrink-0 border-2 border-white/20"
+                        style={{ backgroundColor: highestTeam.team_color }}
+                      >
+                        {highestTeam.short_name}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-gbl-orange-400 uppercase font-black tracking-widest block">Leading Bidder</span>
+                      <h4 className="text-xl sm:text-2xl font-black text-white font-sports leading-tight truncate">{highestTeam.name}</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">Owner: <strong className="text-slate-200">{highestTeam.owner_name}</strong> • Wallet: <span className="font-mono text-emerald-400 font-bold">{formatINR(highestTeam.current_balance)}</span></p>
                     </div>
                   </>
                 ) : (
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Status</span>
-                    <h4 className="text-sm font-bold text-slate-300">Awaiting opening bid from team</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 flex items-center justify-center text-slate-500">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Stage Status</span>
+                      <h4 className="text-sm font-bold text-slate-300">Awaiting opening bid from team</h4>
+                    </div>
                   </div>
                 )}
               </div>
@@ -441,14 +555,20 @@ export const AdminAuction: React.FC = () => {
           {/* Active Team Max Legal Bid Helper */}
           {maxBidInfo && (
             <div className="bg-gradient-to-r from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-700/60 p-4 rounded-2xl flex items-center justify-between shadow-lg">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-xs shadow-md"
-                  style={{ backgroundColor: activeTeam.team_color }}
-                >
-                  {activeTeam.short_name}
-                </div>
-                <div>
+              <div className="flex items-center gap-3 min-w-0">
+                {activeTeam.logo_url ? (
+                  <div className="w-11 h-11 rounded-xl bg-gbl-navy-950 border border-gbl-navy-700 p-1 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                    <img src={activeTeam.logo_url} alt={activeTeam.name} className="w-full h-full object-contain" />
+                  </div>
+                ) : (
+                  <div 
+                    className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-xs shadow-md shrink-0"
+                    style={{ backgroundColor: activeTeam.team_color }}
+                  >
+                    {activeTeam.short_name}
+                  </div>
+                )}
+                <div className="min-w-0">
                   <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">Target Team: {activeTeam.name}</span>
                   <p className="text-xs font-bold text-white">
                     Wallet: <span className="font-mono text-emerald-400 font-bold">{formatINR(activeTeam.current_balance)}</span>
@@ -456,7 +576,7 @@ export const AdminAuction: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <span className="text-[10px] text-amber-400 uppercase font-black tracking-widest block">MAX LEGAL BID</span>
                 <span className="text-lg font-black text-amber-400 font-mono">
                   {formatINR(maxBidInfo.maxLegalBid)}
@@ -751,13 +871,19 @@ export const AdminAuction: React.FC = () => {
                     FULL
                   </span>
                 )}
-                <div 
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md mb-1.5 shrink-0"
-                  style={{ backgroundColor: t.team_color }}
-                >
-                  {t.short_name}
-                </div>
-                <span className="text-[11px] font-bold text-white truncate w-full">{t.name}</span>
+                {t.logo_url ? (
+                  <div className="w-10 h-10 rounded-xl bg-gbl-navy-900 border border-gbl-navy-700 p-1 shadow-md mb-1.5 shrink-0 flex items-center justify-center overflow-hidden">
+                    <img src={t.logo_url} alt={t.name} className="w-full h-full object-contain" />
+                  </div>
+                ) : (
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-md mb-1.5 shrink-0 border border-white/20"
+                    style={{ backgroundColor: t.team_color }}
+                  >
+                    {t.short_name}
+                  </div>
+                )}
+                <span className="text-xs font-black text-white truncate w-full text-center leading-tight">{t.name}</span>
                 <div className="w-full flex items-center justify-between mt-1 text-[9px]">
                   <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
                   <span className="font-mono text-slate-300 font-semibold">{squadCount}/{totalSlots}</span>

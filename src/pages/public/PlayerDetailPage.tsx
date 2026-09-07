@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Award, Shield, User, Calendar, Flame } from 'lucide-react';
+import { ArrowLeft, Award, Shield, User, Calendar, Flame, Sparkles } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { formatINR } from '../../lib/currency';
 import { Badge } from '../../components/common/Badge';
@@ -23,6 +23,7 @@ export const PlayerDetailPage: React.FC = () => {
   }
 
   const soldTeam = player.sold_team_id ? teams.find(t => t.id === player.sold_team_id) : null;
+  const playerAuctionCat = player.auction_category || 'NON-MEDALLIST';
 
   return (
     <div className="min-h-screen bg-gbl-navy-950 py-12 px-4 sm:px-6 lg:px-8">
@@ -82,11 +83,11 @@ export const PlayerDetailPage: React.FC = () => {
                     {player.name}
                   </h1>
                   <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
-                    <span className="text-xs text-slate-400 font-semibold">
-                      Age: {player.age} Years | Gender: {player.gender}
+                    <span className="text-xs text-slate-300 font-semibold bg-white/5 px-2.5 py-0.5 rounded-lg border border-white/10">
+                      Age: {player.age} Years • {player.gender}
                     </span>
                     {player.academy && (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                      <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
                         Academy: {player.academy}
                       </span>
                     )}
@@ -98,17 +99,32 @@ export const PlayerDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Categories */}
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                    Eligible Categories:
+                {/* Prominent Gold Auction Category Highlight */}
+                <div className="pt-1">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-yellow-400/35 to-amber-500/25 text-yellow-300 border border-yellow-400/80 shadow-[0_0_20px_rgba(245,158,11,0.25)] font-black text-xs sm:text-sm tracking-wider uppercase">
+                    <Sparkles className="w-4 h-4 text-yellow-300 shrink-0" />
+                    <span>AUCTION CATEGORY: [ {playerAuctionCat} ]</span>
                   </span>
-                  <div className="flex flex-wrap gap-2">
-                    {player.eligible_category_names.map((catName) => (
-                      <Badge key={catName} variant="orange" size="md">
-                        {catName}
-                      </Badge>
-                    ))}
+                </div>
+
+                {/* Separate Eligible Categories Section */}
+                <div className="pt-2 space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Eligible Categories (Allowed to Play):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {player.eligible_category_names && player.eligible_category_names.length > 0 ? (
+                      player.eligible_category_names.map((catName) => (
+                        <span
+                          key={catName}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-950/70 text-sky-300 border border-sky-800/60"
+                        >
+                          {catName}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">None specified</span>
+                    )}
                   </div>
                 </div>
 

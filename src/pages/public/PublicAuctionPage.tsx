@@ -110,12 +110,12 @@ export const PublicAuctionPage: React.FC = () => {
               </div>
 
               {/* Player Information Body */}
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-3.5">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-950 leading-tight">
                     {currentPlayer.name}
                   </h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 font-semibold">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 font-semibold flex-wrap">
                     <span>Age: <strong className="text-slate-800">{currentPlayer.age}</strong></span>
                     <span>•</span>
                     <span>Gender: <strong className="text-slate-800">{currentPlayer.gender}</strong></span>
@@ -130,13 +130,36 @@ export const PublicAuctionPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                {/* Golden Auction Category Badge */}
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 text-yellow-800 border border-yellow-500/50 shadow-sm">
+                    <span>AUCTION CATEGORY: {currentPlayer.auction_category || currentCategory?.name || 'OPEN'}</span>
+                  </span>
+                </div>
+
+                {/* Separate Eligible Categories */}
+                {currentPlayer.eligible_category_names && currentPlayer.eligible_category_names.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                      Eligible Categories:
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {currentPlayer.eligible_category_names.map(ec => (
+                        <span key={ec} className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                          {ec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                      Category
+                      Starting Bid Tier
                     </span>
                     <span className="text-xs font-bold text-slate-900">
-                      {currentCategory?.name || 'OPEN'}
+                      {currentCategory?.name || 'OPEN'} ({formatINR(currentAuction?.starting_bid)})
                     </span>
                   </div>
                   <div className="text-right">
@@ -201,33 +224,33 @@ export const PublicAuctionPage: React.FC = () => {
 
                 {/* Leading Team Display */}
                 <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="flex items-center gap-3.5 overflow-hidden">
                     {highestTeam ? (
                       <>
                         {highestTeam.logo_url ? (
-                          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 p-0.5 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 p-1 shadow-lg shrink-0 flex items-center justify-center overflow-hidden">
                             <img src={highestTeam.logo_url} alt={highestTeam.name} className="w-full h-full object-contain" />
                           </div>
                         ) : (
                           <div 
-                            className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-xs shadow-md shrink-0"
+                            className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white text-base shadow-lg shrink-0 border border-white/20"
                             style={{ backgroundColor: highestTeam.team_color }}
                           >
                             {highestTeam.short_name}
                           </div>
                         )}
                         <div className="overflow-hidden">
-                          <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block">
-                            LEADING TEAM
+                          <span className="text-[10px] text-lime-400 uppercase font-black tracking-widest block">
+                            LEADING HIGHEST BIDDER
                           </span>
-                          <h4 className="text-sm sm:text-base font-black truncate">{highestTeam.name}</h4>
-                          <p className="text-[11px] text-slate-400 truncate">Owner: {highestTeam.owner_name}</p>
+                          <h4 className="text-base sm:text-xl font-black truncate">{highestTeam.name}</h4>
+                          <p className="text-xs text-slate-400 truncate">Owner: {highestTeam.owner_name}</p>
                         </div>
                       </>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-slate-400 shrink-0">
-                          <Clock className="w-4 h-4" />
+                        <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-slate-400 shrink-0">
+                          <Clock className="w-5 h-5" />
                         </div>
                         <div>
                           <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block">STATUS</span>

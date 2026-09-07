@@ -136,23 +136,46 @@ export const ProjectorPage: React.FC = () => {
               {/* Player Auction Information & Big Scoreboard */}
               <div className="col-span-1 lg:col-span-7 space-y-5 sm:space-y-7">
                 
-                {/* Category & Name */}
-                <div>
-                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <span className="px-3 sm:px-4 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider bg-gradient-to-r from-gbl-orange-500 to-amber-500 text-white shadow-lg">
-                      CATEGORY: {currentCategory?.name || 'OPEN'}
+                {/* Category, Age, Name & Eligible Categories */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {/* Golden Auction Category Badge */}
+                    <span className="px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-yellow-300 border border-yellow-400/80 shadow-[0_0_25px_rgba(245,158,11,0.3)] flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-yellow-300" />
+                      <span>AUCTION CATEGORY: {currentPlayer.auction_category || currentCategory?.name || 'OPEN'}</span>
                     </span>
-                    <span className="text-sm sm:text-lg text-slate-300 font-bold">
+                    <span className="text-sm sm:text-base text-slate-300 font-bold bg-white/10 px-3 py-1 rounded-xl">
                       Age: {currentPlayer.age} Yrs
                     </span>
+                    {currentPlayer.academy && (
+                      <span className="text-xs sm:text-sm text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-xl">
+                        {currentPlayer.academy}
+                      </span>
+                    )}
                   </div>
 
-                  <h2 className="text-3xl sm:text-5xl xl:text-6xl font-black text-white font-sports uppercase tracking-tight mt-2 sm:mt-3 leading-tight drop-shadow-md">
+                  <h2 className="text-4xl sm:text-6xl xl:text-7xl font-black text-white font-sports uppercase tracking-tight leading-none drop-shadow-md">
                     {currentPlayer.name}
                   </h2>
+
+                  {/* Separate Eligible Categories Row */}
+                  {currentPlayer.eligible_category_names && currentPlayer.eligible_category_names.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      <span className="text-xs uppercase font-black tracking-widest text-slate-400">
+                        Eligible Categories:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {currentPlayer.eligible_category_names.map((ec) => (
+                          <span key={ec} className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-sky-950/80 text-sky-300 border border-sky-700/50">
+                            {ec}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {currentPlayer.achievements && (
-                    <p className="text-xs sm:text-base text-slate-300 mt-2 sm:mt-3 line-clamp-2 leading-relaxed font-normal">
+                    <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed font-normal">
                       {currentPlayer.achievements}
                     </p>
                   )}
@@ -194,40 +217,40 @@ export const ProjectorPage: React.FC = () => {
                 </div>
 
                 {/* LEADING TEAM SPOTLIGHT */}
-                <div className="p-4 sm:p-6 rounded-3xl bg-gbl-navy-900/90 border border-gbl-navy-800 flex items-center justify-between shadow-xl">
-                  <div className="flex items-center gap-3 sm:gap-5">
+                <div className="p-5 sm:p-7 rounded-3xl bg-gbl-navy-900/90 border border-gbl-navy-800 flex items-center justify-between shadow-2xl">
+                  <div className="flex items-center gap-4 sm:gap-6 min-w-0">
                     {highestTeam ? (
                       <>
                         {highestTeam.logo_url ? (
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gbl-navy-950 border-2 border-gbl-orange-500/50 p-1 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gbl-navy-950 border-2 border-gbl-orange-500/60 p-1.5 shadow-[0_0_30px_rgba(255,94,0,0.3)] shrink-0 flex items-center justify-center overflow-hidden">
                             <img src={highestTeam.logo_url} alt={highestTeam.name} className="w-full h-full object-contain" />
                           </div>
                         ) : (
                           <div 
-                            className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-lg shadow-xl shrink-0"
+                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center font-black text-white text-xl sm:text-2xl shadow-2xl shrink-0 border-2 border-white/20"
                             style={{ backgroundColor: highestTeam.team_color }}
                           >
                             {highestTeam.short_name}
                           </div>
                         )}
-                        <div>
-                          <span className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400 block">
+                        <div className="min-w-0">
+                          <span className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-gbl-orange-400 block">
                             CURRENT HIGHEST BIDDER
                           </span>
-                          <h3 className="text-lg sm:text-2xl font-black text-white font-sports tracking-wide leading-tight">{highestTeam.name}</h3>
-                          <p className="text-[11px] sm:text-xs text-slate-400">Team Owner: {highestTeam.owner_name}</p>
+                          <h3 className="text-2xl sm:text-4xl font-black text-white font-sports tracking-wide leading-tight truncate">{highestTeam.name}</h3>
+                          <p className="text-xs sm:text-sm text-slate-400 mt-1">Owner: <strong className="text-white">{highestTeam.owner_name}</strong></p>
                         </div>
                       </>
                     ) : (
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 flex items-center justify-center text-slate-500 shrink-0">
-                          <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 flex items-center justify-center text-slate-500 shrink-0">
+                          <Clock className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <div>
-                          <span className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400 block">
+                          <span className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-slate-400 block">
                             AUCTION STAGE
                           </span>
-                          <h3 className="text-sm sm:text-xl font-bold text-slate-300">AWAITING OPENING BID</h3>
+                          <h3 className="text-base sm:text-2xl font-black text-slate-300 font-sports">AWAITING OPENING BID</h3>
                         </div>
                       </div>
                     )}

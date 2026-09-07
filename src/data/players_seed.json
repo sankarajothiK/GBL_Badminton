@@ -11,17 +11,20 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "OPEN"
+      "Super Doubles",
+      "Challengers Doubles",
+      "Future Stars"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 100000,
     "sold_team_id": "20000000-0000-0000-0000-000000000010",
     "auction_order": 1,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000002",
@@ -35,25 +38,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 2,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000003",
@@ -67,25 +68,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 3,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000004",
@@ -99,20 +98,20 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Veterans Doubles",
-      "80+",
-      "Combined Doubles"
+      "35",
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Veterans Doubles, 80+, Combined Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Veterans Doubles, 80+, Combined Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 4,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000005",
@@ -126,25 +125,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 5,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000006",
@@ -158,25 +155,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 6,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000007",
@@ -190,25 +185,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 7,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000008",
@@ -222,25 +215,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 8,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000009",
@@ -254,25 +245,23 @@
     "academy": "Union Club Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Union Club Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 9,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000010",
@@ -286,17 +275,18 @@
     "academy": "Sakthi badminton club",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sakthi badminton club. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 10,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000011",
@@ -310,25 +300,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 11,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000012",
@@ -342,17 +330,18 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+ AGE"
+      "35"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000008",
     "auction_order": 12,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000013",
@@ -366,25 +355,23 @@
     "academy": "Jolly Friends Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Jolly Friends Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 13,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000014",
@@ -398,25 +385,23 @@
     "academy": "Captains Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Captains Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 14,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000015",
@@ -430,20 +415,19 @@
     "academy": "Jolly Friends Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with Jolly Friends Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 15,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000016",
@@ -457,25 +441,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 16,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000017",
@@ -489,25 +471,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 17,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000018",
@@ -521,25 +501,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 18,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000019",
@@ -553,17 +531,18 @@
     "academy": "Captains Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Captains Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 19,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000020",
@@ -577,25 +556,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 20,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000021",
@@ -609,25 +586,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 21,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000022",
@@ -641,17 +616,20 @@
     "academy": "Captains Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "NON-MEDALLIST"
+      "Super Doubles",
+      "Challengers Doubles",
+      "Future Stars"
     ],
     "achievements": "Affiliated with Captains Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, Super Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, Super Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000009",
     "auction_order": 22,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000023",
@@ -665,25 +643,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 23,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000024",
@@ -697,25 +673,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 24,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000025",
@@ -729,25 +703,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 25,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000026",
@@ -761,25 +733,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 26,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000027",
@@ -793,25 +763,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 27,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000028",
@@ -825,25 +793,23 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 28,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000029",
@@ -857,25 +823,23 @@
     "academy": "Union Club Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Union Club Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 29,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000030",
@@ -889,25 +853,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 30,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000031",
@@ -921,20 +883,19 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 31,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000032",
@@ -948,25 +909,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 32,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000033",
@@ -980,25 +939,23 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 33,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000034",
@@ -1012,19 +969,19 @@
     "academy": "Turbo Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "80+",
-      "Combined Doubles",
-      "Veterans Doubles"
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Turbo Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 80+, Combined Doubles, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 80+, Combined Doubles, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 34,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000035",
@@ -1038,19 +995,19 @@
     "academy": "Jolly Friends Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "80+",
-      "Combined Doubles",
-      "Veterans Doubles"
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Jolly Friends Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 80+, Combined Doubles, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 80+, Combined Doubles, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 35,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000036",
@@ -1064,21 +1021,20 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 36,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000037",
@@ -1092,19 +1048,19 @@
     "academy": "Literary Association Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "80+",
-      "Combined Doubles",
-      "Veterans Doubles"
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Literary Association Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 80+, Combined Doubles, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 80+, Combined Doubles, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 37,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000038",
@@ -1118,17 +1074,20 @@
     "academy": "Sharavanas Badminton Academy",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "NON-MEDALLIST"
+      "35",
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with Sharavanas Badminton Academy. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000001",
     "auction_order": 38,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000039",
@@ -1142,17 +1101,20 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "OPEN"
+      "Super Doubles",
+      "Challengers Doubles",
+      "Future Stars"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 100000,
     "sold_team_id": "20000000-0000-0000-0000-000000000005",
     "auction_order": 39,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000040",
@@ -1166,21 +1128,20 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 40,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000041",
@@ -1194,21 +1155,20 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 41,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000042",
@@ -1222,17 +1182,20 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "OPEN"
+      "Super Doubles",
+      "Challengers Doubles",
+      "Future Stars"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 100000,
     "sold_team_id": "20000000-0000-0000-0000-000000000007",
     "auction_order": 42,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000043",
@@ -1246,21 +1209,20 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 43,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000044",
@@ -1274,22 +1236,21 @@
     "academy": "UNION",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with UNION. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 44,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000045",
@@ -1303,22 +1264,21 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:OPEN] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 45,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "OPEN"
   },
   {
     "id": "00000000-0000-0000-0002-000000000046",
@@ -1332,25 +1292,23 @@
     "academy": "SAKTHI",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SAKTHI. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 46,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000047",
@@ -1364,25 +1322,23 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 47,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000048",
@@ -1396,23 +1352,22 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 48,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000049",
@@ -1426,25 +1381,23 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 49,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000050",
@@ -1458,25 +1411,23 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 50,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000051",
@@ -1490,25 +1441,23 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 51,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000052",
@@ -1522,25 +1471,23 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 52,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000053",
@@ -1554,25 +1501,23 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 53,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000054",
@@ -1586,23 +1531,22 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 54,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000055",
@@ -1616,25 +1560,23 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 55,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000056",
@@ -1648,21 +1590,20 @@
     "academy": "UNION",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles"
     ],
     "achievements": "Affiliated with UNION. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 56,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000057",
@@ -1676,25 +1617,23 @@
     "academy": "LITERARY",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with LITERARY. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 57,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000058",
@@ -1708,19 +1647,19 @@
     "academy": "16",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 16. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 58,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000059",
@@ -1734,19 +1673,19 @@
     "academy": "19",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 19. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 59,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000060",
@@ -1760,19 +1699,19 @@
     "academy": "20",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 20. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 60,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000061",
@@ -1786,19 +1725,19 @@
     "academy": "32",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 32. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 61,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000062",
@@ -1812,19 +1751,19 @@
     "academy": "PON SUBBURAJ",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
       "Super Doubles",
       "Future Stars"
     ],
     "achievements": "Affiliated with PON SUBBURAJ. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, Super Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, Super Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 62,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000063",
@@ -1838,25 +1777,23 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "Open",
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars",
-      "Veterans Doubles"
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 63,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000064",
@@ -1870,17 +1807,20 @@
     "academy": "LITERARY",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "NON-MEDALLIST"
+      "35",
+      "80",
+      "Veteran Doubles"
     ],
     "achievements": "Affiliated with LITERARY. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Eligible for: Open, 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars, Veterans Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000006",
     "auction_order": 64,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000065",
@@ -1894,23 +1834,22 @@
     "academy": "SHARAVANAS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars"
     ],
     "achievements": "Affiliated with SHARAVANAS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 65,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000066",
@@ -1924,23 +1863,22 @@
     "academy": "TURBO",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
-      "80+",
-      "Combined Doubles",
+      "35",
+      "80",
       "Super Doubles",
-      "Challenges Doubles",
+      "Challengers Doubles",
       "Future Stars"
     ],
     "achievements": "Affiliated with TURBO. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, 80+, Combined Doubles, Super Doubles, Challenges Doubles, Future Stars.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 66,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000067",
@@ -1954,19 +1892,19 @@
     "academy": "35+,80+,SD,CD,FS",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 35+,80+,SD,CD,FS. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 67,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000068",
@@ -1980,19 +1918,19 @@
     "academy": "30",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 30. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 68,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000069",
@@ -2006,19 +1944,19 @@
     "academy": "31",
     "eligible_category_ids": [],
     "eligible_category_names": [
-      "35+",
-      "Jumbled",
+      "35",
       "Super Doubles"
     ],
     "achievements": "Affiliated with 31. Registered for GBL 2026 Kovilpatti tournament.",
-    "notes": "Eligible for: 35+, Jumbled, Super Doubles.",
+    "notes": "[AUCTION_CATEGORY:35+ AGE] Eligible for: 35+, Jumbled, Super Doubles.",
     "registration_status": "APPROVED",
     "auction_status": "UNSOLD",
     "sold_price": null,
     "sold_team_id": null,
     "auction_order": 69,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-06T00:00:00.000Z"
+    "updated_at": "2026-09-06T00:00:00.000Z",
+    "auction_category": "35+ AGE"
   },
   {
     "id": "00000000-0000-0000-0002-000000000070",
@@ -2034,17 +1972,19 @@
       "10000000-0000-0000-0000-000000000003"
     ],
     "eligible_category_names": [
-      "NON-MEDALLIST"
+      "35",
+      "Super Doubles"
     ],
     "achievements": "Owner & Player of Gokulam super kings",
-    "notes": "Allocated team owner player",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Allocated team owner player",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000002",
     "auction_order": 70,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   },
   {
     "id": "00000000-0000-0000-0002-000000000071",
@@ -2060,16 +2000,19 @@
       "10000000-0000-0000-0000-000000000003"
     ],
     "eligible_category_names": [
-      "NON-MEDALLIST"
+      "Super Doubles",
+      "Challengers Doubles",
+      "Future Stars"
     ],
     "achievements": "Owner & Player of Jolly strikers cool bro's",
-    "notes": "Allocated team owner player",
+    "notes": "[AUCTION_CATEGORY:NON-MEDALLIST] Allocated team owner player",
     "registration_status": "APPROVED",
     "auction_status": "SOLD",
     "sold_price": 30000,
     "sold_team_id": "20000000-0000-0000-0000-000000000003",
     "auction_order": 71,
     "created_at": "2026-09-06T00:00:00.000Z",
-    "updated_at": "2026-09-07T00:00:00.000Z"
+    "updated_at": "2026-09-07T00:00:00.000Z",
+    "auction_category": "NON-MEDALLIST"
   }
 ]

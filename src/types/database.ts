@@ -30,19 +30,28 @@ export interface Tournament {
   updated_at: string;
 }
 
-export const OFFICIAL_PLAYER_CATEGORIES = [
-  'Open',
-  '35+',
-  'Jumbled',
-  '80+',
-  'Combined Doubles',
+export const ELIGIBLE_CATEGORIES = [
+  '35',
+  '80',
   'Super Doubles',
-  'Challenges Doubles',
+  'Challengers Doubles',
   'Future Stars',
-  'Veterans Doubles'
+  'Veteran Doubles'
 ] as const;
 
-export type OfficialPlayerCategory = typeof OFFICIAL_PLAYER_CATEGORIES[number];
+export type EligibleCategory = typeof ELIGIBLE_CATEGORIES[number];
+
+export const AUCTION_CATEGORIES = [
+  'OPEN',
+  'NON-MEDALLIST',
+  '35+ AGE'
+] as const;
+
+export type AuctionCategory = typeof AUCTION_CATEGORIES[number];
+
+// Retain alias for any existing references
+export const OFFICIAL_PLAYER_CATEGORIES = ELIGIBLE_CATEGORIES;
+export type OfficialPlayerCategory = EligibleCategory;
 
 export interface TournamentSettings {
   id: string;
@@ -122,6 +131,7 @@ export interface Player {
   payment_status?: string;
   eligible_category_ids: string[];
   eligible_category_names: string[];
+  auction_category?: AuctionCategory;
   achievements: string;
   notes: string;
   registration_status: 'PENDING' | 'APPROVED' | 'REJECTED';
