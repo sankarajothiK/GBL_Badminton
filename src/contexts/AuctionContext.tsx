@@ -290,7 +290,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // 1. START AUCTION
   const startAuction = (player: Player, category: Category) => {
-    const startBid = category.starting_bid || 0;
+    const startBid = (category?.starting_bid && category.starting_bid > 0) ? category.starting_bid : 30000;
     const duration = settings.timer_seconds || 20;
     const expiresAt = Date.now() + duration * 1000;
     expiresAtRef.current = expiresAt;
@@ -356,8 +356,9 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return { success: false, error: `Minimum bid increment is ₹${minIncrement.toLocaleString('en-IN')}` };
       }
     } else {
-      if (amount < currentAuction.starting_bid) {
-        return { success: false, error: `Bid cannot be less than starting bid of ₹${currentAuction.starting_bid.toLocaleString('en-IN')}` };
+      const minStartingBid = (currentAuction.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000;
+      if (amount < minStartingBid) {
+        return { success: false, error: `Bid cannot be less than starting bid of ₹${minStartingBid.toLocaleString('en-IN')}` };
       }
     }
 
@@ -390,7 +391,8 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     expiresAtRef.current = expiresAt;
 
     // Calculate exact bid increment from current bid or starting bid
-    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : currentAuction.starting_bid;
+    const startingBid = (currentAuction.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000;
+    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : startingBid;
     const increment = Math.max(0, amount - prevAmount);
 
     const newBid: AuctionBid = {
@@ -402,29 +404,25 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       bid_type: bidType,
       is_reverted: false,
       created_at: new Date().toISOString(),
-      created_by: 'Admin',
-      team_name: team.name,
-      team_color: team.team_color
+      created_by: team?.name || 'Admin',
+      team_name: team?.name,
+      team_color: team?.team_color
     };
+
+    const updatedHistory = [newBid, ...bidHistory];
+    setBidHistory(updatedHistory);
 
     const updatedAuction: Auction = {
       ...currentAuction,
       current_bid: amount,
       highest_team_id: teamId,
-      server_expires_at: new Date(expiresAt).toISOString(),
-      updated_at: new Date().toISOString()
+      server_expires_at: new Date(expiresAt).toISOString()
     };
-
     setCurrentAuction(updatedAuction);
-    setBidHistory(prev => {
-      if (prev.some(b => b.id === newBid.id || (b.auction_id === newBid.auction_id && b.team_id === newBid.team_id && b.amount === newBid.amount))) {
-        return prev;
-      }
-      return [newBid, ...prev];
-    });
+
     setTimerSeconds(duration);
     setIsTimerRunning(true);
-    setLastActionMessage(`New Bid: ₹${amount.toLocaleString('en-IN')} by ${team.name}`);
+    setLastActionMessage(`${team?.name || 'Team'} bid ₹${amount.toLocaleString('en-IN')}`);
 
     sounds.playBidChime();
 
@@ -435,7 +433,12 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       timerSeconds: duration
     });
 
-    logAuditAction('BID_PLACED', { player: currentPlayer?.name, team: team.name, amount, bidType });
+    logAuditAction('BID_PLACED', {
+      team: team?.name,
+      amount,
+      increment,
+      bidType
+    });
 
     return { success: true };
   };
@@ -443,7 +446,8 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Quick Bid (+10k, +20k, +50k)
   const placeQuickBid = (teamId: string, increment: number): { success: boolean; error?: string } => {
     if (!currentAuction) return { success: false, error: 'No active auction' };
-    const base = currentAuction.current_bid > 0 ? currentAuction.current_bid : currentAuction.starting_bid;
+    const startingBid = (currentAuction.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000;
+    const base = currentAuction.current_bid > 0 ? currentAuction.current_bid : startingBid;
     const nextAmount = base + increment;
     const bidType: BidType = increment === 10000 ? 'QUICK_10K' : increment === 20000 ? 'QUICK_20K' : 'QUICK_50K';
     return placeBid(teamId, nextAmount, bidType);
@@ -534,7 +538,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const expiresAt = Date.now() + duration * 1000;
     expiresAtRef.current = expiresAt;
 
-    const newAmount = previousBid ? previousBid.amount : currentAuction.starting_bid;
+    const newAmount = previousBid ? previousBid.amount : ((currentAuction.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000);
     const newTeamId = previousBid ? previousBid.team_id : null;
 
     const updatedAuction: Auction = {
@@ -570,7 +574,8 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return { success: false, error: `Amount exceeds ${team.name} balance of ₹${team.current_balance.toLocaleString('en-IN')}` };
     }
 
-    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : currentAuction.starting_bid;
+    const startingBid = (currentAuction.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000;
+    const prevAmount = currentAuction.current_bid > 0 ? currentAuction.current_bid : startingBid;
     const increment = Math.max(0, newAmount - prevAmount);
 
     const editedBid: AuctionBid = {

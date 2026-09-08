@@ -20,7 +20,8 @@ import {
   Zap,
   Sparkles,
   Search,
-  X
+  X,
+  Lock
 } from 'lucide-react';
 import { useAuction } from '../../contexts/AuctionContext';
 import { useTournament } from '../../contexts/TournamentContext';
@@ -36,28 +37,28 @@ export const AdminAuction: React.FC = () => {
     currentAuction, 
     currentPlayer, 
     currentCategory, 
-    highestTeam, 
+    status, 
     timerSeconds, 
     isTimerRunning, 
-    status, 
-    bidHistory,
-    lastActionMessage,
+    highestTeam, 
+    bidHistory, 
     startAuction, 
-    placeBid, 
-    placeQuickBid, 
     pauseAuction, 
     resumeAuction, 
     resetTimer, 
-    markSoldManually, 
-    markUnsoldManually, 
+    placeBid, 
+    placeQuickBid, 
     undoLastBid, 
     editCurrentBid, 
+    markSoldManually, 
+    markUnsoldManually, 
     cancelSold, 
     reAuctionPlayer, 
-    selectNextPlayer 
+    selectNextPlayer,
+    lastActionMessage 
   } = useAuction();
 
-  const { players, teams, categories, settings } = useTournament();
+  const { players, teams, categories, settings, releaseSoldPlayer } = useTournament();
 
   // Selection states
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
@@ -71,11 +72,15 @@ export const AdminAuction: React.FC = () => {
   // Modals for critical confirmations
   const [showCancelSoldModal, setShowCancelSoldModal] = useState(false);
   const [showEditBidModal, setShowEditBidModal] = useState(false);
+  const [showRevertPlayerModal, setShowRevertPlayerModal] = useState(false);
+  const [revertingPlayer, setRevertingPlayer] = useState(false);
   const [editBidAmount, setEditBidAmount] = useState<string>('');
   const [editBidTeamId, setEditBidTeamId] = useState<string>('');
 
   // Selected player object
   const chosenPlayer = players.find(p => p.id === selectedPlayerId) || currentPlayer || players.find(p => p.auction_status === 'UNSOLD');
+  const soldTeam = chosenPlayer?.sold_team_id ? teams.find(t => t.id === chosenPlayer.sold_team_id) : null;
+  const isPlayerAlreadySold = chosenPlayer?.auction_status === 'SOLD';
 
   // Normalizer for player codes (e.g. 'GBL 00025', 'gbl25', '25', '025' -> '25')
   const normalizePlayerCode = (val: string) => {
@@ -85,7 +90,7 @@ export const AdminAuction: React.FC = () => {
   // Instant player search results supporting ID formats & names
   const searchResults = useMemo(() => {
     if (!playerSearchQuery.trim()) {
-      return players.filter(p => p.auction_status === 'UNSOLD').slice(0, 10);
+      return players.filter(p => p.auction_status === 'UNSOLD').slice(0, 15);
     }
     const q = playerSearchQuery.trim().toLowerCase();
     const normQ = normalizePlayerCode(q);
@@ -97,7 +102,7 @@ export const AdminAuction: React.FC = () => {
       if (normQ && (normP === normQ || normP.includes(normQ))) return true;
       if (p.academy && p.academy.toLowerCase().includes(q)) return true;
       return false;
-    }).slice(0, 12);
+    }).slice(0, 15);
   }, [playerSearchQuery, players]);
 
   const handleSelectSearchedPlayer = (player: Player) => {
@@ -167,6 +172,10 @@ export const AdminAuction: React.FC = () => {
     setErrorMessage(null);
     if (!chosenPlayer) {
       setErrorMessage('Please select a player to auction.');
+      return;
+    }
+    if (chosenPlayer.auction_status === 'SOLD') {
+      setErrorMessage(`Cannot auction: ${chosenPlayer.name} is already SOLD to ${soldTeam?.name || 'another team'}. Please revert to Unsold first.`);
       return;
     }
     startAuction(chosenPlayer, currentActiveCategory);
@@ -362,29 +371,38 @@ export const AdminAuction: React.FC = () => {
                       {playerSearchQuery.trim() ? 'No matching player found.' : 'Type player ID or name.'}
                     </div>
                   ) : (
-                    searchResults.map(p => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSelectSearchedPlayer(p)}
-                        className="w-full p-2.5 text-left hover:bg-gbl-navy-800 flex items-center justify-between gap-2.5 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <img
-                            src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                            alt={p.name}
-                            className="w-8 h-8 rounded-lg object-cover shrink-0 border border-gbl-navy-700"
-                          />
-                          <div className="min-w-0">
-                            <span className="font-bold text-white text-xs block truncate">{p.name}</span>
-                            <span className="text-[10px] font-mono text-slate-400">{p.player_code} • Age {p.age}</span>
+                    searchResults.map(p => {
+                      const pSoldTeam = p.sold_team_id ? teams.find(t => t.id === p.sold_team_id) : null;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleSelectSearchedPlayer(p)}
+                          className="w-full p-2.5 text-left hover:bg-gbl-navy-800 flex items-center justify-between gap-2.5 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <img
+                              src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                              alt={p.name}
+                              className="w-8 h-8 rounded-lg object-cover shrink-0 border border-gbl-navy-700"
+                            />
+                            <div className="min-w-0">
+                              <span className="font-bold text-white text-xs block truncate">{p.name}</span>
+                              <span className="text-[10px] font-mono text-slate-400">{p.player_code} • Age {p.age}</span>
+                            </div>
                           </div>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/40 shrink-0">
-                          {p.auction_category || 'NON-MEDALLIST'}
-                        </span>
-                      </button>
-                    ))
+                          {p.auction_status === 'SOLD' ? (
+                            <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-rose-950/80 text-rose-300 border border-rose-500/50 shrink-0">
+                              SOLD {pSoldTeam ? `(${pSoldTeam.short_name})` : ''}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/40 shrink-0">
+                              {p.auction_category || 'NON-MEDALLIST'}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -405,7 +423,40 @@ export const AdminAuction: React.FC = () => {
                     {chosenPlayer.player_code}
                   </span>
                 </div>
+                {isPlayerAlreadySold && (
+                  <div className="absolute top-3 right-3">
+                    <span className="px-3 py-1 rounded-xl bg-rose-600 text-white font-black text-xs uppercase tracking-wider shadow-lg">
+                      SOLD
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Already Sold Warning Alert & Quick Revert Button */}
+              {isPlayerAlreadySold && (
+                <div className="p-3.5 rounded-2xl bg-rose-950/70 border border-rose-500/80 text-rose-200 space-y-2 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 animate-bounce" />
+                      <span className="font-black uppercase tracking-wider text-xs text-white">PLAYER ALREADY SOLD</span>
+                    </div>
+                    <span className="text-xs font-black text-rose-300 font-mono">
+                      {formatINR(chosenPlayer.sold_price || 0)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-rose-300">
+                    Sold to <strong className="text-white">{soldTeam?.name || 'Assigned Team'}</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowRevertPlayerModal(true)}
+                    className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-rose-600/30"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Revert to Unsold &amp; Refund Team</span>
+                  </button>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-2xl font-black text-white font-sports uppercase leading-tight">
@@ -446,7 +497,7 @@ export const AdminAuction: React.FC = () => {
                     Opening Bid Tier:
                   </label>
                   <span className="text-xs font-black text-emerald-400 font-mono">
-                    {formatINR(currentActiveCategory.starting_bid)}
+                    {formatINR((currentActiveCategory.starting_bid && currentActiveCategory.starting_bid > 0) ? currentActiveCategory.starting_bid : 30000)}
                   </span>
                 </div>
                 <select
@@ -457,7 +508,7 @@ export const AdminAuction: React.FC = () => {
                 >
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.name}>
-                      {cat.name} (Starts at {formatINR(cat.starting_bid)})
+                      {cat.name} (Starts at {formatINR((cat.starting_bid && cat.starting_bid > 0) ? cat.starting_bid : 30000)})
                     </option>
                   ))}
                 </select>
@@ -492,10 +543,10 @@ export const AdminAuction: React.FC = () => {
                   CURRENT HIGHEST BID
                 </span>
                 <p className="text-4xl sm:text-5xl xl:text-6xl font-black text-emerald-400 font-mono tracking-tight mt-1 drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || currentActiveCategory.starting_bid)}
+                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || currentActiveCategory?.starting_bid || 30000)}
                 </p>
                 <p className="text-xs text-slate-400 mt-2">
-                  Starting Bid: <strong className="text-white font-mono">{formatINR(currentAuction?.starting_bid || currentActiveCategory.starting_bid)}</strong>
+                  Starting Bid: <strong className="text-white font-mono">{formatINR((currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : ((currentActiveCategory?.starting_bid && currentActiveCategory.starting_bid > 0) ? currentActiveCategory.starting_bid : 30000))}</strong>
                 </p>
               </div>
 
@@ -532,7 +583,9 @@ export const AdminAuction: React.FC = () => {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <span className="text-[10px] text-gbl-orange-400 uppercase font-black tracking-widest block">Leading Bidder</span>
+                      <span className="text-[10px] uppercase font-black tracking-widest text-gbl-orange-400 block">
+                        CURRENT HIGHEST BIDDER
+                      </span>
                       <h4 className="text-xl sm:text-2xl font-black text-white font-sports leading-tight truncate">{highestTeam.name}</h4>
                       <p className="text-xs text-slate-400 mt-0.5">Owner: <strong className="text-slate-200">{highestTeam.owner_name}</strong> • Wallet: <span className="font-mono text-emerald-400 font-bold">{formatINR(highestTeam.current_balance)}</span></p>
                     </div>
@@ -705,13 +758,29 @@ export const AdminAuction: React.FC = () => {
 
           {/* Primary Action: START / PAUSE / RESUME */}
           {status !== 'LIVE' && status !== 'PAUSED' ? (
-            <button
-              onClick={handleStartAuction}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>START AUCTION</span>
-            </button>
+            isPlayerAlreadySold ? (
+              <div className="space-y-2">
+                <button
+                  disabled
+                  className="w-full py-4 rounded-2xl bg-slate-800 text-slate-400 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-slate-700 cursor-not-allowed opacity-80"
+                  title="Player is already SOLD. Please revert first to auction again."
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>CANNOT AUCTION (ALREADY SOLD)</span>
+                </button>
+                <p className="text-[11px] text-amber-400 text-center font-semibold">
+                  Player belongs to {soldTeam?.name || 'a team'}. Use "Revert to Unsold" to release.
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartAuction}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>START AUCTION</span>
+              </button>
+            )
           ) : (
             <div className="grid grid-cols-2 gap-2.5">
               {isTimerRunning ? (
@@ -1038,6 +1107,58 @@ export const AdminAuction: React.FC = () => {
         </div>
       </Modal>
 
+      {/* MODAL: REVERT SOLD PLAYER TO UNSOLD */}
+      <Modal
+        isOpen={showRevertPlayerModal}
+        onClose={() => setShowRevertPlayerModal(false)}
+        title="REVERT PLAYER TO UNSOLD"
+        subtitle="Release player back into auction pool and refund purchasing team"
+      >
+        {chosenPlayer && (
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-rose-950/40 border border-rose-500/50 rounded-2xl text-rose-200 space-y-2">
+              <p className="font-bold text-sm">
+                Release <span className="text-white underline font-black">{chosenPlayer.name}</span>?
+              </p>
+              <ul className="list-disc list-inside space-y-1.5 text-xs text-rose-300">
+                <li>Player auction status will be set back to <strong className="text-white">UNSOLD</strong>.</li>
+                <li><strong className="text-white font-mono">{formatINR(chosenPlayer.sold_price || 0)}</strong> will be refunded to <strong className="text-white">{soldTeam?.name || 'purchasing team'}</strong>.</li>
+                <li>Team's total spent will decrease accordingly.</li>
+                <li>Player will be ready to auction again immediately.</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">
+              <button
+                type="button"
+                disabled={revertingPlayer}
+                onClick={() => setShowRevertPlayerModal(false)}
+                className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 font-bold hover:bg-gbl-navy-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={revertingPlayer}
+                onClick={async () => {
+                  setRevertingPlayer(true);
+                  const res = await releaseSoldPlayer(chosenPlayer.id);
+                  setRevertingPlayer(false);
+                  setShowRevertPlayerModal(false);
+                  if (!res.success) {
+                    setErrorMessage(res.message);
+                  }
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-black uppercase tracking-wider transition-colors shadow-lg shadow-rose-600/30"
+              >
+                {revertingPlayer ? 'Reverting...' : 'Confirm Revert & Refund'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </div>
   );
 };
+

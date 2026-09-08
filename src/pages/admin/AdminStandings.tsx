@@ -1,13 +1,32 @@
-import React, { useState } from 'react';
-import { ListOrdered, CheckCircle, XCircle, Save, Award, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ListOrdered, CheckCircle, XCircle, Save, Award, Download, Layers, Shuffle } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { exportStandingsCSV } from '../../lib/csv';
 
 export const AdminStandings: React.FC = () => {
-  const { standings, teams, settings, toggleManualQualifier, setQualifyingTeamsCount } = useTournament();
+  const { standings, teams, settings, toggleManualQualifier, setQualifyingTeamsCount, setTeamsPools } = useTournament();
 
   const [qualifyingCount, setLocalQualifyingCount] = useState<number>(settings.qualifying_teams_count || 8);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Editable pool state
+  const [poolAssignments, setPoolAssignments] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    teams.forEach(t => {
+      init[t.id] = t.pool || 'Unassigned';
+    });
+    return init;
+  });
+
+  useEffect(() => {
+    setPoolAssignments(prev => {
+      const next = { ...prev };
+      teams.forEach(t => {
+        if (!next[t.id]) next[t.id] = t.pool || 'Unassigned';
+      });
+      return next;
+    });
+  }, [teams]);
 
   const teamMap = new Map(teams.map(t => [t.id, t]));
   const manuallySelectedCount = standings.filter(s => s.manual_qualifier).length;
@@ -18,10 +37,32 @@ export const AdminStandings: React.FC = () => {
     setTimeout(() => setSaveMessage(null), 3000);
   };
 
+  const handlePoolSelect = (teamId: string, pool: string) => {
+    setPoolAssignments(prev => ({ ...prev, [teamId]: pool }));
+  };
+
+  const handleAutoSplit = () => {
+    const next: Record<string, string> = {};
+    teams.forEach((t, idx) => {
+      next[t.id] = idx < 5 ? 'Pool A' : 'Pool B';
+    });
+    setPoolAssignments(next);
+  };
+
+  const handleSavePools = async () => {
+    await setTeamsPools(poolAssignments);
+    setSaveMessage('Pool allocations (Pool A & Pool B) saved successfully! Changes are live on public standings.');
+    setTimeout(() => setSaveMessage(null), 4000);
+  };
+
+  const poolACount = Object.values(poolAssignments).filter(p => p === 'Pool A').length;
+  const poolBCount = Object.values(poolAssignments).filter(p => p === 'Pool B').length;
+
   const handleExportCSV = () => {
     const enriched = standings.map(s => ({
       ...s,
-      teamName: teamMap.get(s.team_id)?.name
+      teamName: teamMap.get(s.team_id)?.name,
+      pool: teamMap.get(s.team_id)?.pool || 'Unassigned'
     }));
     exportStandingsCSV(enriched);
   };
@@ -36,7 +77,7 @@ export const AdminStandings: React.FC = () => {
             STANDINGS & QUALIFICATION MANAGEMENT
           </h1>
           <p className="text-xs text-slate-400">
-            Control ranking rules, qualification thresholds, and manual overrides
+            Configure Pool A & Pool B allocations for the 10 teams, qualification thresholds, and manual overrides
           </p>
         </div>
 
@@ -56,7 +97,98 @@ export const AdminStandings: React.FC = () => {
         </div>
       )}
 
-      {/* SECTION 33: QUALIFICATION THRESHOLD & CONTROLS */}
+      {/* SECTION: POST-AUCTION POOL ALLOCATION (POOL A - 5 TEAMS & POOL B - 5 TEAMS) */}
+      <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 shadow-xl space-y-5">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gbl-navy-800">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <Layers className="w-4 h-4 text-gbl-orange-500" />
+              <span>Tournament Pools Allocation (Post-Auction)</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Assign the 10 teams into <strong>Pool A (5 Teams)</strong> and <strong>Pool B (5 Teams)</strong> after auction completion.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-xs mr-2">
+              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolACount === 5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                Pool A: {poolACount}/5
+              </span>
+              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolBCount === 5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                Pool B: {poolBCount}/5
+              </span>
+            </div>
+
+            <button
+              onClick={handleAutoSplit}
+              className="px-3 py-1.5 rounded-xl bg-gbl-navy-950 hover:bg-gbl-navy-800 border border-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+            >
+              <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+              <span>Auto-Split 5 &amp; 5</span>
+            </button>
+
+            <button
+              onClick={handleSavePools}
+              className="px-4 py-1.5 rounded-xl bg-gbl-orange-600 hover:bg-gbl-orange-500 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Pools</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Teams Pool Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {teams.map((t) => {
+            const currentPool = poolAssignments[t.id] || 'Unassigned';
+            return (
+              <div 
+                key={t.id}
+                className={`p-3 rounded-2xl border transition-all ${
+                  currentPool === 'Pool A'
+                    ? 'bg-sky-950/30 border-sky-500/40'
+                    : currentPool === 'Pool B'
+                    ? 'bg-amber-950/30 border-amber-500/40'
+                    : 'bg-gbl-navy-950 border-gbl-navy-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {t.logo_url ? (
+                    <img src={t.logo_url} alt={t.name} className="w-7 h-7 rounded-lg object-contain bg-slate-900 p-0.5 border border-slate-700 shrink-0" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0" style={{ backgroundColor: t.team_color }}>
+                      {t.short_name}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{t.name}</p>
+                    <span className="text-[10px] text-slate-400">Team #{t.team_number}</span>
+                  </div>
+                </div>
+
+                <select
+                  value={currentPool}
+                  onChange={(e) => handlePoolSelect(t.id, e.target.value)}
+                  className={`w-full text-xs font-bold rounded-xl px-2.5 py-1.5 border focus:outline-none ${
+                    currentPool === 'Pool A'
+                      ? 'bg-sky-950 border-sky-500/60 text-sky-300'
+                      : currentPool === 'Pool B'
+                      ? 'bg-amber-950 border-amber-500/60 text-amber-300'
+                      : 'bg-gbl-navy-900 border-gbl-navy-700 text-slate-400'
+                  }`}
+                >
+                  <option value="Unassigned">Unassigned</option>
+                  <option value="Pool A">Pool A</option>
+                  <option value="Pool B">Pool B</option>
+                </select>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SECTION: QUALIFICATION THRESHOLD & CONTROLS */}
       <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 shadow-xl space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-gbl-navy-800 flex items-center gap-2">
           <Award className="w-4 h-4 text-gbl-orange-500" />
@@ -97,6 +229,7 @@ export const AdminStandings: React.FC = () => {
               <tr>
                 <th className="p-4 text-center">Rank</th>
                 <th className="p-4">Team</th>
+                <th className="p-4 text-center">Pool</th>
                 <th className="p-4 text-center">Played</th>
                 <th className="p-4 text-center">Won</th>
                 <th className="p-4 text-center">Lost</th>
@@ -110,6 +243,7 @@ export const AdminStandings: React.FC = () => {
               {standings.map((s, index) => {
                 const team = teamMap.get(s.team_id);
                 const isAutoQual = index < qualifyingCount;
+                const pool = team?.pool || 'Unassigned';
 
                 return (
                   <tr key={s.id} className="hover:bg-gbl-navy-800/40 transition-colors">
@@ -125,6 +259,18 @@ export const AdminStandings: React.FC = () => {
                         </div>
                         <span className="font-bold text-white text-sm">{team?.name}</span>
                       </div>
+                    </td>
+
+                    <td className="p-4 text-center">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        pool === 'Pool A'
+                          ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                          : pool === 'Pool B'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {pool}
+                      </span>
                     </td>
 
                     <td className="p-4 text-center font-mono text-slate-300">{s.played}</td>

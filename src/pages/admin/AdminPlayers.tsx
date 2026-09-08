@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   AlertTriangle,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { Player, ELIGIBLE_CATEGORIES, AUCTION_CATEGORIES, AuctionCategory, EligibleCategory } from '../../types/database';
@@ -22,12 +23,13 @@ import { Modal } from '../../components/common/Modal';
 import { PhoneInput, parsePhoneNumber } from '../../components/common/PhoneInput';
 
 export const AdminPlayers: React.FC = () => {
-  const { players, teams, categories, createPlayer, updatePlayer, deletePlayer, importPlayersList } = useTournament();
+  const { players, teams, categories, createPlayer, updatePlayer, deletePlayer, importPlayersList, releaseSoldPlayer } = useTournament();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAuctionCatFilter, setSelectedAuctionCatFilter] = useState<'ALL' | AuctionCategory | 'SOLD_OWNERS'>('ALL');
   const [selectedEligibleFilter, setSelectedEligibleFilter] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
+  const [unsellingPlayer, setUnsellingPlayer] = useState<Player | null>(null);
 
   // Create / Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -240,11 +242,11 @@ export const AdminPlayers: React.FC = () => {
     // Auction category filter tab
     let matchesAuctionCat = true;
     if (selectedAuctionCatFilter === 'ALL') {
-      matchesAuctionCat = selectedStatusFilter !== 'ALL' || p.auction_status !== 'SOLD';
+      matchesAuctionCat = true;
     } else if (selectedAuctionCatFilter === 'SOLD_OWNERS') {
       matchesAuctionCat = p.auction_status === 'SOLD';
     } else {
-      matchesAuctionCat = (p.auction_category || 'NON-MEDALLIST') === selectedAuctionCatFilter && p.auction_status !== 'SOLD';
+      matchesAuctionCat = (p.auction_category || 'NON-MEDALLIST') === selectedAuctionCatFilter;
     }
 
     const matchesEligible = selectedEligibleFilter === 'ALL' ||
@@ -507,6 +509,15 @@ export const AdminPlayers: React.FC = () => {
 
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {player.auction_status === 'SOLD' && (
+                            <button
+                              onClick={() => setUnsellingPlayer(player)}
+                              className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 hover:text-amber-300 transition-colors"
+                              title="Revert to Unsold (Refund Team)"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => openEditModal(player)}
                             className="p-1.5 rounded-lg bg-gbl-navy-950 hover:bg-gbl-navy-800 text-slate-300 hover:text-white transition-colors"
@@ -869,6 +880,52 @@ export const AdminPlayers: React.FC = () => {
               className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold uppercase tracking-wider"
             >
               Delete Player
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* CONFIRM REVERT TO UNSOLD MODAL */}
+      <Modal
+        isOpen={!!unsellingPlayer}
+        onClose={() => setUnsellingPlayer(null)}
+        title="REVERT PLAYER TO UNSOLD"
+        subtitle="Reverse player sale, refund squad purse, and restore availability"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-300">
+            Are you sure you want to remove <strong className="text-white">{unsellingPlayer?.name}</strong> from team{' '}
+            <strong className="text-amber-400">{teamMap.get(unsellingPlayer?.sold_team_id || '')?.name}</strong>?
+          </p>
+          <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/40 text-amber-300 space-y-1">
+            <p className="font-bold">Summary of actions upon confirmation:</p>
+            <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-200/90">
+              <li>Player status will revert to <strong>UNSOLD</strong> and become available for live auction.</li>
+              <li><strong>{formatINR(unsellingPlayer?.sold_price || 0)}</strong> will be refunded to {teamMap.get(unsellingPlayer?.sold_team_id || '')?.name}'s balance.</li>
+              <li>Player will be removed from team squad roster.</li>
+            </ul>
+          </div>
+          <div className="flex justify-end gap-3 pt-3 border-t border-gbl-navy-800">
+            <button
+              onClick={() => setUnsellingPlayer(null)}
+              className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (unsellingPlayer) {
+                  const res = await releaseSoldPlayer(unsellingPlayer.id);
+                  setUnsellingPlayer(null);
+                  if (res.success) {
+                    setSaveToast(res.message);
+                    setTimeout(() => setSaveToast(null), 5000);
+                  }
+                }
+              }}
+              className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold uppercase tracking-wider"
+            >
+              Confirm Revert to Unsold
             </button>
           </div>
         </div>

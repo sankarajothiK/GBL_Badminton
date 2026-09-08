@@ -95,20 +95,24 @@ export const TeamDetailPage: React.FC = () => {
                 <span className="font-black text-emerald-400 font-mono text-base">{formatINR(metrics.remainingBalance)}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400">Total Spent on Players:</span>
+                <span className="font-bold text-white font-mono">{formatINR(metrics.totalSpent)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Owner Allocation:</span>
                 <span className="font-bold text-amber-400 font-mono">
                   {metrics.ownerAllocation > 0 ? formatINR(metrics.ownerAllocation) : '₹0 (Non-Playing)'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Total Spent on Players:</span>
-                <span className="font-bold text-white font-mono">{formatINR(metrics.totalSpent)}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Roster Capacity:</span>
                 <span className="font-bold text-sky-400">
                   {squad.length} / {team.total_squad_slots || 6} Members
                 </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-gbl-navy-800">
+                <span className="text-amber-400 font-bold uppercase tracking-wider text-[11px]">Max Next Legal Bid:</span>
+                <span className="font-black text-amber-400 font-mono text-base">{formatINR(metrics.maxLegalBid)}</span>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Shield, Edit2, Download, Upload, Users, Wallet, Plus, Check, Trash2, Lock } from 'lucide-react';
+import { Shield, Edit2, Download, Upload, Users, Wallet, Plus, Check, Trash2, Lock, RotateCcw } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
-import { Team } from '../../types/database';
+import { Team, Player } from '../../types/database';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { exportTeamsCSV, exportSquadsCSV } from '../../lib/csv';
 import { uploadImage } from '../../lib/supabase';
@@ -9,10 +9,12 @@ import { calculateMaxBid, getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Modal } from '../../components/common/Modal';
 
 export const AdminTeams: React.FC = () => {
-  const { teams, players, settings, updateTeam, createTeam, deleteTeam } = useTournament();
+  const { teams, players, settings, updateTeam, createTeam, deleteTeam, releaseSoldPlayer } = useTournament();
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
+  const [playerToRevert, setPlayerToRevert] = useState<{ player: Player; team: Team } | null>(null);
+  const [reverting, setReverting] = useState(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
@@ -333,6 +335,63 @@ export const AdminTeams: React.FC = () => {
                     )}
                   </span>
                 </div>
+              </div>
+
+              {/* Purchased Squad Players List with Unsell Option */}
+              <div className="pt-3 border-t border-gbl-navy-800 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-black text-slate-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                    <Users className="w-3 h-3 text-gbl-orange-400" />
+                    Purchased Players ({squad.length})
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-semibold">
+                    {6 - squad.length > 0 ? `${6 - squad.length} slots left` : 'Full roster'}
+                  </span>
+                </div>
+
+                {squad.length === 0 ? (
+                  <div className="py-3 px-3 bg-gbl-navy-950/60 rounded-xl border border-dashed border-gbl-navy-800 text-center text-slate-500 text-xs font-medium">
+                    No players purchased yet
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {squad.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between p-2 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800/80 text-xs hover:border-gbl-navy-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img
+                            src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'}
+                            alt={p.name}
+                            className="w-8 h-8 rounded-lg object-cover border border-gbl-navy-700 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <span className="font-bold text-white block truncate leading-tight">{p.name}</span>
+                            <span className="text-[10px] text-slate-400 truncate block">
+                              {p.player_code} • {p.eligible_category_names?.slice(0, 2).join(', ')}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-mono font-black text-xs text-emerald-400">
+                            {formatINR(p.sold_price || 0)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPlayerToRevert({ player: p, team })}
+                            title="Remove from squad & refund budget"
+                            className="px-2 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 hover:text-white transition-colors flex items-center gap-1 text-[10px] font-bold"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Unsell</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -778,6 +837,59 @@ export const AdminTeams: React.FC = () => {
         </div>
       </Modal>
 
+      {/* CONFIRM REVERT / UNSELL SQUAD PLAYER MODAL */}
+      <Modal
+        isOpen={!!playerToRevert}
+        onClose={() => setPlayerToRevert(null)}
+        title="REMOVE SQUAD PLAYER"
+        subtitle="Revert player to Unsold status and refund team budget"
+      >
+        {playerToRevert && (
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-amber-950/30 border border-amber-500/40 rounded-2xl text-amber-200 space-y-2">
+              <p className="font-bold text-sm">
+                Are you sure you want to remove <span className="text-white underline font-black">{playerToRevert.player.name}</span> from <span className="text-white underline font-black">{playerToRevert.team.name}</span>?
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs text-amber-300/90">
+                <li>Player status will be set back to <strong className="text-white">UNSOLD</strong>.</li>
+                <li><strong className="text-white font-mono">{formatINR(playerToRevert.player.sold_price || 0)}</strong> will be refunded to {playerToRevert.team.name}'s balance.</li>
+                <li>Total spent for {playerToRevert.team.name} will be deducted.</li>
+                <li>The player will immediately be available again in the auction engine.</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-gbl-navy-800">
+              <button
+                type="button"
+                disabled={reverting}
+                onClick={() => setPlayerToRevert(null)}
+                className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 font-bold hover:bg-gbl-navy-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={reverting}
+                onClick={async () => {
+                  setReverting(true);
+                  const res = await releaseSoldPlayer(playerToRevert.player.id);
+                  setReverting(false);
+                  setPlayerToRevert(null);
+                  if (res.success) {
+                    setSaveToast(`Player "${playerToRevert.player.name}" removed from squad and refunded!`);
+                    setTimeout(() => setSaveToast(null), 5000);
+                  }
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-black uppercase tracking-wider transition-colors shadow-lg shadow-rose-600/30"
+              >
+                {reverting ? 'Refunding...' : 'Confirm Remove & Refund'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </div>
   );
 };
+

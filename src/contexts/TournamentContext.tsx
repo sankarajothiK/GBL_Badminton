@@ -70,6 +70,44 @@ function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
       sanitized[key] = (team as any)[key];
     }
   }
+  if (team.pool) {
+    let cleanDesc = (sanitized.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
+    sanitized.description = `[POOL:${team.pool}] ${cleanDesc}`.trim();
+  }
+  return sanitized;
+}
+
+/**
+ * Filter match payload to strictly valid Supabase table columns, embedding
+ * player names and Trump Card metadata inside notes.
+ */
+function sanitizeMatchForDb(match: Partial<TournamentMatch>): Record<string, any> {
+  const allowedCols = [
+    'id', 'tournament_id', 'category_id', 'round', 'match_number',
+    'team1_id', 'team2_id', 'court', 'match_date', 'match_time',
+    'status', 'winner_team_id', 'score_summary',
+    'set1_team1', 'set1_team2', 'set2_team1', 'set2_team2', 'set3_team1', 'set3_team2',
+    'notes', 'created_at', 'updated_at'
+  ];
+  const sanitized: Record<string, any> = {};
+  for (const key of allowedCols) {
+    if (key in match && (match as any)[key] !== undefined) {
+      sanitized[key] = (match as any)[key];
+    }
+  }
+  const meta: Record<string, any> = {};
+  if (match.player1_names) meta.p1 = match.player1_names;
+  if (match.player2_names) meta.p2 = match.player2_names;
+  if (match.is_trump_match) meta.trump = true;
+  if (match.trump_team_id) meta.trumpTeam = match.trump_team_id;
+  if (match.match_points_awarded !== undefined) meta.pts = match.match_points_awarded;
+
+  let cleanNotes = (sanitized.notes || '').replace(/\[MATCH_META:[^\]]+\]\s*/g, '').trim();
+  if (Object.keys(meta).length > 0) {
+    sanitized.notes = `[MATCH_META:${JSON.stringify(meta)}] ${cleanNotes}`.trim();
+  } else {
+    sanitized.notes = cleanNotes || null;
+  }
   return sanitized;
 }
 
@@ -134,6 +172,8 @@ interface TournamentContextType {
   updateCategory: (categoryId: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (categoryId: string) => Promise<void>;
   saveMatchResult: (match: TournamentMatch) => Promise<void>;
+  releaseSoldPlayer: (playerId: string) => Promise<{ success: boolean; message: string }>;
+  setTeamsPools: (assignments: Record<string, string>) => Promise<void>;
   toggleManualQualifier: (teamId: string) => Promise<void>;
   setQualifyingTeamsCount: (count: number) => Promise<void>;
   addGalleryItem: (item: Omit<GalleryItem, 'id' | 'created_at'>) => Promise<void>;
@@ -215,9 +255,18 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? cloudTeam.owner_reserved_points : 30000);
               const auctionBudget = (cloudTeam.initial_budget || 500000) - ownerPoints;
 
+              let pool = cloudTeam.pool || localTeam.pool;
+              if (!pool && cloudTeam.description) {
+                const m = cloudTeam.description.match(/\[POOL:([^\]]+)\]/);
+                if (m) pool = m[1].trim();
+              }
+              const cleanDesc = (cloudTeam.description || localTeam.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
+
               const mergedTeam: Team = {
                 ...localTeam,
                 ...cloudTeam,
+                description: cleanDesc,
+                pool: pool || 'Unassigned',
                 logo_url: bestLogo,
                 owner_photo_url: bestOwnerPhoto,
                 owner_is_player: !isNoPlayTeam,
@@ -263,8 +312,39 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           saveStoredData(GBL_CATEGORIES_STORAGE_KEY, cData);
         }
         if (mData && mData.length > 0) {
-          setMatches(mData);
-          saveStoredData(GBL_MATCHES_STORAGE_KEY, mData);
+          const hydratedMatches = mData.map((cloudM: any) => {
+            let player1_names = cloudM.player1_names;
+            let player2_names = cloudM.player2_names;
+            let is_trump_match = cloudM.is_trump_match;
+            let trump_team_id = cloudM.trump_team_id;
+            let match_points_awarded = cloudM.match_points_awarded;
+
+            if (cloudM.notes && cloudM.notes.includes('[MATCH_META:')) {
+              const metaMatch = cloudM.notes.match(/\[MATCH_META:({[^\]]+})\]/);
+              if (metaMatch) {
+                try {
+                  const meta = JSON.parse(metaMatch[1]);
+                  if (meta.p1 && !player1_names) player1_names = meta.p1;
+                  if (meta.p2 && !player2_names) player2_names = meta.p2;
+                  if (meta.trump !== undefined && is_trump_match === undefined) is_trump_match = meta.trump;
+                  if (meta.trumpTeam && !trump_team_id) trump_team_id = meta.trumpTeam;
+                  if (meta.pts !== undefined && match_points_awarded === undefined) match_points_awarded = meta.pts;
+                } catch {}
+              }
+            }
+            const cleanNotes = (cloudM.notes || '').replace(/\[MATCH_META:[^\]]+\]\s*/g, '').trim();
+            return {
+              ...cloudM,
+              notes: cleanNotes || null,
+              player1_names: player1_names || '',
+              player2_names: player2_names || '',
+              is_trump_match: !!is_trump_match,
+              trump_team_id: trump_team_id || null,
+              match_points_awarded: match_points_awarded ?? (is_trump_match ? 2 : 1)
+            } as TournamentMatch;
+          });
+          setMatches(hydratedMatches);
+          saveStoredData(GBL_MATCHES_STORAGE_KEY, hydratedMatches);
         }
         if (stData && stData.length > 0) {
           setStandings(stData);
@@ -802,29 +882,36 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Save Match Result and Recalculate Standings Automatically
   const saveMatchResult = async (matchData: TournamentMatch) => {
+    const ptsAwarded = matchData.is_trump_match ? 2 : 1;
+    const enrichedMatch: TournamentMatch = {
+      ...matchData,
+      match_points_awarded: ptsAwarded
+    };
+
     setMatches(prev => {
-      const idx = prev.findIndex(m => m.id === matchData.id);
+      const idx = prev.findIndex(m => m.id === enrichedMatch.id);
       let next: TournamentMatch[];
       if (idx >= 0) {
         next = [...prev];
-        next[idx] = matchData;
+        next[idx] = enrichedMatch;
       } else {
-        next = [...prev, matchData];
+        next = [...prev, enrichedMatch];
       }
       saveStoredData(GBL_MATCHES_STORAGE_KEY, next);
       return next;
     });
 
     try {
-      await supabase.from('tournament_matches').upsert(matchData);
-    } catch {
-      // ignore
+      const payload = sanitizeMatchForDb(enrichedMatch);
+      await supabase.from('tournament_matches').upsert(payload);
+    } catch (e) {
+      console.warn('Sync error on saveMatchResult:', e);
     }
 
-    realtimeManager.broadcast('MATCH_SAVED', matchData);
+    realtimeManager.broadcast('MATCH_SAVED', enrichedMatch);
     // Auto-calculate standings
-    recalculateStandings([...matches.filter(m => m.id !== matchData.id), matchData]);
-    logAuditAction('MATCH_RESULT_ENTERED', { matchNumber: matchData.match_number, winner: matchData.winner_team_id });
+    recalculateStandings([...matches.filter(m => m.id !== enrichedMatch.id), enrichedMatch]);
+    logAuditAction('MATCH_RESULT_ENTERED', { matchNumber: enrichedMatch.match_number, winner: enrichedMatch.winner_team_id, trump: enrichedMatch.is_trump_match });
   };
 
   const recalculateStandings = (allMatches: TournamentMatch[]) => {
@@ -834,6 +921,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       stats[t.id] = { played: 0, won: 0, lost: 0, points: 0, score_for: 0, score_against: 0 };
     });
 
+    // 1. Accumulate set scores, played, won, lost
     allMatches.forEach(m => {
       if (m.status === 'COMPLETED' && m.winner_team_id) {
         const t1 = m.team1_id;
@@ -847,7 +935,6 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           stats[t1].score_against += totalT2;
           if (m.winner_team_id === t1) {
             stats[t1].won += 1;
-            stats[t1].points += 2; // 2 points for win
           } else {
             stats[t1].lost += 1;
           }
@@ -859,12 +946,52 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           stats[t2].score_against += totalT1;
           if (m.winner_team_id === t2) {
             stats[t2].won += 1;
-            stats[t2].points += 2;
           } else {
             stats[t2].lost += 1;
           }
         }
       }
+    });
+
+    // 2. Dynamic points calculation per fixture / clash
+    // Group completed matches by tie / fixture
+    const fixtures: Record<string, TournamentMatch[]> = {};
+    allMatches.forEach(m => {
+      if (m.status === 'COMPLETED' && m.winner_team_id) {
+        const pairKey = [m.team1_id, m.team2_id].sort().join('_');
+        const fKey = `${m.round || 'Round'}_${pairKey}`;
+        if (!fixtures[fKey]) fixtures[fKey] = [];
+        fixtures[fKey].push(m);
+      }
+    });
+
+    // For each fixture, evaluate normal wins points + trump card wins
+    Object.values(fixtures).forEach(matchList => {
+      // Find involved teams
+      const teamsInFixture = new Set<string>();
+      matchList.forEach(m => {
+        teamsInFixture.add(m.team1_id);
+        teamsInFixture.add(m.team2_id);
+      });
+
+      teamsInFixture.forEach(teamId => {
+        if (!stats[teamId]) return;
+
+        // Normal wins points rule: 1 win -> 1 pt, 2 wins -> 2 pts, 3 wins -> 3 pts, 4 wins -> 5 pts
+        const normalWins = matchList.filter(m => !m.is_trump_match && m.winner_team_id === teamId).length;
+        let normalPoints = 0;
+        if (normalWins === 1) normalPoints = 1;
+        else if (normalWins === 2) normalPoints = 2;
+        else if (normalWins === 3) normalPoints = 3;
+        else if (normalWins === 4) normalPoints = 5;
+        else if (normalWins > 4) normalPoints = 5 + (normalWins - 4);
+
+        // Trump Card match wins (+2 pts per win)
+        const trumpWins = matchList.filter(m => m.is_trump_match && m.winner_team_id === teamId).length;
+        const trumpPoints = trumpWins * 2;
+
+        stats[teamId].points += (normalPoints + trumpPoints);
+      });
     });
 
     // Rank teams by Points DESC, then Score Diff DESC
@@ -907,6 +1034,100 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setStandings(rankedStandings);
     saveStoredData(GBL_STANDINGS_STORAGE_KEY, rankedStandings);
     realtimeManager.broadcast('STANDINGS_UPDATED', rankedStandings);
+  };
+
+  // Release Sold Player back to UNSOLD and refund team balance
+  const releaseSoldPlayer = async (playerId: string): Promise<{ success: boolean; message: string }> => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return { success: false, message: 'Player not found' };
+    if (player.auction_status !== 'SOLD') return { success: false, message: 'Player is not currently marked as SOLD' };
+
+    const refundTeamId = player.sold_team_id;
+    const refundPrice = player.sold_price || 0;
+
+    // 1. Refund team balance and reduce spent
+    if (refundTeamId) {
+      const team = teams.find(t => t.id === refundTeamId);
+      if (team) {
+        const updatedBal = (team.current_balance || 0) + refundPrice;
+        const updatedSpent = Math.max(0, (team.total_spent || 0) - refundPrice);
+        const updatedTeam: Team = {
+          ...team,
+          current_balance: updatedBal,
+          total_spent: updatedSpent,
+          updated_at: new Date().toISOString()
+        };
+        setTeams(prev => {
+          const next = prev.map(t => t.id === refundTeamId ? updatedTeam : t);
+          saveStoredData(GBL_TEAMS_STORAGE_KEY, next);
+          return next;
+        });
+        realtimeManager.broadcast('TEAM_UPDATED', updatedTeam);
+        try {
+          const payload = sanitizeTeamForDb(updatedTeam);
+          await supabase.from('teams').upsert(payload);
+        } catch (e) {
+          console.warn('Sync error on refund team balance:', e);
+        }
+      }
+    }
+
+    // 2. Revert player to UNSOLD status
+    const updatedPlayer: Player = {
+      ...player,
+      auction_status: 'UNSOLD',
+      sold_price: null,
+      sold_team_id: null,
+      updated_at: new Date().toISOString()
+    };
+    setPlayers(prev => {
+      const next = prev.map(p => p.id === playerId ? updatedPlayer : p);
+      saveStoredData(GBL_PLAYERS_STORAGE_KEY, next);
+      return next;
+    });
+    realtimeManager.broadcast('PLAYER_UPDATED', updatedPlayer);
+    try {
+      const payload = sanitizePlayerForDb(updatedPlayer);
+      await supabase.from('players').upsert(payload);
+    } catch (e) {
+      console.warn('Sync error on revert player to unsold:', e);
+    }
+
+    logAuditAction('PLAYER_RELEASED_TO_UNSOLD', {
+      playerId,
+      playerName: player.name,
+      refundTeamId,
+      refundPrice
+    });
+
+    return {
+      success: true,
+      message: `Successfully released ${player.name}. ₹${refundPrice.toLocaleString('en-IN')} has been refunded to the team purse.`
+    };
+  };
+
+  // Assign Pool A / Pool B to teams
+  const setTeamsPools = async (assignments: Record<string, string>) => {
+    const updatedTeams = teams.map(t => {
+      if (assignments[t.id]) {
+        return { ...t, pool: assignments[t.id], updated_at: new Date().toISOString() };
+      }
+      return t;
+    });
+    setTeams(updatedTeams);
+    saveStoredData(GBL_TEAMS_STORAGE_KEY, updatedTeams);
+    realtimeManager.broadcast('TEAMS_POOLS_UPDATED', assignments);
+    for (const t of updatedTeams) {
+      if (assignments[t.id]) {
+        try {
+          const payload = sanitizeTeamForDb(t);
+          await supabase.from('teams').upsert(payload);
+        } catch (e) {
+          console.warn('Sync error on team pool:', e);
+        }
+      }
+    }
+    logAuditAction('TEAMS_POOLS_ASSIGNED', { count: Object.keys(assignments).length });
   };
 
   // Toggle manual qualifier
@@ -1153,6 +1374,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateCategory,
         deleteCategory,
         saveMatchResult,
+        releaseSoldPlayer,
+        setTeamsPools,
         toggleManualQualifier,
         setQualifyingTeamsCount,
         addGalleryItem,

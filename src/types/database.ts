@@ -115,6 +115,7 @@ export interface Team {
   auction_budget?: number;
   max_auction_slots?: number;
   total_squad_slots?: number;
+  pool?: 'Pool A' | 'Pool B' | 'Unassigned' | string;
 }
 
 export interface Player {
@@ -209,6 +210,11 @@ export interface TournamentMatch {
   set3_team1: number;
   set3_team2: number;
   notes: string | null;
+  player1_names?: string;
+  player2_names?: string;
+  is_trump_match?: boolean;
+  trump_team_id?: string | null;
+  match_points_awarded?: number;
   created_at: string;
   updated_at: string;
 }

@@ -75,14 +75,30 @@ export const ResultsPage: React.FC = () => {
               const team2 = teamMap.get(match.team2_id);
               const isWinner1 = match.winner_team_id === match.team1_id;
               const isWinner2 = match.winner_team_id === match.team2_id;
+              const winner = match.winner_team_id ? teamMap.get(match.winner_team_id) : null;
+              const isTrump = !!match.is_trump_match;
+              const ptsAwarded = match.match_points_awarded ?? (isTrump ? 2 : 1);
 
               return (
                 <div
                   key={match.id}
-                  className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-2xl p-6 shadow-xl space-y-4"
+                  className={`bg-gbl-navy-900 border rounded-2xl p-6 shadow-xl space-y-4 ${
+                    isTrump ? 'border-amber-500/40 shadow-amber-500/10' : 'border-gbl-navy-800'
+                  }`}
                 >
-                  <div className="flex justify-between items-center text-xs pb-3 border-b border-gbl-navy-800">
-                    <span className="font-bold text-gbl-orange-400 uppercase tracking-wider">{match.round} • Match #{match.match_number}</span>
+                  <div className="flex justify-between items-center text-xs pb-3 border-b border-gbl-navy-800 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-gbl-orange-400 uppercase tracking-wider">{match.round} • Match #{match.match_number}</span>
+                      {isTrump ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm">
+                          ★ TRUMP CARD (2 PTS)
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400">
+                          Normal Match
+                        </span>
+                      )}
+                    </div>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                       match.status === 'COMPLETED'
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
@@ -97,58 +113,85 @@ export const ResultsPage: React.FC = () => {
                   {/* Teams and Scores comparison */}
                   <div className="space-y-3">
                     {/* Team 1 */}
-                    <div className={`p-3 rounded-xl flex items-center justify-between gap-2 border ${
-                      isWinner1 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
-                    }`}>
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {team1?.logo_url ? (
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
-                            <img src={team1.logo_url} alt={team1.name} className="w-full h-full object-contain" />
-                          </div>
-                        ) : (
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team1?.team_color || '#333' }}>
-                            {team1?.short_name || 'T1'}
-                          </div>
-                        )}
-                        <span className="text-xs sm:text-sm font-bold truncate">{team1?.name || 'Team 1'}</span>
-                        {isWinner1 && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />}
+                    <div className="space-y-1">
+                      <div className={`p-3 rounded-xl flex items-center justify-between gap-2 border ${
+                        isWinner1 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
+                      }`}>
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {team1?.logo_url ? (
+                            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                              <img src={team1.logo_url} alt={team1.name} className="w-full h-full object-contain" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team1?.team_color || '#333' }}>
+                              {team1?.short_name || 'T1'}
+                            </div>
+                          )}
+                          <span className="text-xs sm:text-sm font-bold truncate">{team1?.name || 'Team 1'}</span>
+                          {isWinner1 && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs font-bold shrink-0">
+                          <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set1_team1}</span>
+                          <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set2_team1}</span>
+                          {match.set3_team1 > 0 && <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set3_team1}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs font-bold shrink-0">
-                        <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set1_team1}</span>
-                        <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set2_team1}</span>
-                        {match.set3_team1 > 0 && <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set3_team1}</span>}
-                      </div>
+                      {match.player1_names && (
+                        <p className="text-[11px] text-slate-400 pl-3">
+                          Players: <strong className="text-slate-300">{match.player1_names}</strong>
+                        </p>
+                      )}
                     </div>
 
                     {/* Team 2 */}
-                    <div className={`p-3 rounded-xl flex items-center justify-between gap-2 border ${
-                      isWinner2 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
-                    }`}>
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {team2?.logo_url ? (
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
-                            <img src={team2.logo_url} alt={team2.name} className="w-full h-full object-contain" />
-                          </div>
-                        ) : (
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team2?.team_color || '#333' }}>
-                            {team2?.short_name || 'T2'}
-                          </div>
-                        )}
-                        <span className="text-xs sm:text-sm font-bold truncate">{team2?.name || 'Team 2'}</span>
-                        {isWinner2 && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />}
+                    <div className="space-y-1">
+                      <div className={`p-3 rounded-xl flex items-center justify-between gap-2 border ${
+                        isWinner2 ? 'bg-emerald-950/20 border-emerald-500/40 text-white' : 'bg-gbl-navy-950 border-gbl-navy-800/80 text-slate-300'
+                      }`}>
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {team2?.logo_url ? (
+                            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                              <img src={team2.logo_url} alt={team2.name} className="w-full h-full object-contain" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 shadow" style={{ backgroundColor: team2?.team_color || '#333' }}>
+                              {team2?.short_name || 'T2'}
+                            </div>
+                          )}
+                          <span className="text-xs sm:text-sm font-bold truncate">{team2?.name || 'Team 2'}</span>
+                          {isWinner2 && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs font-bold shrink-0">
+                          <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set1_team2}</span>
+                          <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set2_team2}</span>
+                          {match.set3_team2 > 0 && <span className="px-2 py-1 bg-gbl-navy-900 rounded">{match.set3_team2}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs font-bold shrink-0">
-                        <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set1_team2}</span>
-                        <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set2_team2}</span>
-                        {match.set3_team2 > 0 && <span className="px-1.5 sm:px-2 py-1 bg-gbl-navy-900 rounded">{match.set3_team2}</span>}
-                      </div>
+                      {match.player2_names && (
+                        <p className="text-[11px] text-slate-400 pl-3">
+                          Players: <strong className="text-slate-300">{match.player2_names}</strong>
+                        </p>
+                      )}
                     </div>
                   </div>
 
+                  {/* Winner and Points Banner */}
+                  {match.status === 'COMPLETED' && winner && (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs">
+                      <span className="text-slate-300 flex items-center gap-1.5 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Winner: <strong className="text-white">{winner.name}</strong></span>
+                      </span>
+                      <span className={`font-mono font-black ${isTrump ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        +{ptsAwarded} {ptsAwarded === 2 ? 'Points (Trump Win)' : 'Win Pt'}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Footer date & court */}
-                  <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1">
+                  <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1 border-t border-gbl-navy-800">
                     <span>{match.court} • {match.match_time}</span>
-                    {match.score_summary && <span className="font-semibold text-white">{match.score_summary}</span>}
+                    {match.score_summary && <span className="font-semibold text-white font-mono">{match.score_summary}</span>}
                   </div>
 
                 </div>

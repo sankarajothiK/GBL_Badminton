@@ -73,35 +73,35 @@ export const PublicAuctionPage: React.FC = () => {
             <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm text-left">
               
               {/* Photo Header with Overlays */}
-              <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+              <div className="relative aspect-[3/4] min-h-[400px] sm:min-h-[460px] bg-slate-100 overflow-hidden">
                 <img
                   src={currentPlayer.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'}
                   alt={currentPlayer.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-                <div className="absolute top-3 left-3">
-                  <span className="px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm text-xs font-mono font-bold text-white">
+                <div className="absolute top-4 left-4">
+                  <span className="px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md text-xs sm:text-sm font-mono font-bold text-white shadow-md">
                     {currentPlayer.player_code}
                   </span>
                 </div>
 
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-4 right-4">
                   {status === 'SOLD' ? (
-                    <span className="px-3 py-1 rounded-md bg-emerald-600 text-white font-black text-xs uppercase tracking-wider shadow-sm">
+                    <span className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg">
                       SOLD!
                     </span>
                   ) : status === 'UNSOLD' ? (
-                    <span className="px-3 py-1 rounded-md bg-slate-800 text-white font-bold text-xs uppercase tracking-wider">
+                    <span className="px-3.5 py-1.5 rounded-xl bg-slate-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg">
                       UNSOLD
                     </span>
                   ) : status === 'PAUSED' ? (
-                    <span className="px-3 py-1 rounded-md bg-amber-500 text-white font-black text-xs uppercase tracking-wider">
+                    <span className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg">
                       PAUSED
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-md bg-red-600 text-white font-black text-xs uppercase tracking-wider shadow-sm animate-pulse flex items-center gap-1.5">
+                    <span className="px-3.5 py-1.5 rounded-xl bg-red-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg animate-pulse flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-white animate-ping" />
                       LIVE
                     </span>
@@ -110,9 +110,9 @@ export const PublicAuctionPage: React.FC = () => {
               </div>
 
               {/* Player Information Body */}
-              <div className="p-5 space-y-3.5">
+              <div className="p-6 space-y-4">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-950 leading-tight">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-950 leading-tight">
                     {currentPlayer.name}
                   </h2>
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 font-semibold flex-wrap">
@@ -122,7 +122,7 @@ export const PublicAuctionPage: React.FC = () => {
                     {currentPlayer.academy && (
                       <>
                         <span>•</span>
-                        <span className="text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        <span className="text-amber-800 font-bold bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
                           {currentPlayer.academy}
                         </span>
                       </>
@@ -139,13 +139,13 @@ export const PublicAuctionPage: React.FC = () => {
 
                 {/* Separate Eligible Categories */}
                 {currentPlayer.eligible_category_names && currentPlayer.eligible_category_names.length > 0 && (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
-                      Eligible Categories:
+                      Eligible Categories (Matches):
                     </span>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {currentPlayer.eligible_category_names.map(ec => (
-                        <span key={ec} className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                        <span key={ec} className="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
                           {ec}
                         </span>
                       ))}
@@ -153,13 +153,13 @@ export const PublicAuctionPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
                       Starting Bid Tier
                     </span>
                     <span className="text-xs font-bold text-slate-900">
-                      {currentCategory?.name || 'OPEN'} ({formatINR(currentAuction?.starting_bid)})
+                      {currentCategory?.name || 'OPEN'} ({formatINR((currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : ((currentCategory?.starting_bid && currentCategory.starting_bid > 0) ? currentCategory.starting_bid : 30000))})
                     </span>
                   </div>
                   <div className="text-right">
@@ -200,10 +200,10 @@ export const PublicAuctionPage: React.FC = () => {
                     <p className={`text-3xl sm:text-5xl font-black font-mono tracking-tight mt-1 ${
                       isUrgent ? 'text-rose-700' : 'text-lime-300'
                     }`}>
-                      {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid)}
+                      {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || currentCategory?.starting_bid || 30000)}
                     </p>
                     <div className="text-xs text-slate-400 mt-1">
-                      <span>Opening Bid: <strong className={isUrgent ? 'text-slate-800' : 'text-white'}>{formatINR(currentAuction?.starting_bid)}</strong></span>
+                      <span>Opening Bid: <strong className={isUrgent ? 'text-slate-800' : 'text-white'}>{formatINR((currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : ((currentCategory?.starting_bid && currentCategory.starting_bid > 0) ? currentCategory.starting_bid : 30000))}</strong></span>
                     </div>
                   </div>
 

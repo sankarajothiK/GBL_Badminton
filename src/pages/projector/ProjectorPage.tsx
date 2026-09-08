@@ -85,28 +85,57 @@ export const ProjectorPage: React.FC = () => {
       <main className="flex-1 flex items-center justify-center my-auto z-10 py-6">
         {status === 'LIVE' || status === 'PAUSED' || status === 'SOLD' || status === 'UNSOLD' ? (
           currentPlayer ? (
-            <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+            <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
               
-              {/* Player Image Showcase */}
-              <div className="col-span-1 lg:col-span-5 max-w-md mx-auto lg:max-w-none w-full relative">
-                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border-4 border-gbl-navy-800 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-gbl-navy-900">
+              {/* Dominant Player Image Showcase (Viewing distance 10-20 ft) */}
+              <div className="col-span-1 lg:col-span-6 w-full relative">
+                <div className="relative aspect-[3/4] min-h-[460px] sm:min-h-[520px] xl:min-h-[580px] rounded-3xl overflow-hidden border-4 border-gbl-navy-700/80 shadow-[0_25px_70px_rgba(0,0,0,0.85)] bg-gbl-navy-900">
                   <img
                     src={currentPlayer.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'}
                     alt={currentPlayer.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                  {/* Status Indicator Badge on Top-Left */}
+                  <div className="absolute top-5 left-5 z-20">
+                    {status === 'LIVE' ? (
+                      <span className="px-4 py-2 rounded-2xl bg-red-600/90 backdrop-blur-md text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl flex items-center gap-2 border border-red-400/50 animate-pulse">
+                        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                        LIVE AUCTION
+                      </span>
+                    ) : status === 'PAUSED' ? (
+                      <span className="px-4 py-2 rounded-2xl bg-amber-500/90 backdrop-blur-md text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl border border-amber-300/50">
+                        PAUSED
+                      </span>
+                    ) : status === 'SOLD' ? (
+                      <span className="px-4 py-2 rounded-2xl bg-emerald-600/95 backdrop-blur-md text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl border border-emerald-400/50">
+                        SOLD
+                      </span>
+                    ) : (
+                      <span className="px-4 py-2 rounded-2xl bg-slate-700/90 backdrop-blur-md text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl border border-slate-500/50">
+                        UNSOLD
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Player Code Tag on Top-Right */}
+                  <div className="absolute top-5 right-5 z-20">
+                    <span className="px-4 py-2 rounded-2xl bg-black/80 backdrop-blur-md text-sm sm:text-base font-mono font-bold text-white border border-white/25 shadow-xl">
+                      {currentPlayer.player_code}
+                    </span>
+                  </div>
 
                   {/* SOLD Explosive Overlay */}
                   {status === 'SOLD' && (
-                    <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 animate-in zoom-in-95 duration-300">
-                      <span className="text-7xl font-black text-emerald-400 font-sports tracking-wider drop-shadow-[0_0_30px_rgba(16,185,129,0.6)] animate-bounce">
+                    <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 animate-in zoom-in-95 duration-300 z-30">
+                      <span className="text-7xl xl:text-8xl font-black text-emerald-400 font-sports tracking-wider drop-shadow-[0_0_40px_rgba(16,185,129,0.7)] animate-bounce">
                         SOLD!
                       </span>
-                      <p className="text-2xl font-black text-white uppercase tracking-wide mt-3">
+                      <p className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wide mt-4">
                         ACQUIRED BY {highestTeam?.name}
                       </p>
-                      <p className="text-4xl font-black text-amber-400 font-mono mt-2 drop-shadow-md">
+                      <p className="text-4xl sm:text-5xl font-black text-amber-400 font-mono mt-3 drop-shadow-md">
                         {formatINR(currentAuction?.current_bid)}
                       </p>
                     </div>
@@ -114,8 +143,8 @@ export const ProjectorPage: React.FC = () => {
 
                   {/* UNSOLD Overlay */}
                   {status === 'UNSOLD' && (
-                    <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6">
-                      <span className="text-6xl font-black text-slate-400 font-sports tracking-wider">
+                    <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 z-30">
+                      <span className="text-6xl sm:text-7xl font-black text-slate-400 font-sports tracking-wider">
                         UNSOLD
                       </span>
                       <p className="text-base font-semibold text-slate-300 mt-3">
@@ -123,18 +152,11 @@ export const ProjectorPage: React.FC = () => {
                       </p>
                     </div>
                   )}
-
-                  {/* Player Code Tag */}
-                  <div className="absolute top-5 left-5">
-                    <span className="px-4 py-2 rounded-2xl bg-black/80 backdrop-blur-md text-sm font-mono font-bold text-white border border-white/20 shadow-xl">
-                      {currentPlayer.player_code}
-                    </span>
-                  </div>
                 </div>
               </div>
 
-              {/* Player Auction Information & Big Scoreboard */}
-              <div className="col-span-1 lg:col-span-7 space-y-5 sm:space-y-7">
+              {/* Player Auction Information & Balanced Scoreboard */}
+              <div className="col-span-1 lg:col-span-6 space-y-5 sm:space-y-6">
                 
                 {/* Category, Age, Name & Eligible Categories */}
                 <div className="space-y-3">
@@ -144,29 +166,30 @@ export const ProjectorPage: React.FC = () => {
                       <Sparkles className="w-4 h-4 text-yellow-300" />
                       <span>AUCTION CATEGORY: {currentPlayer.auction_category || currentCategory?.name || 'OPEN'}</span>
                     </span>
-                    <span className="text-sm sm:text-base text-slate-300 font-bold bg-white/10 px-3 py-1 rounded-xl">
+                    <span className="text-sm sm:text-base text-slate-300 font-bold bg-white/10 px-3.5 py-1.5 rounded-xl">
                       Age: {currentPlayer.age} Yrs
                     </span>
                     {currentPlayer.academy && (
-                      <span className="text-xs sm:text-sm text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-xl">
+                      <span className="text-xs sm:text-sm text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 px-3.5 py-1.5 rounded-xl">
                         {currentPlayer.academy}
                       </span>
                     )}
                   </div>
 
-                  <h2 className="text-4xl sm:text-6xl xl:text-7xl font-black text-white font-sports uppercase tracking-tight leading-none drop-shadow-md">
+                  {/* Giant Player Name for 10-20ft Viewing */}
+                  <h2 className="text-5xl sm:text-7xl xl:text-8xl font-black text-white font-sports uppercase tracking-tight leading-none drop-shadow-md">
                     {currentPlayer.name}
                   </h2>
 
                   {/* Separate Eligible Categories Row */}
                   {currentPlayer.eligible_category_names && currentPlayer.eligible_category_names.length > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap pt-1">
-                      <span className="text-xs uppercase font-black tracking-widest text-slate-400">
-                        Eligible Categories:
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-xs uppercase font-black tracking-widest text-slate-400 block">
+                        Eligible Categories (Match Play):
                       </span>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {currentPlayer.eligible_category_names.map((ec) => (
-                          <span key={ec} className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-sky-950/80 text-sky-300 border border-sky-700/50">
+                          <span key={ec} className="px-3 py-1 rounded-xl text-xs sm:text-sm font-extrabold bg-sky-950/90 text-sky-300 border border-sky-600/60 shadow-sm">
                             {ec}
                           </span>
                         ))}
@@ -181,8 +204,8 @@ export const ProjectorPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* CURRENT BID & CIRCULAR TIMER BANNER */}
-                <div className={`p-5 sm:p-8 rounded-3xl border-2 transition-all duration-300 shadow-2xl ${
+                {/* CURRENT BID & CIRCULAR TIMER BANNER (Balanced Typography) */}
+                <div className={`p-5 sm:p-7 rounded-3xl border-2 transition-all duration-300 shadow-2xl ${
                   isUrgent
                     ? 'bg-rose-950/50 border-rose-500 shadow-[0_0_60px_rgba(244,63,94,0.4)] animate-pulse'
                     : 'bg-gradient-to-r from-gbl-navy-900 to-gbl-navy-950 border-gbl-navy-700'
@@ -192,17 +215,17 @@ export const ProjectorPage: React.FC = () => {
                       <span className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-slate-400 block">
                         CURRENT HIGHEST BID
                       </span>
-                      <p className="text-3xl sm:text-5xl xl:text-7xl font-black text-emerald-400 font-mono tracking-tight mt-1 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-                        {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid)}
+                      <p className="text-3xl sm:text-5xl xl:text-6xl font-black text-emerald-400 font-mono tracking-tight mt-1 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                        {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || currentCategory?.starting_bid || 30000)}
                       </p>
-                      <span className="text-[11px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2 block">
-                        Opening Bid: <strong className="text-white font-mono">{formatINR(currentAuction?.starting_bid)}</strong>
+                      <span className="text-xs text-slate-400 mt-1.5 sm:mt-2 block">
+                        Opening Bid: <strong className="text-white font-mono">{formatINR((currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : ((currentCategory?.starting_bid && currentCategory.starting_bid > 0) ? currentCategory.starting_bid : 30000))}</strong>
                       </span>
                     </div>
 
                     {/* Giant 20-Second Countdown Clock */}
                     <div className="flex flex-col items-center shrink-0">
-                      <div className={`w-20 h-20 sm:w-28 sm:h-28 xl:w-32 xl:h-32 rounded-full border-4 flex flex-col items-center justify-center transition-all ${
+                      <div className={`w-20 h-20 sm:w-26 sm:h-26 xl:w-28 xl:h-28 rounded-full border-4 flex flex-col items-center justify-center transition-all ${
                         isUrgent
                           ? 'border-rose-500 bg-rose-500/20 text-rose-400 scale-105 sm:scale-110 shadow-[0_0_40px_rgba(244,63,94,0.6)]'
                           : timerSeconds <= 10

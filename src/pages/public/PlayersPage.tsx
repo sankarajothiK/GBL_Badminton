@@ -283,21 +283,21 @@ export const PlayersPage: React.FC = () => {
 
                 {/* Footer Row: Sold Price or Base Details */}
                 <div className="p-4 pt-3 border-t border-slate-100 mt-2">
-                  {player.auction_status === 'SOLD' && soldTeam ? (
+                  {player.auction_status === 'SOLD' ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 overflow-hidden">
-                        {soldTeam.logo_url ? (
+                        {soldTeam?.logo_url ? (
                           <img src={soldTeam.logo_url} alt={soldTeam.name} className="w-5 h-5 rounded-full object-contain bg-slate-100 p-0.5 shrink-0" />
                         ) : (
                           <span 
                             className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0"
-                            style={{ backgroundColor: soldTeam.team_color }}
+                            style={{ backgroundColor: soldTeam?.team_color || '#10B981' }}
                           >
-                            {soldTeam.short_name}
+                            {soldTeam?.short_name || 'SOLD'}
                           </span>
                         )}
-                        <span className="text-xs font-bold text-slate-700 truncate max-w-[90px]">
-                          {soldTeam.name}
+                        <span className="text-xs font-bold text-slate-700 truncate max-w-[110px]">
+                          {soldTeam?.name || 'Sold in Auction'}
                         </span>
                       </div>
                       <span className="font-mono font-black text-emerald-600 text-xs">
