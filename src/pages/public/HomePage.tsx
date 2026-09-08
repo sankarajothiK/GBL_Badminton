@@ -46,7 +46,8 @@ export const HomePage: React.FC = () => {
   ];
 
   // Current on floor player (or fallback to top queued player)
-  const activeFloorPlayer = currentPlayer || players.find(p => p.auction_status === 'LIVE') || players[0];
+  const isAuctionLive = currentAuction?.status === 'LIVE';
+  const activeFloorPlayer = currentPlayer || (isAuctionLive ? players.find(p => p.auction_status === 'LIVE') : null) || players.find(p => p.auction_status === 'UNSOLD') || players[0];
   const activeBidAmount = currentAuction?.current_bid || (currentAuction?.starting_bid && currentAuction.starting_bid > 0 ? currentAuction.starting_bid : 30000);
   const activeHighBidder = highestTeam || (teams.length > 0 ? teams[0] : null);
 

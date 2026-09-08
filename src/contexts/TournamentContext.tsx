@@ -325,8 +325,17 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             if (cat === 'NON-MEDALLIST') {
               cat = 'NON-MEDALIST';
             }
+
+            // Stale 'LIVE' auction status guard: reset un-auctioned live flags to UNSOLD
+            let status = cloudP.auction_status;
+            if (status === 'LIVE') {
+              status = 'UNSOLD';
+              supabase.from('players').update({ auction_status: 'UNSOLD' }).eq('id', cloudP.id).then(undefined, console.warn);
+            }
+
             return {
               ...cloudP,
+              auction_status: status,
               auction_category: cat
             };
           });
