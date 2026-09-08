@@ -107,13 +107,13 @@ export const AdminAuction: React.FC = () => {
 
   const handleSelectSearchedPlayer = (player: Player) => {
     setSelectedPlayerId(player.id);
-    setSelectedCategoryName(player.auction_category || 'NON-MEDALLIST');
+    setSelectedCategoryName((player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST'));
     setPlayerSearchQuery(`${player.player_code} - ${player.name}`);
     setIsSearchOpen(false);
   };
   
   // Category resolution: Auction Category determines default opening bid
-  const playerAuctionCat = chosenPlayer?.auction_category || 'NON-MEDALLIST';
+  const playerAuctionCat = (chosenPlayer?.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
   const currentActiveCategory = categories.find(c => c.name.toUpperCase() === (selectedCategoryName || playerAuctionCat).toUpperCase()) 
     || categories.find(c => c.name.toUpperCase() === playerAuctionCat.toUpperCase())
     || categories[0];
@@ -397,7 +397,7 @@ export const AdminAuction: React.FC = () => {
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/40 shrink-0">
-                              {p.auction_category || 'NON-MEDALLIST'}
+                              {(p.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST')}
                             </span>
                           )}
                         </button>

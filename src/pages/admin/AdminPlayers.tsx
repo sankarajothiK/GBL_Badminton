@@ -41,7 +41,7 @@ export const AdminPlayers: React.FC = () => {
   const [academy, setAcademy] = useState('');
   const [tshirtSize, setTshirtSize] = useState('');
   const [mobile, setMobile] = useState('');
-  const [auctionCategory, setAuctionCategory] = useState<AuctionCategory>('NON-MEDALLIST');
+  const [auctionCategory, setAuctionCategory] = useState<AuctionCategory>('NON-MEDALIST');
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Super Doubles']);
   const [achievements, setAchievements] = useState('');
   const [notes, setNotes] = useState('');
@@ -72,7 +72,7 @@ export const AdminPlayers: React.FC = () => {
     setAcademy('');
     setTshirtSize('');
     setMobile('');
-    setAuctionCategory('NON-MEDALLIST');
+    setAuctionCategory('NON-MEDALIST');
     setSelectedCategories(['Super Doubles']);
     setAchievements('');
     setNotes('');
@@ -91,7 +91,8 @@ export const AdminPlayers: React.FC = () => {
     setTshirtSize(p.tshirt_size || '');
     const cleanPhone = p.mobile && p.mobile !== '+91 98840 00000' && p.mobile !== '98840 00000' ? p.mobile : '';
     setMobile(cleanPhone);
-    setAuctionCategory(p.auction_category || 'NON-MEDALLIST');
+    const cat = (p.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST') as AuctionCategory;
+    setAuctionCategory(cat);
     setSelectedCategories(p.eligible_category_names?.length ? p.eligible_category_names : ['Super Doubles']);
     setAchievements(p.achievements || '');
     setNotes(p.notes || '');
@@ -226,9 +227,12 @@ export const AdminPlayers: React.FC = () => {
 
   // Category Counts
   const unsoldPool = players.filter(p => p.auction_status !== 'SOLD');
-  const openCount = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'OPEN').length;
-  const nonMedalCount = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'NON-MEDALLIST').length;
-  const age35Count = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALLIST') === '35+ AGE').length;
+  const openCount = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALIST') === 'OPEN').length;
+  const nonMedalCount = unsoldPool.filter(p => {
+    const cat = p.auction_category || 'NON-MEDALIST';
+    return cat === 'NON-MEDALIST' || cat === 'NON-MEDALLIST';
+  }).length;
+  const age35Count = unsoldPool.filter(p => (p.auction_category || 'NON-MEDALIST') === '35+ AGE').length;
   const soldOwnersCount = players.filter(p => p.auction_status === 'SOLD').length;
 
   // Filtering
@@ -245,8 +249,11 @@ export const AdminPlayers: React.FC = () => {
       matchesAuctionCat = true;
     } else if (selectedAuctionCatFilter === 'SOLD_OWNERS') {
       matchesAuctionCat = p.auction_status === 'SOLD';
+    } else if (selectedAuctionCatFilter === 'NON-MEDALIST') {
+      const cat = p.auction_category || 'NON-MEDALIST';
+      matchesAuctionCat = cat === 'NON-MEDALIST' || cat === 'NON-MEDALLIST';
     } else {
-      matchesAuctionCat = (p.auction_category || 'NON-MEDALLIST') === selectedAuctionCatFilter;
+      matchesAuctionCat = (p.auction_category || 'NON-MEDALIST') === selectedAuctionCatFilter;
     }
 
     const matchesEligible = selectedEligibleFilter === 'ALL' ||
@@ -331,14 +338,14 @@ export const AdminPlayers: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => setSelectedAuctionCatFilter('NON-MEDALLIST')}
+          onClick={() => setSelectedAuctionCatFilter('NON-MEDALIST')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 ${
-            selectedAuctionCatFilter === 'NON-MEDALLIST'
+            selectedAuctionCatFilter === 'NON-MEDALIST'
               ? 'bg-gradient-to-r from-amber-500/30 via-yellow-400/40 to-amber-500/30 text-yellow-300 border-yellow-400 shadow-lg shadow-yellow-500/20'
               : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
           }`}
         >
-          🛡 NON-MEDALLIST ({nonMedalCount})
+          🛡 NON-MEDALIST ({nonMedalCount})
         </button>
 
         <button
@@ -468,7 +475,7 @@ export const AdminPlayers: React.FC = () => {
 
                       <td className="p-4 text-center">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/50 shadow-sm shadow-yellow-500/10">
-                          {player.auction_category || 'NON-MEDALLIST'}
+                          {(player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST')}
                         </span>
                       </td>
 

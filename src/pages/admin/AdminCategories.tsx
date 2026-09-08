@@ -91,7 +91,7 @@ export const AdminCategories: React.FC = () => {
             CATEGORY BIDDING SETTINGS
           </h1>
           <p className="text-xs text-slate-400">
-            Configure starting bids, base/reserve points, and bid increments for auction bidding categories (Open, 35+, and Non-Medallist)
+            Configure starting bids, base/reserve points, and bid increments for auction bidding categories (Open, 35+, and Non-Medalist)
           </p>
         </div>
 

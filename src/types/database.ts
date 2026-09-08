@@ -43,11 +43,11 @@ export type EligibleCategory = typeof ELIGIBLE_CATEGORIES[number];
 
 export const AUCTION_CATEGORIES = [
   'OPEN',
-  'NON-MEDALLIST',
+  'NON-MEDALIST',
   '35+ AGE'
 ] as const;
 
-export type AuctionCategory = typeof AUCTION_CATEGORIES[number];
+export type AuctionCategory = typeof AUCTION_CATEGORIES[number] | 'NON-MEDALLIST';
 
 // Retain alias for any existing references
 export const OFFICIAL_PLAYER_CATEGORIES = ELIGIBLE_CATEGORIES;
@@ -66,7 +66,8 @@ export interface TournamentSettings {
   owner_double_deduction_enabled: boolean;
   owner_deduction_open: number;
   owner_deduction_35plus: number;
-  owner_deduction_non_medallist: number;
+  owner_deduction_non_medallist?: number;
+  owner_deduction_non_medalist?: number;
   qualifying_teams_count: number;
   currency_symbol: string;
   currency_code: string;

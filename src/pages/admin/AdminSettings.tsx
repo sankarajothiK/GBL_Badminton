@@ -77,7 +77,7 @@ export const AdminSettings: React.FC = () => {
   const [ownerDeductionEnabled, setOwnerDeductionEnabled] = useState(settings.owner_double_deduction_enabled);
   const [ownerOpen, setOwnerOpen] = useState(settings.owner_deduction_open || 50000);
   const [owner35, setOwner35] = useState(settings.owner_deduction_35plus || 20000);
-  const [ownerNonMedallist, setOwnerNonMedallist] = useState(settings.owner_deduction_non_medallist || 10000);
+  const [ownerNonMedallist, setOwnerNonMedallist] = useState(settings.owner_deduction_non_medalist || settings.owner_deduction_non_medallist || 10000);
 
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
@@ -188,7 +188,8 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
       owner_double_deduction_enabled: ownerDeductionEnabled,
       owner_deduction_open: Number(ownerOpen),
       owner_deduction_35plus: Number(owner35),
-      owner_deduction_non_medallist: Number(ownerNonMedallist)
+      owner_deduction_non_medallist: Number(ownerNonMedallist),
+      owner_deduction_non_medalist: Number(ownerNonMedallist)
     });
 
     setFeedbackMsg('Auction and tournament settings updated successfully.');
@@ -595,7 +596,7 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Non-Medallist Deduction (₹)</label>
+              <label className="block text-slate-400 mb-1">Non-Medalist Deduction (₹)</label>
               <input
                 type="number"
                 value={ownerNonMedallist}

@@ -29,9 +29,10 @@ export const PlayersPage: React.FC = () => {
                           cleanPlayerCode.includes(cleanTerm) ||
                           (player.academy && player.academy.toLowerCase().includes(rawTerm));
 
-    const playerAuctionCat = player.auction_category || 'NON-MEDALLIST';
+    const playerAuctionCat = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
     const matchesAuctionCategory = selectedAuctionCat === 'ALL' ||
-                                   playerAuctionCat === selectedAuctionCat;
+                                   playerAuctionCat === selectedAuctionCat ||
+                                   (selectedAuctionCat === 'NON-MEDALIST' && (player.auction_category === 'NON-MEDALLIST' || playerAuctionCat === 'NON-MEDALIST'));
 
     const matchesEligibleCategory = selectedEligibleCat === 'ALL' ||
                                     player.eligible_category_names?.some(c => c.toLowerCase() === selectedEligibleCat.toLowerCase());
@@ -45,9 +46,12 @@ export const PlayersPage: React.FC = () => {
   const soldCount = players.filter(p => p.auction_status === 'SOLD').length;
   const unsoldCount = players.filter(p => p.auction_status === 'UNSOLD').length;
 
-  const openCount = players.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'OPEN').length;
-  const nonMedalCount = players.filter(p => (p.auction_category || 'NON-MEDALLIST') === 'NON-MEDALLIST').length;
-  const age35Count = players.filter(p => (p.auction_category || 'NON-MEDALLIST') === '35+ AGE').length;
+  const openCount = players.filter(p => (p.auction_category || 'NON-MEDALIST') === 'OPEN').length;
+  const nonMedalCount = players.filter(p => {
+    const cat = p.auction_category || 'NON-MEDALIST';
+    return cat === 'NON-MEDALIST' || cat === 'NON-MEDALLIST';
+  }).length;
+  const age35Count = players.filter(p => (p.auction_category || 'NON-MEDALIST') === '35+ AGE').length;
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-6 text-slate-950">
@@ -63,7 +67,7 @@ export const PlayersPage: React.FC = () => {
             Registered Players Pool
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Explore shuttlers registered for the Gulf Oil Badminton Premier League 2026 auction. Filter by Auction Category (OPEN, NON-MEDALLIST, 35+ AGE) or player eligibility.
+            Explore shuttlers registered for the Gulf Oil Badminton Premier League 2026 auction. Filter by Auction Category (OPEN, NON-MEDALIST, 35+ AGE) or player eligibility.
           </p>
         </div>
 
@@ -114,14 +118,14 @@ export const PlayersPage: React.FC = () => {
           ★ OPEN ({openCount})
         </button>
         <button
-          onClick={() => setSelectedAuctionCat('NON-MEDALLIST')}
+          onClick={() => setSelectedAuctionCat('NON-MEDALIST')}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-            selectedAuctionCat === 'NON-MEDALLIST'
+            selectedAuctionCat === 'NON-MEDALIST'
               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black shadow-md border border-amber-400'
               : 'bg-white text-slate-700 border border-amber-200 hover:bg-amber-50'
           }`}
         >
-          ★ NON-MEDALLIST ({nonMedalCount})
+          ★ NON-MEDALIST ({nonMedalCount})
         </button>
         <button
           onClick={() => setSelectedAuctionCat('35+ AGE')}
@@ -188,7 +192,7 @@ export const PlayersPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {filteredPlayers.map((player) => {
             const soldTeam = player.sold_team_id ? teamMap.get(player.sold_team_id) : null;
-            const playerAuctionCategory = player.auction_category || 'NON-MEDALLIST';
+            const playerAuctionCategory = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
 
             return (
               <Link

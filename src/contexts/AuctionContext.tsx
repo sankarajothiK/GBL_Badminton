@@ -718,7 +718,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     const nextP = unsoldPlayers[0];
-    const categoryName = nextP.auction_category || 'NON-MEDALLIST';
+    const categoryName = (nextP.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
     const cat = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) || categories[0];
     startAuction(nextP, cat);
   };

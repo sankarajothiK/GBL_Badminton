@@ -258,9 +258,14 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               // Calculate genuine spent on auction picks (excluding owner allocation)
               const nonOwnerPicks = (pData || []).filter((p: any) => {
                 if (p.sold_team_id !== cloudTeam.id || p.auction_status !== 'SOLD') return false;
-                const isOwner = cloudTeam.owner_name && (
-                  p.name.trim().toLowerCase().includes(cloudTeam.owner_name.trim().toLowerCase()) ||
-                  cloudTeam.owner_name.trim().toLowerCase().includes(p.name.trim().toLowerCase())
+                const isOwner = Boolean(
+                  (cloudTeam.owner_name && (
+                    p.name.trim().toLowerCase().includes(cloudTeam.owner_name.trim().toLowerCase()) ||
+                    cloudTeam.owner_name.trim().toLowerCase().includes(p.name.trim().toLowerCase()) ||
+                    p.name.trim().toLowerCase().replace(/y/g, 'i').includes(cloudTeam.owner_name.trim().toLowerCase().replace(/y/g, 'i')) ||
+                    cloudTeam.owner_name.trim().toLowerCase().replace(/y/g, 'i').includes(p.name.trim().toLowerCase().replace(/y/g, 'i'))
+                  )) ||
+                  (cloudTeam.team_number === 2 && (p.player_code === 'GBL-041' || p.id === '10000000-0000-0000-0000-000000000041'))
                 );
                 return !isOwner;
               });
@@ -315,7 +320,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               if (m) cat = m[1].trim();
             }
             if (!cat) {
-              cat = 'NON-MEDALLIST';
+              cat = 'NON-MEDALIST';
+            }
+            if (cat === 'NON-MEDALLIST') {
+              cat = 'NON-MEDALIST';
             }
             return {
               ...cloudP,

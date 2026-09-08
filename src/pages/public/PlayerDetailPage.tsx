@@ -23,7 +23,7 @@ export const PlayerDetailPage: React.FC = () => {
   }
 
   const soldTeam = player.sold_team_id ? teams.find(t => t.id === player.sold_team_id) : null;
-  const playerAuctionCat = player.auction_category || 'NON-MEDALLIST';
+  const playerAuctionCat = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
 
   return (
     <div className="min-h-screen bg-gbl-navy-950 py-12 px-4 sm:px-6 lg:px-8">

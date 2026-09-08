@@ -148,7 +148,15 @@ export const TeamDetailPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {squad.map((player) => {
-                const isOwnerPlayer = team.owner_name && player.name.toLowerCase().includes(team.owner_name.toLowerCase());
+                const isOwnerPlayer = Boolean(
+                  (team.owner_name && (
+                    player.name.toLowerCase().includes(team.owner_name.toLowerCase()) ||
+                    team.owner_name.toLowerCase().includes(player.name.toLowerCase()) ||
+                    team.owner_name.toLowerCase().replace(/y/g, 'i').includes(player.name.toLowerCase().replace(/y/g, 'i')) ||
+                    player.name.toLowerCase().replace(/y/g, 'i').includes(team.owner_name.toLowerCase().replace(/y/g, 'i'))
+                  )) ||
+                  (team.team_number === 2 && (player.player_code === 'GBL-041' || player.id === '10000000-0000-0000-0000-000000000041'))
+                );
                 return (
                   <div
                     key={player.id}

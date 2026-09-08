@@ -97,8 +97,8 @@ export const RulesPage: React.FC = () => {
               <p className="text-xl font-black text-white font-mono mt-1">{formatINR(settings.owner_deduction_35plus)}</p>
             </div>
             <div className="bg-gbl-navy-950 p-4 rounded-xl border border-gbl-navy-800 text-center">
-              <span className="text-xs text-slate-400 uppercase font-semibold">Non-Medallist</span>
-              <p className="text-xl font-black text-white font-mono mt-1">{formatINR(settings.owner_deduction_non_medallist)}</p>
+              <span className="text-xs text-slate-400 uppercase font-semibold">Non-Medalist</span>
+              <p className="text-xl font-black text-white font-mono mt-1">{formatINR(settings.owner_deduction_non_medalist || settings.owner_deduction_non_medallist)}</p>
             </div>
           </div>
         </div>

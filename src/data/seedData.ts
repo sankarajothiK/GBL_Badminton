@@ -53,13 +53,14 @@ export const initialSettings: TournamentSettings = {
   owner_deduction_open: 100000,
   owner_deduction_35plus: 100000,
   owner_deduction_non_medallist: 100000,
+  owner_deduction_non_medalist: 100000,
   qualifying_teams_count: 8,
   currency_symbol: '₹',
   currency_code: 'INR',
   timezone: 'Asia/Kolkata'
 };
 
-// Category Bidding Settings: Strictly OPEN, 35+ AGE, and NON-MEDALLIST as required
+// Category Bidding Settings: Strictly OPEN, 35+ AGE, and NON-MEDALIST as required
 export const initialCategories: Category[] = [
   {
     id: '10000000-0000-0000-0000-000000000001',
@@ -90,8 +91,8 @@ export const initialCategories: Category[] = [
   {
     id: '10000000-0000-0000-0000-000000000003',
     tournament_id: initialTournament.id,
-    name: 'NON-MEDALLIST',
-    code: 'NON_MEDALLIST',
+    name: 'NON-MEDALIST',
+    code: 'NON_MEDALIST',
     starting_bid: 30000,
     base_reserve_points: 30000,
     min_bid_increment: 10000,
@@ -134,12 +135,12 @@ export const initialTeams: Team[] = [
     id: '20000000-0000-0000-0000-000000000002',
     tournament_id: initialTournament.id,
     team_number: 2,
-    name: 'Gokulam super kings',
+    name: 'Gopalam Super Kings',
     short_name: 'GSK',
     logo_url: null,
-    owner_name: 'Mariyappan',
+    owner_name: 'Mariappan',
     owner_photo_url: null,
-    captain_name: 'Mariyappan',
+    captain_name: 'Mariappan',
     captain_photo_url: null,
     team_color: '#F59E0B',
     accent_color: '#D97706',

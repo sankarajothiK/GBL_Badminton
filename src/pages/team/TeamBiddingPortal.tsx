@@ -267,7 +267,15 @@ export const TeamBiddingPortal: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {squad.map(p => {
-              const isOwner = activeTeam.owner_name && p.name.toLowerCase().includes(activeTeam.owner_name.toLowerCase());
+              const isOwner = Boolean(
+                (activeTeam.owner_name && (
+                  p.name.toLowerCase().includes(activeTeam.owner_name.toLowerCase()) ||
+                  activeTeam.owner_name.toLowerCase().includes(p.name.toLowerCase()) ||
+                  activeTeam.owner_name.toLowerCase().replace(/y/g, 'i').includes(p.name.toLowerCase().replace(/y/g, 'i')) ||
+                  p.name.toLowerCase().replace(/y/g, 'i').includes(activeTeam.owner_name.toLowerCase().replace(/y/g, 'i'))
+                )) ||
+                (activeTeam.team_number === 2 && (p.player_code === 'GBL-041' || p.id === '10000000-0000-0000-0000-000000000041'))
+              );
               return (
                 <div key={p.id} className="p-3 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 flex justify-between items-center text-xs">
                   <div>
