@@ -173,7 +173,7 @@ export const TeamBiddingPortal: React.FC = () => {
                   Current Highest Bid
                 </span>
                 <p className="text-xl sm:text-3xl font-black text-emerald-400 font-mono tracking-tight mt-0.5">
-                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid)}
+                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || 30000)}
                 </p>
               </div>
               <div className="text-right">

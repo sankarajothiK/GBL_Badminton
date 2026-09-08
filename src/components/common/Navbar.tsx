@@ -93,10 +93,10 @@ export const Navbar: React.FC = () => {
             <span>SPONSOR</span>
           </div>
           <span className="truncate text-slate-300 hidden md:inline">
-            GULF OIL LUBRICANTS INDIA • BADMINTON PREMIER LEAGUE 2026
+            GULF OIL LUBRICANTS INDIA • GOKULAM TRADERS • BADMINTON PREMIER LEAGUE 2026
           </span>
           <span className="truncate text-slate-300 md:hidden">
-            GULF OIL PREMIER LEAGUE
+            GULF OIL • GOKULAM TRADERS
           </span>
         </div>
         

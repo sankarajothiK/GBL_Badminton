@@ -47,7 +47,7 @@ export const HomePage: React.FC = () => {
 
   // Current on floor player (or fallback to top queued player)
   const activeFloorPlayer = currentPlayer || players.find(p => p.auction_status === 'LIVE') || players[0];
-  const activeBidAmount = currentAuction?.current_bid || (activeFloorPlayer ? 80000 : 0);
+  const activeBidAmount = currentAuction?.current_bid || (currentAuction?.starting_bid && currentAuction.starting_bid > 0 ? currentAuction.starting_bid : 30000);
   const activeHighBidder = highestTeam || (teams.length > 0 ? teams[0] : null);
 
   // Category queued counts
@@ -200,6 +200,51 @@ export const HomePage: React.FC = () => {
           <div className="absolute -bottom-10 -right-8 h-28 w-28 rounded-full border-[18px] border-lime-300/10 pointer-events-none" />
         </div>
       </div>
+
+      {/* PERMANENT OFFICIAL TITLE SPONSOR & TOURNAMENT PARTNER ADVERTISEMENT BANNER */}
+      <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-r from-[#0c1618] via-[#122023] to-[#0c1618] border border-amber-500/35 p-5 sm:p-7 shadow-2xl text-left">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/50 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+              <span>OFFICIAL TITLE SPONSOR &amp; TOURNAMENT PARTNER</span>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white font-sports uppercase tracking-tight leading-none">
+                GOKULAM TRADERS
+              </h3>
+              <p className="text-xs sm:text-sm text-lime-300 font-bold uppercase tracking-wider mt-1">
+                Gulf Superfleet NxG Commercial Vehicle Engine Oil
+              </p>
+            </div>
+            
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              Proud premier partner powering the <strong className="text-white">Gulf Oil Badminton Premier League 2026</strong>. Delivering champion performance, heavy-duty commercial automotive lubricants, and trusted engineering across Tamil Nadu.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-semibold text-slate-400">
+              <span className="flex items-center gap-1.5 text-lime-300 font-bold">
+                <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping" />
+                Verified Title Sponsor
+              </span>
+              <span>•</span>
+              <span>Kovilpatti, Tamil Nadu</span>
+              <span>•</span>
+              <span className="text-slate-500">Official Paid Sponsor</span>
+            </div>
+          </div>
+
+          {/* Permanent Sponsor Advertisement Image Showcase (No option to delete/remove) */}
+          <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-black/40 shadow-2xl max-h-60 sm:max-h-72 flex items-center justify-center shrink-0">
+            <img 
+              src="/sponsors/gokulam_traders_ad.jpg" 
+              alt="Gokulam Traders Gulf Superfleet Official Sponsor Advertisement" 
+              className="w-full h-full max-h-60 sm:max-h-72 object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      </section>
 
       {/* 3. SPLIT SECTION: LIVE AUCTION PULSE & QUEUE / CATEGORIES */}
       <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
@@ -376,7 +421,7 @@ export const HomePage: React.FC = () => {
                     </p>
                   </div>
                   <p className="text-xs font-black text-slate-700">
-                    {cat.starting_bid ? formatINR(cat.starting_bid) : 'No base'}
+                    {formatINR((cat.starting_bid && cat.starting_bid > 0) ? cat.starting_bid : 30000)}
                   </p>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-300 transition group-hover:text-slate-600" />
                 </div>

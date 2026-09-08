@@ -277,7 +277,7 @@ export const PublicAuctionPage: React.FC = () => {
                 {deduplicatedBids.length === 0 ? (
                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="text-xs text-slate-500">No bids placed yet for this lot.</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Opening bid: {formatINR(currentAuction?.starting_bid)}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Opening bid: {formatINR((currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000)}</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">

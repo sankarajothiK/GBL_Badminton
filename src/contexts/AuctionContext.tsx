@@ -60,6 +60,12 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const expiresAtRef = useRef<number | null>(null);
   const remainingAtPauseRef = useRef<number>(20);
 
+  // Atomic locks to prevent race conditions and duplicate operations
+  const isResolvingAuctionRef = useRef<boolean>(false);
+  const isActionPendingRef = useRef<boolean>(false);
+  const lastBidTimestampRef = useRef<number>(0);
+  const lastBidTupleRef = useRef<string>('');
+
   // Find currently highest bidder team
   const highestTeam = currentAuction?.highest_team_id
     ? teams.find(t => t.id === currentAuction.highest_team_id) || null
@@ -167,7 +173,10 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Complete Automatic SOLD action
   const handleAutomaticSold = useCallback(() => {
-    if (!currentAuction || !currentPlayer || !currentAuction.highest_team_id) return;
+    if (isResolvingAuctionRef.current) return;
+    if (!currentAuction || currentAuction.status !== 'LIVE' || !currentPlayer || !currentAuction.highest_team_id) return;
+    isResolvingAuctionRef.current = true;
+
     setIsTimerRunning(false);
     expiresAtRef.current = null;
 
@@ -223,7 +232,10 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Complete Automatic UNSOLD action
   const handleAutomaticUnsold = useCallback(() => {
-    if (!currentAuction || !currentPlayer) return;
+    if (isResolvingAuctionRef.current) return;
+    if (!currentAuction || currentAuction.status !== 'LIVE' || !currentPlayer) return;
+    isResolvingAuctionRef.current = true;
+
     setIsTimerRunning(false);
     expiresAtRef.current = null;
 
@@ -290,6 +302,13 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // 1. START AUCTION
   const startAuction = (player: Player, category: Category) => {
+    if (player.auction_status === 'SOLD') {
+      console.warn(`Cannot start auction for ${player.name}: player is already SOLD.`);
+      return;
+    }
+    isResolvingAuctionRef.current = false;
+    isActionPendingRef.current = false;
+
     const startBid = (category?.starting_bid && category.starting_bid > 0) ? category.starting_bid : 30000;
     const duration = settings.timer_seconds || 20;
     const expiresAt = Date.now() + duration * 1000;
@@ -340,6 +359,15 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!currentAuction || currentAuction.status !== 'LIVE') {
       return { success: false, error: 'Auction is not currently LIVE' };
     }
+
+    // Debounce duplicate bid spam within 250ms for same team and amount
+    const now = Date.now();
+    const bidKey = `${teamId}_${amount}`;
+    if (now - lastBidTimestampRef.current < 250 && lastBidTupleRef.current === bidKey) {
+      return { success: false, error: 'Duplicate bid suppressed' };
+    }
+    lastBidTimestampRef.current = now;
+    lastBidTupleRef.current = bidKey;
 
     const team = teams.find(t => t.id === teamId);
     if (!team) {
@@ -509,17 +537,25 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Manual SOLD Trigger
   const markSoldManually = () => {
+    if (isResolvingAuctionRef.current) return;
+    if (!currentAuction || currentAuction.status !== 'LIVE' || !highestTeam || currentAuction.current_bid <= 0) return;
     handleAutomaticSold();
   };
 
   // Manual UNSOLD Trigger
   const markUnsoldManually = () => {
+    if (isResolvingAuctionRef.current) return;
+    if (!currentAuction || currentAuction.status !== 'LIVE') return;
     handleAutomaticUnsold();
   };
 
   // Undo Last Bid
   const undoLastBid = (): { success: boolean; error?: string } => {
     if (!currentAuction) return { success: false, error: 'No active auction' };
+    if (isActionPendingRef.current) return { success: false, error: 'Action in progress' };
+    isActionPendingRef.current = true;
+    setTimeout(() => { isActionPendingRef.current = false; }, 350);
+
     const sortedActiveBids = [...bidHistory.filter(b => !b.is_reverted)].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
@@ -618,6 +654,9 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!currentAuction || currentAuction.status !== 'SOLD' || !currentPlayer) {
       return { success: false, error: 'Current auction is not in SOLD status' };
     }
+    if (isActionPendingRef.current) return { success: false, error: 'Action in progress' };
+    isActionPendingRef.current = true;
+    setTimeout(() => { isActionPendingRef.current = false; }, 500);
 
     const winningTeam = teams.find(t => t.id === currentAuction.highest_team_id);
     const refundAmount = currentAuction.current_bid;

@@ -258,7 +258,7 @@ export const AdminResults: React.FC = () => {
           </div>
 
           {/* Trump Card Match Toggle */}
-          <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-2">
+          <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -270,13 +270,28 @@ export const AdminResults: React.FC = () => {
                 <span className="font-bold text-amber-300 text-xs">TRUMP CARD MATCH</span>
               </label>
               <span className="text-[10px] font-mono font-bold text-amber-400">
-                {isTrumpMatch ? '2 Points for Winner' : 'Normal Points Rule'}
+                {isTrumpMatch ? '+2 Win / -1 Loss Rule' : 'Normal Points Rule'}
               </span>
             </div>
             {isTrumpMatch && (
-              <p className="text-[11px] text-amber-200/80">
-                ★ Winning this Trump Card match awards <strong>2 points</strong> directly to the winning team on the points table.
-              </p>
+              <div className="space-y-2 pt-1 border-t border-amber-500/20">
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                  ★ <strong>Trump Rules:</strong> Winning team receives <strong>+2 points</strong>. If the team that called Trump loses, they receive a <strong>-1 point penalty</strong>.
+                </p>
+                <div>
+                  <label className="block text-[11px] text-amber-300 font-semibold mb-1">
+                    Which Team Nominated Trump?
+                  </label>
+                  <select
+                    value={trumpTeamId || team1Id}
+                    onChange={(e) => setTrumpTeamId(e.target.value)}
+                    className="w-full bg-gbl-navy-950 border border-amber-500/40 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400"
+                  >
+                    <option value={team1Id}>{teamMap.get(team1Id)?.name || 'Team 1'} (Team 1)</option>
+                    <option value={team2Id}>{teamMap.get(team2Id)?.name || 'Team 2'} (Team 2)</option>
+                  </select>
+                </div>
+              </div>
             )}
           </div>
 

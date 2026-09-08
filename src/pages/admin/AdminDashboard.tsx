@@ -148,6 +148,51 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* PERMANENT OFFICIAL TITLE SPONSOR & TOURNAMENT PARTNER ADVERTISEMENT BANNER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-gbl-navy-950 via-gbl-navy-900 to-gbl-navy-950 border border-amber-500/35 p-6 shadow-2xl text-left">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/50 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+              <span>OFFICIAL TITLE SPONSOR &amp; TOURNAMENT PARTNER</span>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white font-sports uppercase tracking-tight leading-none">
+                GOKULAM TRADERS
+              </h3>
+              <p className="text-xs sm:text-sm text-gbl-orange-400 font-bold uppercase tracking-wider mt-1">
+                Gulf Superfleet NxG Commercial Vehicle Engine Oil
+              </p>
+            </div>
+            
+            <p className="text-xs text-slate-300 font-medium leading-relaxed">
+              Official premier sponsor powering the <strong className="text-white">Gulf Oil Badminton Premier League 2026</strong>. Heavy-duty commercial automotive lubricants and certified industrial engineering.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-semibold text-slate-400">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                Verified Title Sponsor
+              </span>
+              <span>•</span>
+              <span>Kovilpatti, Tamil Nadu</span>
+              <span>•</span>
+              <span className="text-slate-500">Official Paid Sponsor • Non-Removable</span>
+            </div>
+          </div>
+
+          {/* Permanent Sponsor Advertisement Showcase */}
+          <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-black/40 shadow-2xl max-h-56 sm:max-h-64 flex items-center justify-center shrink-0">
+            <img 
+              src="/sponsors/gokulam_traders_ad.jpg" 
+              alt="Gokulam Traders Gulf Superfleet Official Sponsor Advertisement" 
+              className="w-full h-full max-h-56 sm:max-h-64 object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* CURRENT AUCTION STATUS WIDGET */}
       <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 shadow-xl">
         <div className="flex justify-between items-center pb-4 border-b border-gbl-navy-800">
@@ -185,7 +230,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="text-center p-3 bg-gbl-navy-950 rounded-2xl border border-gbl-navy-800">
                 <span className="text-[10px] text-slate-400 uppercase font-bold">Leading Bid</span>
                 <p className="text-2xl font-black text-emerald-400 font-mono">
-                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid)}
+                  {formatINR(currentAuction?.current_bid || currentAuction?.starting_bid || 30000)}
                 </p>
                 <p className="text-xs text-slate-400 truncate mt-0.5">
                   {highestTeam ? highestTeam.name : 'No bids placed yet'}

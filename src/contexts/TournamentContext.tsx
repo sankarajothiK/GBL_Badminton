@@ -1004,9 +1004,29 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         else if (normalWins === 4) normalPoints = 5;
         else if (normalWins > 4) normalPoints = 5 + (normalWins - 4);
 
-        // Trump Card match wins (+2 pts per win)
-        const trumpWins = matchList.filter(m => m.is_trump_match && m.winner_team_id === teamId).length;
-        const trumpPoints = trumpWins * 2;
+        // Trump Card match: winning team gets 2 points, losing team loses 1 point (-1)
+        let trumpPoints = 0;
+        matchList.forEach(m => {
+          if (m.is_trump_match) {
+            if (m.trump_team_id) {
+              if (m.trump_team_id === teamId) {
+                // This team nominated Trump
+                if (m.winner_team_id === teamId) {
+                  trumpPoints += 2; // Won Trump match: +2 points
+                } else {
+                  trumpPoints -= 1; // Lost Trump match: -1 point penalty
+                }
+              }
+            } else {
+              // Fallback if trump_team_id wasn't explicitly specified
+              if (m.winner_team_id === teamId) {
+                trumpPoints += 2;
+              } else if (m.team1_id === teamId || m.team2_id === teamId) {
+                trumpPoints -= 1;
+              }
+            }
+          }
+        });
 
         stats[teamId].points += (normalPoints + trumpPoints);
       });

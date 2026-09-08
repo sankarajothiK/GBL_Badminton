@@ -815,7 +815,7 @@ export const AdminAuction: React.FC = () => {
           <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-gbl-navy-800">
             <button
               onClick={markSoldManually}
-              disabled={!currentAuction || !highestTeam || currentAuction.current_bid <= 0}
+              disabled={!currentAuction || !highestTeam || currentAuction.current_bid <= 0 || status !== 'LIVE'}
               className="py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -824,7 +824,7 @@ export const AdminAuction: React.FC = () => {
 
             <button
               onClick={markUnsoldManually}
-              disabled={!currentAuction}
+              disabled={!currentAuction || status !== 'LIVE'}
               className="py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/20"
             >
               <XCircle className="w-4 h-4" />

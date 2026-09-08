@@ -30,7 +30,7 @@ export const AdminAuctionHistory: React.FC = () => {
         playerName: p.name,
         playerCode: p.player_code,
         category: primaryCategory,
-        startingBid: catObj?.starting_bid || 0,
+        startingBid: (catObj?.starting_bid && catObj.starting_bid > 0) ? catObj.starting_bid : 30000,
         finalBid: p.sold_price || 0,
         winningTeamName: soldTeam?.name || 'None',
         winningTeamColor: soldTeam?.team_color,
