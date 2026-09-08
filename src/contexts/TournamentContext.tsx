@@ -255,6 +255,18 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? cloudTeam.owner_reserved_points : 30000);
               const auctionBudget = (cloudTeam.initial_budget || 500000) - ownerPoints;
 
+              // Calculate genuine spent on auction picks (excluding owner allocation)
+              const nonOwnerPicks = (pData || []).filter((p: any) => {
+                if (p.sold_team_id !== cloudTeam.id || p.auction_status !== 'SOLD') return false;
+                const isOwner = cloudTeam.owner_name && (
+                  p.name.trim().toLowerCase().includes(cloudTeam.owner_name.trim().toLowerCase()) ||
+                  cloudTeam.owner_name.trim().toLowerCase().includes(p.name.trim().toLowerCase())
+                );
+                return !isOwner;
+              });
+              const actualSpent = nonOwnerPicks.reduce((sum: number, p: any) => sum + (Number(p.sold_price) || 0), 0);
+              const computedBalance = Math.max(0, auctionBudget - actualSpent);
+
               let pool = cloudTeam.pool || localTeam.pool;
               if (!pool && cloudTeam.description) {
                 const m = cloudTeam.description.match(/\[POOL:([^\]]+)\]/);
@@ -273,10 +285,16 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 owner_points_allocation: ownerPoints,
                 owner_reserved_points: ownerPoints,
                 auction_budget: auctionBudget,
-                current_balance: cloudTeam.current_balance !== undefined ? cloudTeam.current_balance : auctionBudget,
+                total_spent: actualSpent,
+                current_balance: computedBalance,
                 max_auction_slots: isNoPlayTeam ? 6 : 5,
                 total_squad_slots: 6
               };
+
+              // Reconcile with Supabase if cloud data had stale/corrupted spent or balance
+              if (cloudTeam.current_balance !== computedBalance || cloudTeam.total_spent !== actualSpent) {
+                supabase.from('teams').update({ current_balance: computedBalance, total_spent: actualSpent }).eq('id', cloudTeam.id).then(undefined, console.warn);
+              }
 
               if (localTeam.logo_url && !cloudTeam.logo_url) {
                 supabase.from('teams').update({ logo_url: localTeam.logo_url }).eq('id', cloudTeam.id).then(undefined, console.warn);

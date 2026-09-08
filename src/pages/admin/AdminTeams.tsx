@@ -91,7 +91,12 @@ export const AdminTeams: React.FC = () => {
     const ownerPoints = ownerTier === 'OPEN' ? 100000 : (ownerTier === 'NORMAL' ? 30000 : 0);
     const auctionBudget = 500000 - ownerPoints;
     const maxSlots = isPlaying ? 5 : 6;
-    const newBalance = Math.max(0, auctionBudget - (editingTeam.total_spent || 0));
+    
+    // Calculate genuine spent from non-owner squad picks
+    const squad = players.filter(p => p.sold_team_id === editingTeam.id && p.auction_status === 'SOLD');
+    const nonOwnerSquad = squad.filter(p => !ownerName.trim() || !p.name.trim().toLowerCase().includes(ownerName.trim().toLowerCase()));
+    const actualSpent = nonOwnerSquad.reduce((sum, p) => sum + (p.sold_price || 0), 0);
+    const newBalance = Math.max(0, auctionBudget - actualSpent);
 
     await updateTeam(editingTeam.id, {
       name: teamName.trim(),
@@ -108,6 +113,7 @@ export const AdminTeams: React.FC = () => {
       auction_budget: auctionBudget,
       max_auction_slots: maxSlots,
       total_squad_slots: 6,
+      total_spent: actualSpent,
       current_balance: newBalance
     });
 
