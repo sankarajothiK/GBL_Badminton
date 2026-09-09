@@ -5,6 +5,7 @@ import { useTournament } from '../../contexts/TournamentContext';
 import { formatINR } from '../../lib/currency';
 import { getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
+import { TeamCategoryBreakdown } from '../../components/common/TeamCategoryBreakdown';
 
 export const TeamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -139,6 +140,9 @@ export const TeamDetailPage: React.FC = () => {
             </Link>
           </div>
 
+          {/* Category-Wise Squad Composition Breakdown */}
+          <TeamCategoryBreakdown squad={squad} maxSlots={team.total_squad_slots || 6} />
+
           {squad.length === 0 ? (
             <div className="text-center py-16 bg-gbl-navy-900 border border-gbl-navy-800 rounded-2xl">
               <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
@@ -148,7 +152,7 @@ export const TeamDetailPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {squad.map((player) => {
-                const isOwnerPlayer = Boolean(
+                const isOwnerPlayer = team.team_number !== 4 && Boolean(
                   (team.owner_name && (
                     player.name.toLowerCase().includes(team.owner_name.toLowerCase()) ||
                     team.owner_name.toLowerCase().includes(player.name.toLowerCase()) ||
@@ -157,6 +161,7 @@ export const TeamDetailPage: React.FC = () => {
                   )) ||
                   (team.team_number === 2 && (player.player_code === 'GBL-041' || player.id === '10000000-0000-0000-0000-000000000041'))
                 );
+                const playerCat = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
                 return (
                   <div
                     key={player.id}
@@ -169,15 +174,18 @@ export const TeamDetailPage: React.FC = () => {
                         className="w-12 h-12 rounded-xl object-cover border border-gbl-navy-700 shrink-0"
                       />
                       <div className="overflow-hidden">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[10px] font-mono font-bold text-slate-400">{player.player_code}</span>
                           {isOwnerPlayer && (
                             <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/30">
                               Owner
                             </span>
                           )}
+                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/40">
+                            {playerCat}
+                          </span>
                         </div>
-                        <h4 className="text-sm font-bold text-white truncate">{player.name}</h4>
+                        <h4 className="text-sm font-bold text-white truncate mt-0.5">{player.name}</h4>
                         <p className="text-[11px] text-slate-400 truncate">{player.age ? `${player.age} yrs • ` : ''}{player.eligible_category_names.join(', ')}</p>
                       </div>
                     </div>

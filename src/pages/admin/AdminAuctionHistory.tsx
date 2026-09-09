@@ -22,7 +22,7 @@ export const AdminAuctionHistory: React.FC = () => {
     .filter(p => p.auction_status === 'SOLD' || p.auction_status === 'UNSOLD')
     .map(p => {
       const soldTeam = p.sold_team_id ? teamMap.get(p.sold_team_id) : null;
-      const primaryCategory = p.eligible_category_names[0] || 'OPEN';
+      const primaryCategory = (p.auction_category || p.eligible_category_names?.[0] || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
       const catObj = categories.find(c => c.name.toLowerCase() === primaryCategory.toLowerCase());
 
       return {

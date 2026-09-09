@@ -6,6 +6,7 @@ import { useTournament } from '../../contexts/TournamentContext';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { calculateMaxLegalBid } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
+import { TeamCategoryBreakdown } from '../../components/common/TeamCategoryBreakdown';
 
 export const TeamBiddingPortal: React.FC = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -255,7 +256,9 @@ export const TeamBiddingPortal: React.FC = () => {
         </div>
       )}
 
-      {/* TEAM SQUAD LIST */}
+      {/* TEAM SQUAD & CATEGORY BREAKDOWN */}
+      <TeamCategoryBreakdown squad={squad} maxSlots={activeTeam.total_squad_slots || settings.required_squad_slots || 6} />
+
       <div className="bg-gradient-to-b from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-3 sm:space-y-4 relative z-10 shadow-xl">
         <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
           <Users className="w-4 h-4 text-gbl-orange-500" />
@@ -267,7 +270,7 @@ export const TeamBiddingPortal: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {squad.map(p => {
-              const isOwner = Boolean(
+              const isOwner = activeTeam.team_number !== 4 && Boolean(
                 (activeTeam.owner_name && (
                   p.name.toLowerCase().includes(activeTeam.owner_name.toLowerCase()) ||
                   activeTeam.owner_name.toLowerCase().includes(p.name.toLowerCase()) ||
@@ -276,21 +279,26 @@ export const TeamBiddingPortal: React.FC = () => {
                 )) ||
                 (activeTeam.team_number === 2 && (p.player_code === 'GBL-041' || p.id === '10000000-0000-0000-0000-000000000041'))
               );
+              const pCat = (p.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
               return (
                 <div key={p.id} className="p-3 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800 flex justify-between items-center text-xs">
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono text-[10px] text-slate-400 font-bold">{p.player_code}</span>
                       <span className="font-bold text-white text-xs sm:text-sm">{p.name}</span>
                       {isOwner && (
                         <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/30">
                           Owner
                         </span>
                       )}
+                      <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/40">
+                        {pCat}
+                      </span>
                       <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase border border-emerald-500/30">
                         SOLD
                       </span>
                     </div>
-                    <p className="text-[10px] sm:text-[11px] text-slate-400">{p.eligible_category_names.join(', ')}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">{p.eligible_category_names.join(', ')}</p>
                   </div>
                   <span className="font-mono font-black text-emerald-400 text-xs sm:text-sm">{formatINR(p.sold_price)}</span>
                 </div>

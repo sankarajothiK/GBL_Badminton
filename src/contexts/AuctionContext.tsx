@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Auction, AuctionBid, AuctionStatus, BidType, Player, Category, Team } from '../types/database';
 import { useTournament } from './TournamentContext';
-import { realtimeManager } from '../lib/supabase';
+import { supabase, realtimeManager } from '../lib/supabase';
 import { sounds } from '../lib/sound';
 import { calculateMaxLegalBid } from '../lib/maxBid';
 
@@ -29,16 +29,17 @@ interface AuctionContextType {
 
   // Actions
   startAuction: (player: Player, category: Category) => void;
+  stagePlayer: (player: Player, category?: Category) => void;
   placeBid: (teamId: string, amount: number, bidType?: BidType) => { success: boolean; error?: string };
   placeQuickBid: (teamId: string, increment: number) => { success: boolean; error?: string };
   pauseAuction: () => void;
   resumeAuction: () => void;
   resetTimer: () => void;
-  markSoldManually: () => void;
-  markUnsoldManually: () => void;
+  markSoldManually: () => Promise<void>;
+  markUnsoldManually: () => Promise<void>;
   undoLastBid: () => { success: boolean; error?: string };
   editCurrentBid: (newAmount: number, teamId: string) => { success: boolean; error?: string };
-  cancelSold: () => { success: boolean; error?: string };
+  cancelSold: () => Promise<{ success: boolean; error?: string }>;
   reAuctionPlayer: () => void;
   selectNextPlayer: () => void;
 }
@@ -46,7 +47,19 @@ interface AuctionContextType {
 const AuctionContext = createContext<AuctionContextType | undefined>(undefined);
 
 export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { tournament, settings, teams, players, categories, updateTeam, updatePlayer, logAuditAction } = useTournament();
+  const { 
+    tournament, 
+    settings, 
+    teams, 
+    players, 
+    categories, 
+    updateTeam, 
+    updatePlayer, 
+    logAuditAction,
+    finalizeAuctionSale,
+    finalizeAuctionUnsold,
+    releaseSoldPlayer
+  } = useTournament();
 
   const [currentAuction, setCurrentAuction] = useState<Auction | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
@@ -171,67 +184,8 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, []);
 
-  // Complete Automatic SOLD action
-  const handleAutomaticSold = useCallback(() => {
-    if (isResolvingAuctionRef.current) return;
-    if (!currentAuction || currentAuction.status !== 'LIVE' || !currentPlayer || !currentAuction.highest_team_id) return;
-    isResolvingAuctionRef.current = true;
-
-    setIsTimerRunning(false);
-    expiresAtRef.current = null;
-
-    const winningTeam = teams.find(t => t.id === currentAuction.highest_team_id);
-    if (!winningTeam) return;
-
-    const soldPrice = currentAuction.current_bid;
-
-    // Deduct team balance and increase total spent
-    updateTeam(winningTeam.id, {
-      current_balance: winningTeam.current_balance - soldPrice,
-      total_spent: winningTeam.total_spent + soldPrice
-    });
-
-    // Mark player as SOLD
-    const updatedPlayer: Player = {
-      ...currentPlayer,
-      auction_status: 'SOLD',
-      sold_price: soldPrice,
-      sold_team_id: winningTeam.id,
-      updated_at: new Date().toISOString()
-    };
-    updatePlayer(currentPlayer.id, {
-      auction_status: 'SOLD',
-      sold_price: soldPrice,
-      sold_team_id: winningTeam.id
-    });
-    setCurrentPlayer(updatedPlayer);
-
-    const updatedAuction: Auction = {
-      ...currentAuction,
-      status: 'SOLD',
-      completed_at: new Date().toISOString()
-    };
-    setCurrentAuction(updatedAuction);
-
-    sounds.playSoldGavel();
-    setLastActionMessage(`SOLD! ${currentPlayer.name} acquired by ${winningTeam.name} for ₹${soldPrice.toLocaleString('en-IN')}`);
-
-    realtimeManager.broadcast('AUCTION_SOLD', {
-      auction: updatedAuction,
-      player: updatedPlayer,
-      winningTeam,
-      soldPrice
-    });
-
-    logAuditAction('PLAYER_SOLD_AUTOMATIC', {
-      player: currentPlayer.name,
-      team: winningTeam.name,
-      price: soldPrice
-    });
-  }, [currentAuction, currentPlayer, teams, updateTeam, updatePlayer, logAuditAction]);
-
   // Complete Automatic UNSOLD action
-  const handleAutomaticUnsold = useCallback(() => {
+  const handleAutomaticUnsold = useCallback(async () => {
     if (isResolvingAuctionRef.current) return;
     if (!currentAuction || currentAuction.status !== 'LIVE' || !currentPlayer) return;
     isResolvingAuctionRef.current = true;
@@ -239,17 +193,20 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsTimerRunning(false);
     expiresAtRef.current = null;
 
+    await finalizeAuctionUnsold({
+      playerId: currentPlayer.id,
+      auctionId: currentAuction.id,
+      categoryId: currentCategory?.id || (categories[0]?.id || ''),
+      startingBid: currentAuction.starting_bid
+    });
+
     const updatedPlayer: Player = {
       ...currentPlayer,
       auction_status: 'UNSOLD',
       sold_price: null,
-      sold_team_id: null
+      sold_team_id: null,
+      updated_at: new Date().toISOString()
     };
-    updatePlayer(currentPlayer.id, {
-      auction_status: 'UNSOLD',
-      sold_price: null,
-      sold_team_id: null
-    });
     setCurrentPlayer(updatedPlayer);
 
     const updatedAuction: Auction = {
@@ -268,7 +225,74 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
 
     logAuditAction('PLAYER_UNSOLD_AUTOMATIC', { player: currentPlayer.name });
-  }, [currentAuction, currentPlayer, updatePlayer, logAuditAction]);
+  }, [currentAuction, currentPlayer, currentCategory, categories, finalizeAuctionUnsold, logAuditAction]);
+
+  // Complete Automatic SOLD action
+  const handleAutomaticSold = useCallback(async () => {
+    if (isResolvingAuctionRef.current) return;
+    if (!currentAuction || currentAuction.status !== 'LIVE' || !currentPlayer) return;
+    if (!currentAuction.highest_team_id || currentAuction.current_bid <= 0) {
+      await handleAutomaticUnsold();
+      return;
+    }
+    isResolvingAuctionRef.current = true;
+
+    setIsTimerRunning(false);
+    expiresAtRef.current = null;
+
+    const winningTeam = teams.find(t => t.id === currentAuction.highest_team_id);
+    if (!winningTeam) {
+      isResolvingAuctionRef.current = false;
+      return;
+    }
+
+    const soldPrice = currentAuction.current_bid;
+
+    // Atomically persist player SOLD, team balance deducted, auctions row inserted, bids saved
+    const res = await finalizeAuctionSale({
+      playerId: currentPlayer.id,
+      winningTeamId: winningTeam.id,
+      soldPrice,
+      auctionId: currentAuction.id,
+      categoryId: currentCategory?.id || (categories[0]?.id || ''),
+      startingBid: currentAuction.starting_bid,
+      serverStartedAt: currentAuction.server_started_at,
+      serverExpiresAt: currentAuction.server_expires_at,
+      bids: bidHistory
+    });
+
+    const updatedPlayer: Player = res.player || {
+      ...currentPlayer,
+      auction_status: 'SOLD',
+      sold_price: soldPrice,
+      sold_team_id: winningTeam.id,
+      updated_at: new Date().toISOString()
+    };
+    setCurrentPlayer(updatedPlayer);
+
+    const updatedAuction: Auction = {
+      ...currentAuction,
+      status: 'SOLD',
+      completed_at: new Date().toISOString()
+    };
+    setCurrentAuction(updatedAuction);
+
+    sounds.playSoldGavel();
+    setLastActionMessage(`SOLD! ${currentPlayer.name} acquired by ${winningTeam.name} for ₹${soldPrice.toLocaleString('en-IN')}`);
+
+    realtimeManager.broadcast('AUCTION_SOLD', {
+      auction: updatedAuction,
+      player: updatedPlayer,
+      winningTeam: res.team || winningTeam,
+      soldPrice
+    });
+
+    logAuditAction('PLAYER_SOLD_AUTOMATIC', {
+      player: currentPlayer.name,
+      team: winningTeam.name,
+      price: soldPrice
+    });
+  }, [currentAuction, currentPlayer, currentCategory, categories, teams, bidHistory, finalizeAuctionSale, handleAutomaticUnsold, logAuditAction]);
 
   // Synchronized Server-Timestamp Timer Loop
   useEffect(() => {
@@ -341,6 +365,23 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLastActionMessage(`Auction started for ${player.name} in ${category.name}`);
 
     updatePlayer(player.id, { auction_status: 'LIVE' });
+
+    // Persist LIVE auction lot to central database
+    supabase.from('auctions').upsert({
+      id: newAuction.id,
+      tournament_id: tournament.id,
+      player_id: player.id,
+      category_id: category.id,
+      status: 'LIVE',
+      starting_bid: startBid,
+      current_bid: 0,
+      highest_team_id: null,
+      server_started_at: newAuction.server_started_at,
+      server_expires_at: newAuction.server_expires_at,
+      remaining_seconds_at_pause: duration,
+      created_by: 'Auction Admin',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' }).then(undefined, console.warn);
 
     realtimeManager.broadcast('AUCTION_STARTED', {
       auction: newAuction,
@@ -536,17 +577,17 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Manual SOLD Trigger
-  const markSoldManually = () => {
+  const markSoldManually = async () => {
     if (isResolvingAuctionRef.current) return;
     if (!currentAuction || currentAuction.status !== 'LIVE' || !highestTeam || currentAuction.current_bid <= 0) return;
-    handleAutomaticSold();
+    await handleAutomaticSold();
   };
 
   // Manual UNSOLD Trigger
-  const markUnsoldManually = () => {
+  const markUnsoldManually = async () => {
     if (isResolvingAuctionRef.current) return;
     if (!currentAuction || currentAuction.status !== 'LIVE') return;
-    handleAutomaticUnsold();
+    await handleAutomaticUnsold();
   };
 
   // Undo Last Bid
@@ -649,8 +690,8 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return { success: true };
   };
 
-  // Cancel SOLD
-  const cancelSold = (): { success: boolean; error?: string } => {
+  // Cancel SOLD (Atomic database refund and player release)
+  const cancelSold = async (): Promise<{ success: boolean; error?: string }> => {
     if (!currentAuction || currentAuction.status !== 'SOLD' || !currentPlayer) {
       return { success: false, error: 'Current auction is not in SOLD status' };
     }
@@ -658,30 +699,11 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isActionPendingRef.current = true;
     setTimeout(() => { isActionPendingRef.current = false; }, 500);
 
-    const winningTeam = teams.find(t => t.id === currentAuction.highest_team_id);
     const refundAmount = currentAuction.current_bid;
-
-    // Refund team balance
-    if (winningTeam) {
-      updateTeam(winningTeam.id, {
-        current_balance: winningTeam.current_balance + refundAmount,
-        total_spent: Math.max(0, winningTeam.total_spent - refundAmount)
-      });
+    const res = await releaseSoldPlayer(currentPlayer.id);
+    if (!res.success) {
+      return { success: false, error: res.message };
     }
-
-    // Reset player back to UNSOLD
-    const updatedPlayer: Player = {
-      ...currentPlayer,
-      auction_status: 'UNSOLD',
-      sold_price: null,
-      sold_team_id: null
-    };
-    updatePlayer(currentPlayer.id, {
-      auction_status: 'UNSOLD',
-      sold_price: null,
-      sold_team_id: null
-    });
-    setCurrentPlayer(updatedPlayer);
 
     const updatedAuction: Auction = {
       ...currentAuction,
@@ -696,7 +718,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     realtimeManager.broadcast('AUCTION_CANCELLED', {
       auction: updatedAuction,
-      player: updatedPlayer,
+      player: currentPlayer,
       refundAmount
     });
 
@@ -710,7 +732,50 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     startAuction(currentPlayer, currentCategory);
   };
 
-  // Select Next Player
+  // Stage any player lot cleanly without starting live countdown
+  const stagePlayer = (player: Player, category?: Category) => {
+    isResolvingAuctionRef.current = false;
+    isActionPendingRef.current = false;
+    setIsTimerRunning(false);
+    expiresAtRef.current = null;
+
+    const cat = category || categories.find(c => c.name.toLowerCase() === (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST').toLowerCase()) || categories[0];
+    const startBid = (cat?.starting_bid && cat.starting_bid > 0) ? cat.starting_bid : 30000;
+    const duration = settings.timer_seconds || 20;
+
+    setCurrentPlayer(player);
+    setCurrentCategory(cat);
+    setBidHistory([]);
+    setTimerSeconds(duration);
+
+    const stagedAuction: Auction = {
+      id: generateUUID(),
+      tournament_id: tournament.id,
+      player_id: player.id,
+      category_id: cat.id,
+      status: player.auction_status === 'SOLD' ? 'SOLD' : 'READY',
+      starting_bid: startBid,
+      current_bid: player.sold_price || 0,
+      highest_team_id: player.sold_team_id || null,
+      server_started_at: null,
+      server_expires_at: null,
+      paused_at: null,
+      remaining_seconds_at_pause: duration,
+      completed_at: null,
+      created_by: 'Auction Admin',
+      updated_at: new Date().toISOString()
+    };
+    setCurrentAuction(stagedAuction);
+    setLastActionMessage(`Staged lot: ${player.player_code} - ${player.name} (${cat.name}). Ready for auction.`);
+
+    realtimeManager.broadcast('AUCTION_STAGED', {
+      auction: stagedAuction,
+      player,
+      category: cat
+    });
+  };
+
+  // Select Next Player (Cleanly stages the next lot without auto-starting)
   const selectNextPlayer = () => {
     const unsoldPlayers = players.filter(p => p.auction_status === 'UNSOLD');
     if (unsoldPlayers.length === 0) {
@@ -720,7 +785,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const nextP = unsoldPlayers[0];
     const categoryName = (nextP.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
     const cat = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) || categories[0];
-    startAuction(nextP, cat);
+    stagePlayer(nextP, cat);
   };
 
   return (
@@ -736,6 +801,7 @@ export const AuctionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         status: currentAuction?.status || 'READY',
         lastActionMessage,
         startAuction,
+        stagePlayer,
         placeBid,
         placeQuickBid,
         pauseAuction,

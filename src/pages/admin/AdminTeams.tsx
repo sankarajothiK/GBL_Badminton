@@ -7,6 +7,7 @@ import { exportTeamsCSV, exportSquadsCSV } from '../../lib/csv';
 import { uploadImage } from '../../lib/supabase';
 import { calculateMaxBid, getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Modal } from '../../components/common/Modal';
+import { TeamCategoryBreakdown } from '../../components/common/TeamCategoryBreakdown';
 
 export const AdminTeams: React.FC = () => {
   const { teams, players, settings, updateTeam, createTeam, deleteTeam, releaseSoldPlayer } = useTournament();
@@ -343,6 +344,9 @@ export const AdminTeams: React.FC = () => {
                 </div>
               </div>
 
+              {/* Category Breakdown */}
+              <TeamCategoryBreakdown squad={squad} maxSlots={team.total_squad_slots || 6} variant="compact" />
+
               {/* Purchased Squad Players List with Unsell Option */}
               <div className="pt-3 border-t border-gbl-navy-800 space-y-2">
                 <div className="flex justify-between items-center text-xs">
@@ -361,24 +365,31 @@ export const AdminTeams: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {squad.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between p-2 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800/80 text-xs hover:border-gbl-navy-700 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <img
-                            src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'}
-                            alt={p.name}
-                            className="w-8 h-8 rounded-lg object-cover border border-gbl-navy-700 shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <span className="font-bold text-white block truncate leading-tight">{p.name}</span>
-                            <span className="text-[10px] text-slate-400 truncate block">
-                              {p.player_code} • {p.eligible_category_names?.slice(0, 2).join(', ')}
-                            </span>
+                    {squad.map((p) => {
+                      const pCat = (p.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
+                      return (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-gbl-navy-950 border border-gbl-navy-800/80 text-xs hover:border-gbl-navy-700 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <img
+                              src={p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'}
+                              alt={p.name}
+                              className="w-8 h-8 rounded-lg object-cover border border-gbl-navy-700 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-white block truncate leading-tight">{p.name}</span>
+                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-black uppercase border border-amber-500/40">
+                                  {pCat}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 truncate block">
+                                {p.player_code} • {p.eligible_category_names?.slice(0, 2).join(', ')}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="font-mono font-black text-xs text-emerald-400">
@@ -395,8 +406,9 @@ export const AdminTeams: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
                 )}
               </div>
 

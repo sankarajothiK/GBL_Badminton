@@ -55,6 +55,7 @@ export const AdminAuction: React.FC = () => {
     cancelSold, 
     reAuctionPlayer, 
     selectNextPlayer,
+    stagePlayer,
     lastActionMessage 
   } = useAuction();
 
@@ -107,9 +108,12 @@ export const AdminAuction: React.FC = () => {
 
   const handleSelectSearchedPlayer = (player: Player) => {
     setSelectedPlayerId(player.id);
-    setSelectedCategoryName((player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST'));
+    const catName = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
+    setSelectedCategoryName(catName);
     setPlayerSearchQuery(`${player.player_code} - ${player.name}`);
     setIsSearchOpen(false);
+    const cat = categories.find(c => c.name.toUpperCase() === catName.toUpperCase()) || categories[0];
+    stagePlayer(player, cat);
   };
   
   // Category resolution: Auction Category determines default opening bid
@@ -235,8 +239,8 @@ export const AdminAuction: React.FC = () => {
   };
 
   // Handle Confirm Cancel Sold
-  const handleConfirmCancelSold = () => {
-    const res = cancelSold();
+  const handleConfirmCancelSold = async () => {
+    const res = await cancelSold();
     setShowCancelSoldModal(false);
     if (!res.success) {
       setErrorMessage(res.error || 'Cancel SOLD failed');

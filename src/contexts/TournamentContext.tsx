@@ -173,6 +173,23 @@ interface TournamentContextType {
   deleteCategory: (categoryId: string) => Promise<void>;
   saveMatchResult: (match: TournamentMatch) => Promise<void>;
   releaseSoldPlayer: (playerId: string) => Promise<{ success: boolean; message: string }>;
+  finalizeAuctionSale: (params: {
+    playerId: string;
+    winningTeamId: string;
+    soldPrice: number;
+    auctionId: string;
+    categoryId: string;
+    startingBid: number;
+    serverStartedAt?: string | null;
+    serverExpiresAt?: string | null;
+    bids?: any[];
+  }) => Promise<{ success: boolean; player?: Player; team?: Team; error?: string }>;
+  finalizeAuctionUnsold: (params: {
+    playerId: string;
+    auctionId: string;
+    categoryId: string;
+    startingBid: number;
+  }) => Promise<{ success: boolean; player?: Player; error?: string }>;
   setTeamsPools: (assignments: Record<string, string>) => Promise<void>;
   toggleManualQualifier: (teamId: string) => Promise<void>;
   setQualifyingTeamsCount: (count: number) => Promise<void>;
@@ -258,6 +275,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               // Calculate genuine spent on auction picks (excluding owner allocation)
               const nonOwnerPicks = (pData || []).filter((p: any) => {
                 if (p.sold_team_id !== cloudTeam.id || p.auction_status !== 'SOLD') return false;
+                if (isNoPlayTeam) return true;
                 const isOwner = Boolean(
                   (cloudTeam.owner_name && (
                     p.name.trim().toLowerCase().includes(cloudTeam.owner_name.trim().toLowerCase()) ||
@@ -786,9 +804,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (updatedPlayer) {
       try {
         const payload = sanitizePlayerForDb(updatedPlayer);
-        const { error } = await supabase.from('players').upsert(payload);
+        const { error } = await supabase.from('players').update(payload).eq('id', playerId);
         if (error) {
-          console.warn('Supabase player upsert notice:', error.message);
+          console.warn('Supabase player update fallback to upsert:', error.message);
+          await supabase.from('players').upsert(payload, { onConflict: 'id' });
         }
       } catch (e) {
         console.warn('Database sync error on updatePlayer:', e);
@@ -1120,7 +1139,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         realtimeManager.broadcast('TEAM_UPDATED', updatedTeam);
         try {
           const payload = sanitizeTeamForDb(updatedTeam);
-          await supabase.from('teams').upsert(payload);
+          await supabase.from('teams').update(payload).eq('id', refundTeamId);
         } catch (e) {
           console.warn('Sync error on refund team balance:', e);
         }
@@ -1143,7 +1162,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     realtimeManager.broadcast('PLAYER_UPDATED', updatedPlayer);
     try {
       const payload = sanitizePlayerForDb(updatedPlayer);
-      await supabase.from('players').upsert(payload);
+      await supabase.from('players').update(payload).eq('id', playerId);
+      await supabase.from('auctions').update({ status: 'UNSOLD', completed_at: new Date().toISOString() }).eq('player_id', playerId);
     } catch (e) {
       console.warn('Sync error on revert player to unsold:', e);
     }
@@ -1161,6 +1181,214 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   };
 
+  // Atomic Auction Sale Finalization (Guarantees player, team balance, auction history & realtime sync together)
+  const finalizeAuctionSale = async (params: {
+    playerId: string;
+    winningTeamId: string;
+    soldPrice: number;
+    auctionId: string;
+    categoryId: string;
+    startingBid: number;
+    serverStartedAt?: string | null;
+    serverExpiresAt?: string | null;
+    bids?: any[];
+  }): Promise<{ success: boolean; player?: Player; team?: Team; error?: string }> => {
+    const {
+      playerId,
+      winningTeamId,
+      soldPrice,
+      auctionId,
+      categoryId,
+      startingBid,
+      serverStartedAt,
+      serverExpiresAt,
+      bids
+    } = params;
+
+    const player = players.find(p => p.id === playerId);
+    const team = teams.find(t => t.id === winningTeamId);
+
+    if (!player) {
+      console.error(`Player ${playerId} not found`);
+      return { success: false, error: 'Player not found' };
+    }
+    if (!team) {
+      console.error(`Team ${winningTeamId} not found`);
+      return { success: false, error: 'Winning team not found' };
+    }
+
+    const currentBal = typeof team.current_balance === 'number' ? team.current_balance : (team.auction_budget || 470000);
+    const newBalance = Math.max(0, currentBal - soldPrice);
+    const newSpent = (team.total_spent || 0) + soldPrice;
+    const nowIso = new Date().toISOString();
+
+    const updatedPlayer: Player = {
+      ...player,
+      auction_status: 'SOLD',
+      sold_price: soldPrice,
+      sold_team_id: winningTeamId,
+      updated_at: nowIso
+    };
+
+    const updatedTeam: Team = {
+      ...team,
+      current_balance: newBalance,
+      total_spent: newSpent,
+      updated_at: nowIso
+    };
+
+    // 1. Immediately persist synchronously to local state and localStorage
+    setPlayers(prev => {
+      const next = prev.map(p => p.id === playerId ? updatedPlayer : p);
+      saveStoredData(GBL_PLAYERS_STORAGE_KEY, next);
+      return next;
+    });
+
+    setTeams(prev => {
+      const next = prev.map(t => t.id === winningTeamId ? updatedTeam : t);
+      saveStoredData(GBL_TEAMS_STORAGE_KEY, next);
+      return next;
+    });
+
+    // 2. Broadcast immediately over realtime to keep public/projector in sync instantly
+    realtimeManager.broadcast('PLAYER_UPDATED', updatedPlayer);
+    realtimeManager.broadcast('TEAM_UPDATED', updatedTeam);
+
+    // 3. Atomically persist to Supabase tables
+    try {
+      // 3a. Update Player row in Supabase
+      const playerPayload = sanitizePlayerForDb(updatedPlayer);
+      const { error: pErr } = await supabase.from('players').update(playerPayload).eq('id', playerId);
+      if (pErr) {
+        console.warn('Player DB update warning:', pErr.message);
+        await supabase.from('players').upsert(playerPayload, { onConflict: 'id' });
+      }
+
+      // 3b. Update Team row in Supabase
+      const teamPayload = sanitizeTeamForDb(updatedTeam);
+      const { error: tErr } = await supabase.from('teams').update(teamPayload).eq('id', winningTeamId);
+      if (tErr) {
+        console.warn('Team DB update warning:', tErr.message);
+        await supabase.from('teams').upsert(teamPayload, { onConflict: 'id' });
+      }
+
+      // 3c. Insert / Upsert Completed Auction row in Supabase auctions table
+      const auctionPayload = {
+        id: auctionId,
+        tournament_id: tournament.id,
+        player_id: playerId,
+        category_id: categoryId,
+        status: 'SOLD',
+        starting_bid: startingBid,
+        current_bid: soldPrice,
+        highest_team_id: winningTeamId,
+        server_started_at: serverStartedAt || null,
+        server_expires_at: serverExpiresAt || null,
+        completed_at: nowIso,
+        created_by: 'Admin',
+        updated_at: nowIso
+      };
+      const { error: aErr } = await supabase.from('auctions').upsert(auctionPayload, { onConflict: 'id' });
+      if (aErr) console.warn('Auction record insert warning:', aErr.message);
+
+      // 3d. Insert bids into Supabase auction_bids if present
+      if (bids && bids.length > 0) {
+        const bidsPayload = bids.map((b: any) => ({
+          id: b.id || generateUUID(),
+          auction_id: auctionId,
+          team_id: b.team_id,
+          amount: b.amount,
+          bid_type: b.bid_type || 'NORMAL',
+          is_reverted: Boolean(b.is_reverted),
+          created_at: b.created_at || nowIso,
+          created_by: b.created_by || 'Auctioneer'
+        }));
+        await supabase.from('auction_bids').upsert(bidsPayload, { onConflict: 'id' });
+      } else {
+        await supabase.from('auction_bids').upsert([{
+          id: generateUUID(),
+          auction_id: auctionId,
+          team_id: winningTeamId,
+          amount: soldPrice,
+          bid_type: 'NORMAL',
+          is_reverted: false,
+          created_at: nowIso,
+          created_by: 'Auctioneer'
+        }], { onConflict: 'id' });
+      }
+
+    } catch (dbErr) {
+      console.error('Critical database persistence error in finalizeAuctionSale:', dbErr);
+    }
+
+    logAuditAction('PLAYER_SOLD_ATOMIC', {
+      player: player.name,
+      player_code: player.player_code,
+      team: team.name,
+      price: soldPrice,
+      newBalance
+    });
+
+    return { success: true, player: updatedPlayer, team: updatedTeam };
+  };
+
+  // Atomic Auction Unsold Finalization
+  const finalizeAuctionUnsold = async (params: {
+    playerId: string;
+    auctionId: string;
+    categoryId: string;
+    startingBid: number;
+  }): Promise<{ success: boolean; player?: Player; error?: string }> => {
+    const { playerId, auctionId, categoryId, startingBid } = params;
+    const player = players.find(p => p.id === playerId);
+    if (!player) return { success: false, error: 'Player not found' };
+
+    const nowIso = new Date().toISOString();
+    const updatedPlayer: Player = {
+      ...player,
+      auction_status: 'UNSOLD',
+      sold_price: null,
+      sold_team_id: null,
+      updated_at: nowIso
+    };
+
+    setPlayers(prev => {
+      const next = prev.map(p => p.id === playerId ? updatedPlayer : p);
+      saveStoredData(GBL_PLAYERS_STORAGE_KEY, next);
+      return next;
+    });
+
+    realtimeManager.broadcast('PLAYER_UPDATED', updatedPlayer);
+
+    try {
+      const payload = sanitizePlayerForDb(updatedPlayer);
+      await supabase.from('players').update(payload).eq('id', playerId);
+
+      await supabase.from('auctions').upsert({
+        id: auctionId,
+        tournament_id: tournament.id,
+        player_id: playerId,
+        category_id: categoryId,
+        status: 'UNSOLD',
+        starting_bid: startingBid,
+        current_bid: 0,
+        highest_team_id: null,
+        completed_at: nowIso,
+        created_by: 'Admin',
+        updated_at: nowIso
+      }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Sync error on finalizeAuctionUnsold:', e);
+    }
+
+    logAuditAction('PLAYER_UNSOLD_ATOMIC', {
+      player: player.name,
+      player_code: player.player_code
+    });
+
+    return { success: true, player: updatedPlayer };
+  };
+
   // Assign Pool A / Pool B to teams
   const setTeamsPools = async (assignments: Record<string, string>) => {
     const updatedTeams = teams.map(t => {
@@ -1176,7 +1404,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (assignments[t.id]) {
         try {
           const payload = sanitizeTeamForDb(t);
-          await supabase.from('teams').upsert(payload);
+          await supabase.from('teams').update(payload).eq('id', t.id);
         } catch (e) {
           console.warn('Sync error on team pool:', e);
         }
@@ -1430,6 +1658,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         deleteCategory,
         saveMatchResult,
         releaseSoldPlayer,
+        finalizeAuctionSale,
+        finalizeAuctionUnsold,
         setTeamsPools,
         toggleManualQualifier,
         setQualifyingTeamsCount,
