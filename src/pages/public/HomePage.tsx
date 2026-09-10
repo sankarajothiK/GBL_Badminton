@@ -443,7 +443,7 @@ export const HomePage: React.FC = () => {
         </section>
       </div>
 
-      {/* 4. SQUAD TRACKER / 10 TEAM BALANCES GRID */}
+      {/* 4. SQUAD TRACKER / DYNAMIC TEAM BALANCES GRID */}
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
           <div className="text-left">
@@ -451,7 +451,7 @@ export const HomePage: React.FC = () => {
               <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
               Squad tracker
             </div>
-            <h3 className="text-lg font-black tracking-[-0.04em] text-slate-950">Team balances</h3>
+            <h3 className="text-lg font-black tracking-[-0.04em] text-slate-950">Team balances ({teams.length} Teams)</h3>
           </div>
           <Link 
             to="/teams" 
@@ -462,7 +462,7 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-slate-100 text-left">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-px bg-slate-100 text-left">
           {teams.map((team, idx) => {
             const teamPlayers = players.filter(p => p.sold_team_id === team.id);
             const totalBudget = team.initial_budget || 500000;

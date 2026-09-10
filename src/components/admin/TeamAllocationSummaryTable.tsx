@@ -206,7 +206,7 @@ export const TeamAllocationSummaryTable: React.FC<TeamAllocationSummaryTableProp
           {/* Totals Summary Footer */}
           <tfoot>
             <tr className="border-t-2 border-gbl-navy-700 bg-gbl-navy-950/80 font-black text-white text-[11px]">
-              <td className="py-3 px-3 uppercase tracking-wider">TOTAL (10 TEAMS)</td>
+              <td className="py-3 px-3 uppercase tracking-wider">TOTAL ({teams.length} TEAMS)</td>
               <td className="py-3 px-2 text-right font-mono">{formatINR(aggregateTotalBudget)}</td>
               <td className="py-3 px-2 text-right font-mono text-amber-400">{formatINR(aggregateOwnerAlloc)}</td>
               <td className="py-3 px-2 text-right font-mono text-sky-400">{formatINR(aggregateAuctionBudget)}</td>

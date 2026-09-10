@@ -1,52 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Trophy, CheckCircle, XCircle, Layers, Sparkles } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 
 export const StandingsPage: React.FC = () => {
   const { standings, teams, settings } = useTournament();
-  const [activeTab, setActiveTab] = useState<'POOL_A' | 'POOL_B' | 'OVERALL'>('POOL_A');
+  const [activeTab, setActiveTab] = useState<string>('Pool A');
 
-  const teamMap = new Map(teams.map(t => [t.id, t]));
+  const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
   const qualifyingCount = settings.qualifying_teams_count || 8;
+
+  // Complete standings guaranteed for all active teams in database
+  const fullStandings = useMemo(() => {
+    const existingMap = new Map(standings.map(s => [s.team_id, s]));
+    const list = teams.map((team, idx) => {
+      const existing = existingMap.get(team.id);
+      if (existing) return existing;
+      return {
+        id: `standing_${team.id}`,
+        tournament_id: team.tournament_id,
+        team_id: team.id,
+        rank: idx + 1,
+        played: 0,
+        won: 0,
+        lost: 0,
+        points: 0,
+        score_for: 0,
+        score_against: 0,
+        score_diff: 0,
+        is_qualified: false,
+        is_eliminated: false,
+        manual_qualifier: false,
+        created_at: team.created_at,
+        updated_at: team.updated_at
+      };
+    });
+
+    return list.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.score_diff - a.score_diff;
+    });
+  }, [standings, teams]);
+
+  // Dynamically find all unique pools from actual teams
+  const availablePools = useMemo(() => {
+    const defaultPools = ['Pool A', 'Pool B', 'Pool C'];
+    const customPools = teams
+      .map(t => t.pool)
+      .filter((p): p is string => Boolean(p && p !== 'Unassigned' && !defaultPools.includes(p)));
+    const uniqueCustom = Array.from(new Set(customPools));
+    return [...defaultPools, ...uniqueCustom];
+  }, [teams]);
 
   // Filter and sort standings based on active tab
   const getDisplayedStandings = () => {
-    if (activeTab === 'POOL_A') {
-      const poolATeamIds = new Set(teams.filter(t => t.pool === 'Pool A').map(t => t.id));
-      const poolAStandings = standings.filter(s => poolATeamIds.has(s.team_id));
-      // Re-rank 1 to N
-      return poolAStandings.map((s, idx) => ({
+    if (activeTab === 'OVERALL') {
+      return fullStandings.map((s, idx) => ({
         ...s,
         displayRank: idx + 1,
-        poolLabel: 'Pool A',
-        isTopInPool: idx < 2 // Top 2 in pool qualify
+        poolLabel: teamMap.get(s.team_id)?.pool || 'Unassigned',
+        isTopInPool: idx < qualifyingCount
       }));
     }
 
-    if (activeTab === 'POOL_B') {
-      const poolBTeamIds = new Set(teams.filter(t => t.pool === 'Pool B').map(t => t.id));
-      const poolBStandings = standings.filter(s => poolBTeamIds.has(s.team_id));
-      return poolBStandings.map((s, idx) => ({
-        ...s,
-        displayRank: idx + 1,
-        poolLabel: 'Pool B',
-        isTopInPool: idx < 2
-      }));
-    }
-
-    // Overall
-    return standings.map((s, idx) => ({
+    const poolTeamIds = new Set(
+      teams.filter(t => (t.pool || '').toLowerCase() === activeTab.toLowerCase()).map(t => t.id)
+    );
+    const poolStandings = fullStandings.filter(s => poolTeamIds.has(s.team_id));
+    return poolStandings.map((s, idx) => ({
       ...s,
       displayRank: idx + 1,
-      poolLabel: teamMap.get(s.team_id)?.pool || 'Unassigned',
-      isTopInPool: idx < qualifyingCount
+      poolLabel: activeTab,
+      isTopInPool: idx < 2 // Top 2 in pool qualify
     }));
   };
 
   const displayedList = getDisplayedStandings();
 
-  const poolACount = teams.filter(t => t.pool === 'Pool A').length;
-  const poolBCount = teams.filter(t => t.pool === 'Pool B').length;
+  // Helper for pool theme colors
+  const getPoolColorClasses = (poolName: string, isActive: boolean) => {
+    if (!isActive) return 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+    if (poolName === 'Pool A') return 'bg-sky-600 text-white shadow-lg shadow-sky-600/30';
+    if (poolName === 'Pool B') return 'bg-amber-600 text-white shadow-lg shadow-amber-600/30';
+    if (poolName === 'Pool C') return 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30';
+    return 'bg-purple-600 text-white shadow-lg shadow-purple-600/30';
+  };
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-6 text-slate-950">
@@ -62,7 +99,7 @@ export const StandingsPage: React.FC = () => {
             Points Table &amp; Pool Standings
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Gulf Oil Badminton Premier League tournament standings. 10 teams compete across <strong>Pool A (5 Teams)</strong> and <strong>Pool B (5 Teams)</strong> for qualification into knockout stages.
+            Gulf Oil Badminton Premier League tournament standings. {teams.length} teams compete across tournament pools for qualification into knockout stages.
           </p>
         </div>
 
@@ -72,31 +109,23 @@ export const StandingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Pool Navigation Tabs */}
+      {/* Dynamic Pool Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setActiveTab('POOL_A')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'POOL_A'
-              ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>Pool A ({poolACount} Teams)</span>
-        </button>
+        {availablePools.map(poolName => {
+          const count = teams.filter(t => (t.pool || '').toLowerCase() === poolName.toLowerCase()).length;
+          const isActive = activeTab === poolName;
 
-        <button
-          onClick={() => setActiveTab('POOL_B')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
-            activeTab === 'POOL_B'
-              ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>Pool B ({poolBCount} Teams)</span>
-        </button>
+          return (
+            <button
+              key={poolName}
+              onClick={() => setActiveTab(poolName)}
+              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${getPoolColorClasses(poolName, isActive)}`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>{poolName} ({count} Teams)</span>
+            </button>
+          );
+        })}
 
         <button
           onClick={() => setActiveTab('OVERALL')}
@@ -107,7 +136,7 @@ export const StandingsPage: React.FC = () => {
           }`}
         >
           <Trophy className="w-3.5 h-3.5 text-lime-400" />
-          <span>Overall Standings (All 10 Teams)</span>
+          <span>Overall Standings (All {teams.length} Teams)</span>
         </button>
       </div>
 
@@ -180,7 +209,7 @@ export const StandingsPage: React.FC = () => {
                           )}
                           <div>
                             <p className="font-bold text-slate-950 text-sm">{team?.name || 'Team'}</p>
-                            <p className="text-[11px] text-slate-400">Owner: {team?.owner_name}</p>
+                            <p className="text-[11px] text-slate-400">Owner: {team?.owner_name || 'N/A'}</p>
                           </div>
                         </div>
                       </td>
@@ -192,6 +221,8 @@ export const StandingsPage: React.FC = () => {
                             ? 'bg-sky-50 text-sky-700 border border-sky-200'
                             : standing.poolLabel === 'Pool B'
                             ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : standing.poolLabel === 'Pool C'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-slate-100 text-slate-500'
                         }`}>
                           {standing.poolLabel}

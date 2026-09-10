@@ -359,23 +359,25 @@ export const PublicAuctionPage: React.FC = () => {
               to="/teams"
               className="px-4 py-2.5 rounded-xl bg-lime-300 hover:bg-lime-200 text-lime-950 text-xs font-black uppercase tracking-wider shadow-sm transition-colors"
             >
-              View 10 Teams
+              View {teams.length} Teams
             </Link>
           </div>
         </div>
       )}
 
-      {/* 10 TEAMS PURSE STRIP */}
+      {/* DYNAMIC TEAMS PURSE STRIP */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm text-left">
         <div className="flex justify-between items-center">
           <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
             <Shield className="w-4 h-4 text-slate-700" />
-            <span>10 Team Purses</span>
+            <span>{teams.length} Team Purses</span>
           </h3>
-          <span className="text-[11px] text-slate-500 font-mono">₹50L Total</span>
+          <span className="text-[11px] text-slate-500 font-mono">
+            {formatCompactINR(teams.reduce((acc, t) => acc + (t.initial_budget || 500000), 0))} Total
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3">
           {teams.map((t) => (
             <div 
               key={t.id} 
@@ -389,7 +391,7 @@ export const PublicAuctionPage: React.FC = () => {
                   {t.short_name}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-xs font-black text-slate-900 truncate max-w-[80px]">{t.name}</p>
+                  <p className="text-xs font-black text-slate-900 truncate max-w-[90px]">{t.name}</p>
                   <p className="text-[10px] text-slate-400">Purse:</p>
                 </div>
               </div>

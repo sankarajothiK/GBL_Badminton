@@ -158,9 +158,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         {/* Step 2: Create / Edit Teams */}
         {currentStep === 2 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white font-sports">Step 2: 10 Official Teams Initialized</h3>
-            <p className="text-xs text-slate-400">All 10 teams have been initialized with standard ₹5,00,000 budgets (₹30,000 owner reserve + ₹4,70,000 player purse). You can customize logos and owners at any time from Team Management.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2">
+            <h3 className="text-lg font-bold text-white font-sports">Step 2: {teams.length} Official Teams Initialized</h3>
+            <p className="text-xs text-slate-400">All {teams.length} teams have been initialized with standard ₹5,00,000 budgets (₹30,000 owner reserve + ₹4,70,000 player purse). You can customize logos and owners at any time from Team Management.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-2">
               {teams.map((t) => (
                 <div key={t.id} className="bg-gbl-navy-950 border border-gbl-navy-800 p-3 rounded-xl flex flex-col items-center text-center">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white" style={{ backgroundColor: t.team_color }}>
@@ -267,7 +267,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             </div>
             <h3 className="text-2xl font-black text-white font-sports">GBL TOURNAMENT SETUP COMPLETE</h3>
             <p className="text-sm text-slate-300 max-w-md mx-auto">
-              Your tournament settings, 10 team balances, 7 player categories, and live bidding engine are fully configured and ready.
+              Your tournament settings, {teams.length} team balances, 7 player categories, and live bidding engine are fully configured and ready.
             </p>
             <div className="p-4 bg-gbl-navy-950 border border-gbl-navy-800 rounded-xl max-w-md mx-auto text-xs text-slate-400">
               Connect your external projector screen at <strong className="text-sky-400">/projector</strong> and open the Live Auction Control console to conduct bidding in real-time!

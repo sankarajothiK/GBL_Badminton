@@ -29,13 +29,13 @@ export const TeamsPage: React.FC = () => {
         <div className="text-left max-w-2xl">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.23em] text-lime-300">
             <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
-            Official Tournament Teams • 10 Teams
+            Official Tournament Teams • {teams.length} Teams
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-[-0.05em]">
             Teams &amp; Squad Rosters
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            10 premier teams initialized with ₹5,00,000 budgets. Track purchased squad players, total expenditure, available purse, and maximum legal bids.
+            {teams.length} premier teams initialized with ₹5,00,000 budgets. Track purchased squad players, total expenditure, available purse, and maximum legal bids.
           </p>
         </div>
 

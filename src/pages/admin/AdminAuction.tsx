@@ -21,6 +21,7 @@ import {
   Sparkles,
   Search,
   X,
+  Check,
   Lock
 } from 'lucide-react';
 import { useAuction } from '../../contexts/AuctionContext';
@@ -898,25 +899,29 @@ export const AdminAuction: React.FC = () => {
       </div>
 
       {/* ================================================================= */}
-      {/* 4. BOTTOM BAR: 10 QUICK TEAM BIDDING BUTTONS */}
+      {/* 4. BOTTOM BAR: DYNAMIC OPERATOR TEAM CONSOLE */}
       {/* ================================================================= */}
-      <div className="bg-gradient-to-b from-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-700/60 rounded-3xl p-6 shadow-2xl space-y-4">
+      <div className="bg-gradient-to-b from-gbl-navy-900 via-gbl-navy-900 to-gbl-navy-950 border border-gbl-navy-700/70 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gbl-navy-800">
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+            <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest text-white flex items-center gap-2 font-sports">
               <Shield className="w-4 h-4 text-gbl-orange-500" />
-              <span>TEAM QUICK-BID SELECTOR (10 TEAMS)</span>
+              <span>AUCTION OPERATOR BIDDING CONSOLE ({teams.length} TEAMS)</span>
             </h2>
-            <p className="text-[11px] text-slate-400">Click a team tile below to target live quick bids</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Click any team card to place their next legal bid instantly or select as the active quick-bid target
+            </p>
           </div>
-          <div className="text-xs">
-            <span className="text-slate-400">Active Team: </span>
-            <strong className="text-gbl-orange-400 font-bold">{activeTeam?.name}</strong>
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <span className="text-slate-400">Target Team:</span>
+            <span className="px-3 py-1 rounded-xl bg-gbl-orange-500/20 border border-gbl-orange-500/50 text-gbl-orange-300 font-black text-xs uppercase tracking-wider">
+              {activeTeam?.name || 'Select Team'}
+            </span>
           </div>
         </div>
 
-        {/* 10 Quick Team Buttons */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3">
+        {/* Dynamic & Spacious Team Grid (Responsive for 12+ teams) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3.5 sm:gap-4">
           {teams.map((t) => {
             const isSelected = t.id === activeTeamId;
             const isLeader = t.id === highestTeam?.id;
@@ -924,44 +929,129 @@ export const AdminAuction: React.FC = () => {
             const totalSlots = t.total_squad_slots || 6;
             const isLocked = squadCount >= totalSlots;
 
+            // Calculate next bid for this team
+            const currentBid = currentAuction?.current_bid || 0;
+            const minInc = currentCategory?.min_bid_increment || 10000;
+            const startBid = (currentAuction?.starting_bid && currentAuction.starting_bid > 0) ? currentAuction.starting_bid : 30000;
+            const nextBidAmount = currentBid > 0 ? currentBid + minInc : startBid;
+
+            const maxLegalCalc = calculateMaxLegalBid(t, squadCount, settings, currentCategory || currentActiveCategory);
+            const canAffordNextBid = maxLegalCalc.isEligibleToBid && nextBidAmount <= maxLegalCalc.maxLegalBid && nextBidAmount <= t.current_balance;
+
             return (
-              <button
+              <div
                 key={t.id}
-                onClick={() => !isLocked && setActiveTeamId(t.id)}
-                disabled={isLocked}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-between relative ${
-                  isLocked
-                    ? 'opacity-40 bg-slate-900 border-slate-800 cursor-not-allowed'
+                onClick={() => {
+                  if (!isLocked) {
+                    setActiveTeamId(t.id);
+                    setErrorMessage(null);
+                  }
+                }}
+                className={`relative rounded-2xl border-2 transition-all p-4 flex flex-col justify-between cursor-pointer select-none min-h-[195px] ${
+                  isLeader
+                    ? 'bg-gradient-to-b from-emerald-950/90 via-gbl-navy-950 to-emerald-950/60 border-emerald-400 ring-4 ring-emerald-500/30 shadow-2xl shadow-emerald-500/20 scale-[1.02]'
                     : isSelected
-                    ? 'ring-2 ring-gbl-orange-500 border-gbl-orange-500 bg-gbl-orange-500/20 scale-[1.03] shadow-lg shadow-gbl-orange-500/20'
-                    : isLeader
-                    ? 'bg-emerald-950/40 border-emerald-500/60'
-                    : 'bg-gbl-navy-950 border-gbl-navy-800 hover:border-gbl-navy-700'
+                    ? 'bg-gradient-to-b from-amber-950/60 via-gbl-navy-950 to-gbl-navy-900 border-amber-400 ring-4 ring-amber-500/30 shadow-xl'
+                    : isLocked
+                    ? 'bg-slate-950/70 border-slate-800 opacity-40 cursor-not-allowed'
+                    : 'bg-gradient-to-b from-gbl-navy-900/90 to-gbl-navy-950 border-gbl-navy-700/80 hover:border-slate-400 hover:shadow-lg'
                 }`}
               >
-                {isLocked && (
-                  <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[8px] font-black uppercase shadow">
-                    FULL
+                {/* Top Badge Indicators */}
+                {isLocked ? (
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider shadow">
+                    FULL (6/6)
+                  </span>
+                ) : isLeader ? (
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[9px] font-black uppercase tracking-wider shadow animate-pulse flex items-center gap-1">
+                    <span>👑 LEADER</span>
+                  </span>
+                ) : (
+                  <span className="absolute top-2 right-2 px-1.5 py-0.2 rounded text-slate-400 text-[9px] font-mono font-bold">
+                    #{t.team_number}
                   </span>
                 )}
-                {t.logo_url ? (
-                  <div className="w-10 h-10 rounded-xl bg-gbl-navy-900 border border-gbl-navy-700 p-1 shadow-md mb-1.5 shrink-0 flex items-center justify-center overflow-hidden">
-                    <img src={t.logo_url} alt={t.name} className="w-full h-full object-contain" />
+
+                {/* Team Info Header */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    {t.logo_url ? (
+                      <div className="w-11 h-11 rounded-xl bg-gbl-navy-950 border border-gbl-navy-700 p-0.5 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                        <img src={t.logo_url} alt={t.name} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div 
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-md shrink-0 border border-white/20"
+                        style={{ backgroundColor: t.team_color }}
+                      >
+                        {t.short_name}
+                      </div>
+                    )}
+
+                    <div className="min-w-0 flex-1 pr-12">
+                      <h3 className="text-sm sm:text-base font-black text-white leading-tight tracking-tight line-clamp-2">
+                        {t.name}
+                      </h3>
+                      <p className="text-[10px] text-slate-400 truncate">Owner: {t.owner_name || 'N/A'}</p>
+                    </div>
                   </div>
-                ) : (
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-md mb-1.5 shrink-0 border border-white/20"
-                    style={{ backgroundColor: t.team_color }}
-                  >
-                    {t.short_name}
+
+                  {/* Team Financial & Squad Metrics */}
+                  <div className="pt-2 border-t border-gbl-navy-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400 font-medium">Available:</span>
+                      <strong className="font-mono text-emerald-400 font-black text-xs sm:text-sm">
+                        {formatINR(t.current_balance)}
+                      </strong>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Squad Slots:</span>
+                      <span className="font-mono text-slate-200 font-bold">{squadCount} / {totalSlots} Filled</span>
+                    </div>
                   </div>
-                )}
-                <span className="text-xs font-black text-white truncate w-full text-center leading-tight">{t.name}</span>
-                <div className="w-full flex items-center justify-between mt-1 text-[9px]">
-                  <span className="font-mono text-emerald-400 font-bold">{formatCompactINR(t.current_balance)}</span>
-                  <span className="font-mono text-slate-300 font-semibold">{squadCount}/{totalSlots}</span>
                 </div>
-              </button>
+
+                {/* Bottom Bidding Action Controls */}
+                <div className="pt-3 mt-1">
+                  {status === 'LIVE' ? (
+                    isLeader ? (
+                      <div className="w-full py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1 shadow-inner">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>CURRENT HIGHEST</span>
+                      </div>
+                    ) : canAffordNextBid ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTeamId(t.id);
+                          setErrorMessage(null);
+                          const res = placeBid(t.id, nextBidAmount);
+                          if (!res.success) {
+                            setErrorMessage(res.error || 'Bid rejected');
+                          }
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>BID {formatINR(nextBidAmount)}</span>
+                      </button>
+                    ) : (
+                      <div className="w-full py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 font-bold text-[10px] uppercase text-center">
+                        <span>{isLocked ? 'Squad Full' : nextBidAmount > t.current_balance ? 'Insufficient Points' : 'Max Bid Limit'}</span>
+                      </div>
+                    )
+                  ) : (
+                    <div className={`w-full py-2 rounded-xl border text-[10px] font-black uppercase text-center transition-colors ${
+                      isSelected
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                        : 'bg-gbl-navy-950/80 border-gbl-navy-800 text-slate-400'
+                    }`}>
+                      <span>{isSelected ? '✓ Selected Target' : 'Select Team'}</span>
+                    </div>
+                  )}
+                </div>
+
+              </div>
             );
           })}
         </div>
@@ -969,37 +1059,37 @@ export const AdminAuction: React.FC = () => {
         {/* Quick Bid Increment Buttons (+10k, +20k, +50k) & Custom Bid Form */}
         <div className="pt-4 border-t border-gbl-navy-800 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
-            <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-slate-400 shrink-0">
-              Quick Bids for {activeTeam?.short_name}:
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-slate-300 shrink-0">
+              Quick Increments for {activeTeam?.short_name || 'Active Team'}:
             </span>
             <div className="grid grid-cols-3 gap-2 sm:gap-2.5 w-full sm:w-auto">
               <button
                 onClick={() => handleQuickBid(10000)}
                 disabled={status !== 'LIVE'}
-                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-sky-500 to-sky-700 hover:from-sky-400 hover:to-sky-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs shadow-lg transition-all active:scale-95 border border-sky-400/30"
+                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-sky-500 to-sky-700 hover:from-sky-400 hover:to-sky-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs sm:text-sm shadow-lg transition-all active:scale-95 border border-sky-400/30"
               >
-                +₹10k
+                +₹10,000
               </button>
               <button
                 onClick={() => handleQuickBid(20000)}
                 disabled={status !== 'LIVE'}
-                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs shadow-lg transition-all active:scale-95 border border-amber-400/30"
+                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs sm:text-sm shadow-lg transition-all active:scale-95 border border-amber-400/30"
               >
-                +₹20k
+                +₹20,000
               </button>
               <button
                 onClick={() => handleQuickBid(50000)}
                 disabled={status !== 'LIVE'}
-                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-gbl-orange-500 to-gbl-orange-700 hover:from-gbl-orange-400 hover:to-gbl-orange-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs shadow-lg transition-all active:scale-95 border border-gbl-orange-400/30"
+                className="px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-b from-gbl-orange-500 to-gbl-orange-700 hover:from-gbl-orange-400 hover:to-gbl-orange-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-mono font-black text-xs sm:text-sm shadow-lg transition-all active:scale-95 border border-gbl-orange-400/30"
               >
-                +₹50k
+                +₹50,000
               </button>
             </div>
           </div>
 
           {/* Custom Bid Input */}
           <form onSubmit={handleCustomBid} className="flex items-center gap-2 w-full lg:w-auto">
-            <div className="relative flex-1 lg:w-48">
+            <div className="relative flex-1 lg:w-52">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 font-bold">₹</span>
               <input
                 type="number"
@@ -1007,15 +1097,15 @@ export const AdminAuction: React.FC = () => {
                 value={customBidAmount}
                 onChange={(e) => setCustomBidAmount(e.target.value)}
                 disabled={status !== 'LIVE'}
-                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl pl-8 pr-3 py-2.5 text-xs text-white font-mono focus:border-gbl-orange-500 focus:outline-none disabled:opacity-40"
+                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl pl-8 pr-3 py-2.5 text-xs sm:text-sm text-white font-mono focus:border-gbl-orange-500 focus:outline-none disabled:opacity-40"
               />
             </div>
             <button
               type="submit"
               disabled={status !== 'LIVE'}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs font-black uppercase tracking-wider transition-all shadow-md shrink-0"
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs sm:text-sm font-black uppercase tracking-wider transition-all shadow-md shrink-0"
             >
-              Bid
+              Place Bid
             </button>
           </form>
         </div>

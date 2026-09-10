@@ -399,7 +399,46 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setMatches(hydratedMatches);
           saveStoredData(GBL_MATCHES_STORAGE_KEY, hydratedMatches);
         }
-        if (stData && stData.length > 0) {
+        // Standings Reconciliation: Ensure ALL teams in tmData have a standing record
+        if (tmData && tmData.length > 0) {
+          const existingMap = new Map((stData || []).map((s: any) => [s.team_id, s]));
+          const reconciledStandings: Standing[] = tmData.map((t: any, idx: number) => {
+            const existing = existingMap.get(t.id);
+            if (existing) return existing as Standing;
+            return {
+              id: generateUUID(),
+              tournament_id: t.tournament_id || tData?.id || tournament.id,
+              team_id: t.id,
+              rank: idx + 1,
+              played: 0,
+              won: 0,
+              lost: 0,
+              points: 0,
+              score_for: 0,
+              score_against: 0,
+              score_diff: 0,
+              is_qualified: false,
+              is_eliminated: false,
+              manual_qualifier: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          });
+
+          // Sort by points DESC, score_diff DESC
+          const sorted = reconciledStandings.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return b.score_diff - a.score_diff;
+          }).map((s, i) => ({ ...s, rank: i + 1 }));
+
+          setStandings(sorted);
+          saveStoredData(GBL_STANDINGS_STORAGE_KEY, sorted);
+
+          // Push missing standings records to Supabase if any were missing
+          if (!stData || stData.length < tmData.length) {
+            supabase.from('standings').upsert(sorted, { onConflict: 'id' }).then(undefined, console.warn);
+          }
+        } else if (stData && stData.length > 0) {
           setStandings(stData);
           saveStoredData(GBL_STANDINGS_STORAGE_KEY, stData);
         }
@@ -723,6 +762,30 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return next;
     });
 
+    const newStanding: Standing = {
+      id: generateUUID(),
+      tournament_id: newTeam.tournament_id || tournament.id,
+      team_id: newTeam.id,
+      rank: teams.length + 1,
+      played: 0,
+      won: 0,
+      lost: 0,
+      points: 0,
+      score_for: 0,
+      score_against: 0,
+      score_diff: 0,
+      is_qualified: false,
+      is_eliminated: false,
+      manual_qualifier: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setStandings(prev => {
+      const next = [...prev, newStanding];
+      saveStoredData(GBL_STANDINGS_STORAGE_KEY, next);
+      return next;
+    });
+
     realtimeManager.broadcast('TEAM_CREATED', newTeam);
     logAuditAction('TEAM_CREATED', { name: newTeam.name });
 
@@ -732,6 +795,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (error) {
         console.warn('Database sync error on createTeam:', error.message);
       }
+      await supabase.from('standings').upsert(newStanding, { onConflict: 'id' });
     } catch (e) {
       console.warn('Database sync exception on createTeam:', e);
     }
@@ -746,6 +810,12 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return next;
     });
 
+    setStandings(prev => {
+      const next = prev.filter(s => s.team_id !== teamId).map((s, idx) => ({ ...s, rank: idx + 1 }));
+      saveStoredData(GBL_STANDINGS_STORAGE_KEY, next);
+      return next;
+    });
+
     realtimeManager.broadcast('TEAM_DELETED', { id: teamId });
     if (target) {
       logAuditAction('TEAM_DELETED', { name: target.name, id: teamId });
@@ -753,6 +823,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await supabase.from('teams').delete().eq('id', teamId);
+      await supabase.from('standings').delete().eq('team_id', teamId);
     } catch (e) {
       console.warn('Database sync error on deleteTeam:', e);
     }
@@ -1072,8 +1143,9 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const sorted = [...teams].map(team => {
       const st = stats[team.id] || { played: 0, won: 0, lost: 0, points: 0, score_for: 0, score_against: 0 };
       const score_diff = st.score_for - st.score_against;
+      const existingStanding = standings.find(s => s.team_id === team.id);
       return {
-        id: `standing_${team.id}`,
+        id: existingStanding?.id || generateUUID(),
         tournament_id: tournament.id,
         team_id: team.id,
         played: st.played,

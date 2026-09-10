@@ -302,14 +302,14 @@ export const ProjectorPage: React.FC = () => {
         )}
       </main>
 
-      {/* BOTTOM TICKER: 10 TEAM BALANCES */}
+      {/* BOTTOM TICKER: DYNAMIC TEAM BALANCES */}
       <footer className="z-10 border-t border-gbl-navy-800/80 pt-4">
         <div className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2.5 flex items-center gap-2">
           <Shield className="w-4 h-4 text-gbl-orange-500" />
-          <span>10 TEAM REMAINING PURSES</span>
+          <span>{teams.length} TEAM REMAINING PURSES</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 sm:gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-12 gap-2 sm:gap-2.5">
           {teams.map((t) => {
             const squadCount = players.filter(p => p.sold_team_id === t.id).length;
             const totalSlots = t.total_squad_slots || 6;

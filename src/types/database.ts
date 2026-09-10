@@ -235,6 +235,8 @@ export interface Standing {
   is_qualified: boolean;
   is_eliminated: boolean;
   manual_qualifier: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface GalleryItem {

@@ -41,22 +41,36 @@ export const AdminStandings: React.FC = () => {
     setPoolAssignments(prev => ({ ...prev, [teamId]: pool }));
   };
 
-  const handleAutoSplit = () => {
+  const handleAutoSplit3Pools = () => {
     const next: Record<string, string> = {};
+    const count = teams.length;
+    const perPool = Math.ceil(count / 3);
     teams.forEach((t, idx) => {
-      next[t.id] = idx < 5 ? 'Pool A' : 'Pool B';
+      if (idx < perPool) next[t.id] = 'Pool A';
+      else if (idx < perPool * 2) next[t.id] = 'Pool B';
+      else next[t.id] = 'Pool C';
+    });
+    setPoolAssignments(next);
+  };
+
+  const handleAutoSplit2Pools = () => {
+    const next: Record<string, string> = {};
+    const perPool = Math.ceil(teams.length / 2);
+    teams.forEach((t, idx) => {
+      next[t.id] = idx < perPool ? 'Pool A' : 'Pool B';
     });
     setPoolAssignments(next);
   };
 
   const handleSavePools = async () => {
     await setTeamsPools(poolAssignments);
-    setSaveMessage('Pool allocations (Pool A & Pool B) saved successfully! Changes are live on public standings.');
+    setSaveMessage('Pool allocations (Pool A, Pool B & Pool C) saved successfully! Changes are live on public standings.');
     setTimeout(() => setSaveMessage(null), 4000);
   };
 
   const poolACount = Object.values(poolAssignments).filter(p => p === 'Pool A').length;
   const poolBCount = Object.values(poolAssignments).filter(p => p === 'Pool B').length;
+  const poolCCount = Object.values(poolAssignments).filter(p => p === 'Pool C').length;
 
   const handleExportCSV = () => {
     const enriched = standings.map(s => ({
@@ -77,7 +91,7 @@ export const AdminStandings: React.FC = () => {
             STANDINGS & QUALIFICATION MANAGEMENT
           </h1>
           <p className="text-xs text-slate-400">
-            Configure Pool A & Pool B allocations for the 10 teams, qualification thresholds, and manual overrides
+            Configure Pool A, Pool B & Pool C allocations for all {teams.length} teams, qualification thresholds, and manual overrides
           </p>
         </div>
 
@@ -97,7 +111,7 @@ export const AdminStandings: React.FC = () => {
         </div>
       )}
 
-      {/* SECTION: POST-AUCTION POOL ALLOCATION (POOL A - 5 TEAMS & POOL B - 5 TEAMS) */}
+      {/* SECTION: POST-AUCTION POOL ALLOCATION (POOL A, POOL B, POOL C) */}
       <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gbl-navy-800">
           <div>
@@ -106,26 +120,37 @@ export const AdminStandings: React.FC = () => {
               <span>Tournament Pools Allocation (Post-Auction)</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Assign the 10 teams into <strong>Pool A (5 Teams)</strong> and <strong>Pool B (5 Teams)</strong> after auction completion.
+              Assign all {teams.length} teams into tournament pools (Pool A, Pool B, Pool C) after auction completion.
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 text-xs mr-2">
-              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolACount === 5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
-                Pool A: {poolACount}/5
+            <div className="flex items-center gap-1.5 text-xs mr-2 flex-wrap">
+              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolACount > 0 ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                Pool A: {poolACount}
               </span>
-              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolBCount === 5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
-                Pool B: {poolBCount}/5
+              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolBCount > 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                Pool B: {poolBCount}
+              </span>
+              <span className={`px-2.5 py-1 rounded-lg font-bold ${poolCCount > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                Pool C: {poolCCount}
               </span>
             </div>
 
             <button
-              onClick={handleAutoSplit}
+              onClick={handleAutoSplit3Pools}
+              className="px-3 py-1.5 rounded-xl bg-gbl-navy-950 hover:bg-gbl-navy-800 border border-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+            >
+              <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Split 3 Pools (A, B, C)</span>
+            </button>
+
+            <button
+              onClick={handleAutoSplit2Pools}
               className="px-3 py-1.5 rounded-xl bg-gbl-navy-950 hover:bg-gbl-navy-800 border border-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
             >
               <Shuffle className="w-3.5 h-3.5 text-sky-400" />
-              <span>Auto-Split 5 &amp; 5</span>
+              <span>Split 2 Pools (A, B)</span>
             </button>
 
             <button
@@ -139,7 +164,7 @@ export const AdminStandings: React.FC = () => {
         </div>
 
         {/* Teams Pool Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           {teams.map((t) => {
             const currentPool = poolAssignments[t.id] || 'Unassigned';
             return (
@@ -150,6 +175,8 @@ export const AdminStandings: React.FC = () => {
                     ? 'bg-sky-950/30 border-sky-500/40'
                     : currentPool === 'Pool B'
                     ? 'bg-amber-950/30 border-amber-500/40'
+                    : currentPool === 'Pool C'
+                    ? 'bg-emerald-950/30 border-emerald-500/40'
                     : 'bg-gbl-navy-950 border-gbl-navy-800'
                 }`}
               >
@@ -175,12 +202,16 @@ export const AdminStandings: React.FC = () => {
                       ? 'bg-sky-950 border-sky-500/60 text-sky-300'
                       : currentPool === 'Pool B'
                       ? 'bg-amber-950 border-amber-500/60 text-amber-300'
+                      : currentPool === 'Pool C'
+                      ? 'bg-emerald-950 border-emerald-500/60 text-emerald-300'
                       : 'bg-gbl-navy-900 border-gbl-navy-700 text-slate-400'
                   }`}
                 >
                   <option value="Unassigned">Unassigned</option>
                   <option value="Pool A">Pool A</option>
                   <option value="Pool B">Pool B</option>
+                  <option value="Pool C">Pool C</option>
+                  <option value="Pool D">Pool D</option>
                 </select>
               </div>
             );
@@ -201,7 +232,7 @@ export const AdminStandings: React.FC = () => {
             <input
               type="number"
               min={2}
-              max={10}
+              max={teams.length || 12}
               value={qualifyingCount}
               onChange={(e) => setLocalQualifyingCount(Number(e.target.value))}
               className="w-20 bg-gbl-navy-950 border border-gbl-navy-700 text-sm font-bold font-mono text-center rounded-xl p-2 text-white focus:outline-none focus:border-gbl-orange-500"

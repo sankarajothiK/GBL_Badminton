@@ -75,7 +75,7 @@ export const AdminDashboard: React.FC = () => {
             GBL TOURNAMENT CONTROL HUB
           </h1>
           <p className="text-xs text-slate-300 max-w-xl">
-            Live player auction engine, 10 team purse balances, player rosters, and real-time projector synchronization.
+            Live player auction engine, {teams.length} team purse balances, player rosters, and real-time projector synchronization.
           </p>
         </div>
 
