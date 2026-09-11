@@ -263,42 +263,33 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setTeams(prevTeams => {
             const merged = tmData.map((cloudTeam: any) => {
               const localTeam = prevTeams.find(lt => lt.id === cloudTeam.id || lt.team_number === cloudTeam.team_number);
-              if (!localTeam) return cloudTeam as Team;
 
-              const bestLogo = localTeam.logo_url || cloudTeam.logo_url || null;
-              const bestOwnerPhoto = localTeam.owner_photo_url || cloudTeam.owner_photo_url || null;
+              const bestLogo = localTeam?.logo_url || cloudTeam.logo_url || null;
+              const bestOwnerPhoto = localTeam?.owner_photo_url || cloudTeam.owner_photo_url || null;
 
               const isNoPlayTeam = cloudTeam.team_number === 4;
-              const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? cloudTeam.owner_reserved_points : 30000);
-              const auctionBudget = (cloudTeam.initial_budget || 500000) - ownerPoints;
+              const initialBudget = Number(cloudTeam.initial_budget) || 500000;
+              const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? Number(cloudTeam.owner_reserved_points) : 30000);
+              const auctionBudget = initialBudget - ownerPoints;
 
-              // Calculate genuine spent on auction picks (excluding owner allocation)
-              const nonOwnerPicks = (pData || []).filter((p: any) => {
-                if (p.sold_team_id !== cloudTeam.id || p.auction_status !== 'SOLD') return false;
-                if (isNoPlayTeam) return true;
-                const isOwner = Boolean(
-                  (cloudTeam.owner_name && (
-                    p.name.trim().toLowerCase().includes(cloudTeam.owner_name.trim().toLowerCase()) ||
-                    cloudTeam.owner_name.trim().toLowerCase().includes(p.name.trim().toLowerCase()) ||
-                    p.name.trim().toLowerCase().replace(/y/g, 'i').includes(cloudTeam.owner_name.trim().toLowerCase().replace(/y/g, 'i')) ||
-                    cloudTeam.owner_name.trim().toLowerCase().replace(/y/g, 'i').includes(p.name.trim().toLowerCase().replace(/y/g, 'i'))
-                  )) ||
-                  (cloudTeam.team_number === 2 && (p.player_code === 'GBL-041' || p.id === '10000000-0000-0000-0000-000000000041'))
-                );
-                return !isOwner;
-              });
-              const actualSpent = nonOwnerPicks.reduce((sum: number, p: any) => sum + (Number(p.sold_price) || 0), 0);
-              const computedBalance = Math.max(0, auctionBudget - actualSpent);
+              // Read persisted total_spent and current_balance directly from Supabase / local
+              const totalSpent = typeof cloudTeam.total_spent === 'number' 
+                ? cloudTeam.total_spent 
+                : (typeof localTeam?.total_spent === 'number' ? localTeam.total_spent : 0);
 
-              let pool = cloudTeam.pool || localTeam.pool;
+              const currentBalance = typeof cloudTeam.current_balance === 'number' 
+                ? cloudTeam.current_balance 
+                : (typeof localTeam?.current_balance === 'number' ? localTeam.current_balance : Math.max(0, auctionBudget - totalSpent));
+
+              let pool = cloudTeam.pool || localTeam?.pool;
               if (!pool && cloudTeam.description) {
                 const m = cloudTeam.description.match(/\[POOL:([^\]]+)\]/);
                 if (m) pool = m[1].trim();
               }
-              const cleanDesc = (cloudTeam.description || localTeam.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
+              const cleanDesc = (cloudTeam.description || localTeam?.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
 
               const mergedTeam: Team = {
-                ...localTeam,
+                ...(localTeam || {}),
                 ...cloudTeam,
                 description: cleanDesc,
                 pool: pool || 'Unassigned',
@@ -307,19 +298,15 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 owner_is_player: !isNoPlayTeam,
                 owner_points_allocation: ownerPoints,
                 owner_reserved_points: ownerPoints,
+                initial_budget: initialBudget,
                 auction_budget: auctionBudget,
-                total_spent: actualSpent,
-                current_balance: computedBalance,
+                total_spent: totalSpent,
+                current_balance: currentBalance,
                 max_auction_slots: isNoPlayTeam ? 6 : 5,
                 total_squad_slots: 6
               };
 
-              // Reconcile with Supabase if cloud data had stale/corrupted spent or balance
-              if (cloudTeam.current_balance !== computedBalance || cloudTeam.total_spent !== actualSpent) {
-                supabase.from('teams').update({ current_balance: computedBalance, total_spent: actualSpent }).eq('id', cloudTeam.id).then(undefined, console.warn);
-              }
-
-              if (localTeam.logo_url && !cloudTeam.logo_url) {
+              if (localTeam?.logo_url && !cloudTeam.logo_url) {
                 supabase.from('teams').update({ logo_url: localTeam.logo_url }).eq('id', cloudTeam.id).then(undefined, console.warn);
               }
 

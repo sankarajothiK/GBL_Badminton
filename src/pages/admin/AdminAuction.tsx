@@ -821,10 +821,10 @@ export const AdminAuction: React.FC = () => {
             <button
               onClick={markSoldManually}
               disabled={!currentAuction || !highestTeam || currentAuction.current_bid <= 0 || status !== 'LIVE'}
-              className="py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+              className="py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-emerald-600/20"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>HAMMER SOLD</span>
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">{highestTeam ? `SOLD → ${highestTeam.short_name || highestTeam.name}` : 'HAMMER SOLD'}</span>
             </button>
 
             <button
@@ -1015,10 +1015,17 @@ export const AdminAuction: React.FC = () => {
                 <div className="pt-3 mt-1">
                   {status === 'LIVE' ? (
                     isLeader ? (
-                      <div className="w-full py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1 shadow-inner">
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>CURRENT HIGHEST</span>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markSoldManually();
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs sm:text-sm uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/40 active:scale-95 transition-all border border-emerald-300 animate-pulse"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+                        <span>🔨 HAMMER SOLD ({formatINR(currentAuction?.current_bid || 0)})</span>
+                      </button>
                     ) : canAffordNextBid ? (
                       <button
                         type="button"
