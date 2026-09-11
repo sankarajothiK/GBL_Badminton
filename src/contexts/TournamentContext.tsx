@@ -267,9 +267,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               const bestLogo = localTeam?.logo_url || cloudTeam.logo_url || null;
               const bestOwnerPhoto = localTeam?.owner_photo_url || cloudTeam.owner_photo_url || null;
 
-              const isNoPlayTeam = cloudTeam.team_number === 4;
               const initialBudget = Number(cloudTeam.initial_budget) || 500000;
-              const ownerPoints = isNoPlayTeam ? 0 : (cloudTeam.owner_reserved_points !== undefined ? Number(cloudTeam.owner_reserved_points) : 30000);
+              const isOwnerPlaying = cloudTeam.owner_is_player !== false;
+              const ownerPoints = cloudTeam.owner_reserved_points !== undefined 
+                ? Number(cloudTeam.owner_reserved_points) 
+                : (isOwnerPlaying ? 30000 : 0);
               const auctionBudget = initialBudget - ownerPoints;
 
               // Read persisted total_spent and current_balance directly from Supabase / local
@@ -295,14 +297,14 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 pool: pool || 'Unassigned',
                 logo_url: bestLogo,
                 owner_photo_url: bestOwnerPhoto,
-                owner_is_player: !isNoPlayTeam,
+                owner_is_player: isOwnerPlaying,
                 owner_points_allocation: ownerPoints,
                 owner_reserved_points: ownerPoints,
                 initial_budget: initialBudget,
                 auction_budget: auctionBudget,
                 total_spent: totalSpent,
                 current_balance: currentBalance,
-                max_auction_slots: isNoPlayTeam ? 6 : 5,
+                max_auction_slots: isOwnerPlaying ? 5 : 6,
                 total_squad_slots: 6
               };
 

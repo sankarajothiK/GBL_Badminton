@@ -26,14 +26,13 @@ export const initialTournament: Tournament = {
 2. **Team Squad Requirements**: Each team must form a squad of 6 players in total.
 3. **Owner / Player Allocation Logic**:
    - Total Team Points: ₹5,00,000.
-   - If Owner is participating as a player: Owner receives fixed allocation of ₹1,00,000 (occupies 1 team member position). Available auction points for bidding = ₹4,00,000 (must purchase 5 players).
-   - If Owner does NOT play (Tamilaga Asiriyar kootani warriors - Owner: jeevananthan): ₹0 points deducted, 0 slots occupied. Full ₹5,00,000 available for bidding (must purchase 6 players).
-   - The owner's 1,00,000-point allocation is isolated and NEVER deducted again during player bidding.
+   - If Owner is participating as a player: Owner allocation is deducted based on player tier (₹1,00,000 for OPEN or ₹30,000 for other categories) occupying 1 team member position.
+   - The owner allocation is isolated and NEVER deducted again during player bidding.
 4. **Dynamic Maximum Bid & Legal Solvency**:
    - When a player is purchased, the winning bid is deducted ONLY from available auction points.
    - Dynamic Max Bid = Remaining Auction Balance - ((Remaining Auction Slots - 1) * Minimum Reserve).
    - A team cannot bid an amount that would leave them unable to purchase remaining required players.
-5. **Bidding Clock & Lockout**: Live auction operates on a 20-second countdown clock. Teams reaching their player limit (5 or 6) are automatically locked from bidding.`,
+5. **Bidding Clock & Lockout**: Live auction operates on a 20-second countdown clock. Teams reaching their player limit are automatically locked from bidding.`,
   is_active: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString()
@@ -192,22 +191,22 @@ export const initialTeams: Team[] = [
     name: 'Tamilaga Asiriyar kootani warriors',
     short_name: 'TAKW',
     logo_url: null,
-    owner_name: 'jeevananthan',
+    owner_name: 'ARUL KANTHARAJ',
     owner_photo_url: null,
-    captain_name: 'jeevananthan',
+    captain_name: 'ARUL KANTHARAJ',
     captain_photo_url: null,
     team_color: '#10B981',
     accent_color: '#047857',
-    description: 'Tactical strategists. Owner non-playing (Full 5,00,000 budget for 6 auction picks).',
+    description: 'Defensive fortress with lethal transition play.',
     initial_budget: 500000,
-    owner_reserved_points: 0,
-    current_balance: 500000,
+    owner_reserved_points: 100000,
+    current_balance: 400000,
     total_spent: 0,
     is_active: true,
-    owner_is_player: false,
-    owner_points_allocation: 0,
-    auction_budget: 500000,
-    max_auction_slots: 6,
+    owner_is_player: true,
+    owner_points_allocation: 100000,
+    auction_budget: 400000,
+    max_auction_slots: 5,
     total_squad_slots: 6,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
