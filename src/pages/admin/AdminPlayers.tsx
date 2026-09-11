@@ -26,7 +26,7 @@ export const AdminPlayers: React.FC = () => {
   const { players, teams, categories, createPlayer, updatePlayer, deletePlayer, importPlayersList, releaseSoldPlayer } = useTournament();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAuctionCatFilter, setSelectedAuctionCatFilter] = useState<'ALL' | AuctionCategory | 'SOLD_OWNERS'>('ALL');
+  const [selectedAuctionCatFilter, setSelectedAuctionCatFilter] = useState<'ALL' | AuctionCategory | 'SOLD_OWNERS' | 'SOLD'>('ALL');
   const [selectedEligibleFilter, setSelectedEligibleFilter] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
   const [unsellingPlayer, setUnsellingPlayer] = useState<Player | null>(null);
@@ -247,7 +247,7 @@ export const AdminPlayers: React.FC = () => {
     let matchesAuctionCat = true;
     if (selectedAuctionCatFilter === 'ALL') {
       matchesAuctionCat = true;
-    } else if (selectedAuctionCatFilter === 'SOLD_OWNERS') {
+    } else if (selectedAuctionCatFilter === 'SOLD_OWNERS' || selectedAuctionCatFilter === 'SOLD') {
       matchesAuctionCat = p.auction_status === 'SOLD';
     } else if (selectedAuctionCatFilter === 'NON-MEDALIST') {
       const cat = p.auction_category || 'NON-MEDALIST';
@@ -362,14 +362,14 @@ export const AdminPlayers: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => setSelectedAuctionCatFilter('SOLD_OWNERS')}
+          onClick={() => setSelectedAuctionCatFilter('SOLD')}
           className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border shrink-0 flex items-center gap-1.5 ${
-            selectedAuctionCatFilter === 'SOLD_OWNERS'
+            selectedAuctionCatFilter === 'SOLD' || selectedAuctionCatFilter === 'SOLD_OWNERS'
               ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-600/30'
               : 'bg-gbl-navy-900 text-slate-400 border-gbl-navy-800 hover:text-white'
           }`}
         >
-          <span>👑 Pre-Allocated Owners ({soldOwnersCount})</span>
+          <span>🏆 SOLD PLAYERS &amp; SQUADS ({soldOwnersCount})</span>
         </button>
       </div>
 

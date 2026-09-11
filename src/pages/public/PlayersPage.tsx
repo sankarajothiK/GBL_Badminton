@@ -31,7 +31,8 @@ export const PlayersPage: React.FC = () => {
 
     const playerAuctionCat = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
     const matchesAuctionCategory = selectedAuctionCat === 'ALL' ||
-                                   playerAuctionCat === selectedAuctionCat ||
+                                   (selectedAuctionCat === 'SOLD' && player.auction_status === 'SOLD') ||
+                                   (selectedAuctionCat !== 'SOLD' && playerAuctionCat === selectedAuctionCat) ||
                                    (selectedAuctionCat === 'NON-MEDALIST' && (player.auction_category === 'NON-MEDALLIST' || playerAuctionCat === 'NON-MEDALIST'));
 
     const matchesEligibleCategory = selectedEligibleCat === 'ALL' ||
@@ -67,40 +68,66 @@ export const PlayersPage: React.FC = () => {
             Registered Players Pool
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Explore shuttlers registered for the Gulf Oil Badminton Premier League 2026 auction. Filter by Auction Category (OPEN, NON-MEDALIST, 35+ AGE) or player eligibility.
+            Explore shuttlers registered for the Gulf Oil Badminton Premier League 2026 auction. Filter by Auction Category (OPEN, NON-MEDALIST, 35+ AGE), Sold Squads, or player eligibility.
           </p>
         </div>
 
-        {/* Quick Counter Badges */}
+        {/* Quick Counter Badges - Interactive Filter Buttons */}
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
-          <div className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => { setSelectedAuctionCat('ALL'); setSelectedStatus('ALL'); }}
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
+              selectedAuctionCat === 'ALL' && selectedStatus === 'ALL'
+                ? 'bg-lime-400 text-slate-950 border-lime-300 font-bold shadow-md'
+                : 'bg-white/10 hover:bg-white/15 border-white/15 text-slate-300'
+            }`}
+          >
             <Users className="w-3.5 h-3.5 text-lime-300" />
-            <span className="text-slate-400">Total:</span>
-            <strong className="text-white font-mono">{players.length}</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 flex items-center gap-1.5">
+            <span>Total:</span>
+            <strong className="font-mono">{players.length}</strong>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setSelectedAuctionCat('SOLD'); setSelectedStatus('ALL'); }}
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
+              selectedAuctionCat === 'SOLD'
+                ? 'bg-emerald-500 text-white border-emerald-400 font-bold shadow-md'
+                : 'bg-white/10 hover:bg-white/15 border-white/15 text-slate-300'
+            }`}
+          >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-slate-400">Sold:</span>
-            <strong className="text-emerald-400 font-mono">{soldCount}</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 flex items-center gap-1.5">
+            <span>Sold:</span>
+            <strong className="text-emerald-300 font-mono">{soldCount}</strong>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setSelectedAuctionCat('ALL'); setSelectedStatus('UNSOLD'); }}
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
+              selectedStatus === 'UNSOLD'
+                ? 'bg-amber-500 text-white border-amber-400 font-bold shadow-md'
+                : 'bg-white/10 hover:bg-white/15 border-white/15 text-slate-300'
+            }`}
+          >
             <CircleDashed className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-slate-400">Available:</span>
-            <strong className="text-amber-400 font-mono">{unsoldCount}</strong>
-          </div>
+            <span>Available:</span>
+            <strong className="text-amber-300 font-mono">{unsoldCount}</strong>
+          </button>
         </div>
       </div>
 
-      {/* Auction Category Selector Tabs */}
+      {/* Auction Category & Sold Selector Tabs */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          Auction Category:
+          Filter View:
         </span>
         <button
-          onClick={() => setSelectedAuctionCat('ALL')}
+          onClick={() => { setSelectedAuctionCat('ALL'); setSelectedStatus('ALL'); }}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-            selectedAuctionCat === 'ALL'
+            selectedAuctionCat === 'ALL' && selectedStatus === 'ALL'
               ? 'bg-slate-900 text-white shadow'
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
           }`}
@@ -108,7 +135,7 @@ export const PlayersPage: React.FC = () => {
           All ({players.length})
         </button>
         <button
-          onClick={() => setSelectedAuctionCat('OPEN')}
+          onClick={() => { setSelectedAuctionCat('OPEN'); }}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
             selectedAuctionCat === 'OPEN'
               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black shadow-md border border-amber-400'
@@ -118,7 +145,7 @@ export const PlayersPage: React.FC = () => {
           ★ OPEN ({openCount})
         </button>
         <button
-          onClick={() => setSelectedAuctionCat('NON-MEDALIST')}
+          onClick={() => { setSelectedAuctionCat('NON-MEDALIST'); }}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
             selectedAuctionCat === 'NON-MEDALIST'
               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black shadow-md border border-amber-400'
@@ -128,7 +155,7 @@ export const PlayersPage: React.FC = () => {
           ★ NON-MEDALIST ({nonMedalCount})
         </button>
         <button
-          onClick={() => setSelectedAuctionCat('35+ AGE')}
+          onClick={() => { setSelectedAuctionCat('35+ AGE'); }}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
             selectedAuctionCat === '35+ AGE'
               ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black shadow-md border border-amber-400'
@@ -136,6 +163,17 @@ export const PlayersPage: React.FC = () => {
           }`}
         >
           ★ 35+ AGE ({age35Count})
+        </button>
+        <button
+          onClick={() => { setSelectedAuctionCat('SOLD'); setSelectedStatus('ALL'); }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm ${
+            selectedAuctionCat === 'SOLD'
+              ? 'bg-emerald-600 text-white border border-emerald-500 shadow-md'
+              : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 group-hover:text-emerald-700" />
+          <span>🏆 SOLD PLAYERS ({soldCount})</span>
         </button>
       </div>
 

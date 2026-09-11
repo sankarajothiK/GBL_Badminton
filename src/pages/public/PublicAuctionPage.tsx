@@ -27,6 +27,14 @@ export const PublicAuctionPage: React.FC = () => {
     return list;
   }, [bidHistory]);
 
+  const soldPlayers = useMemo(() => {
+    return players.filter(p => p.auction_status === 'SOLD');
+  }, [players]);
+
+  const teamMap = useMemo(() => {
+    return new Map(teams.map(t => [t.id, t]));
+  }, [teams]);
+
   return (
     <div className="mx-auto max-w-[1500px] px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-6 text-slate-950">
       
@@ -403,6 +411,91 @@ export const PublicAuctionPage: React.FC = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* SOLD PLAYERS / SQUAD ACQUISITIONS LIVE SECTION */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm text-left">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-950 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-500" />
+              <span>Sold Players &amp; Squad Acquisitions ({soldPlayers.length})</span>
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Live log of all athletes successfully acquired by tournament franchises during the auction
+            </p>
+          </div>
+          <Link
+            to="/players"
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 shrink-0"
+          >
+            <span>View Full Roster</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {soldPlayers.length === 0 ? (
+          <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-xs text-slate-500 font-medium">No players sold yet in this auction session.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {soldPlayers.map((player) => {
+              const acquiringTeam = player.sold_team_id ? teamMap.get(player.sold_team_id) : null;
+              const catName = (player.auction_category || 'NON-MEDALIST').replace('NON-MEDALLIST', 'NON-MEDALIST');
+
+              return (
+                <div
+                  key={player.id}
+                  className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:border-slate-300 transition-all flex items-center justify-between gap-3 text-left group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={player.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80'}
+                      alt={player.name}
+                      className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-bold text-slate-500 bg-white px-1.5 py-0.2 rounded border border-slate-200">
+                          {player.player_code}
+                        </span>
+                        <span className="text-[9px] font-black uppercase text-amber-800 bg-amber-100/80 px-1.5 py-0.2 rounded">
+                          {catName}
+                        </span>
+                      </div>
+                      <h4 className="font-black text-xs text-slate-900 truncate leading-tight mt-1">
+                        {player.name}
+                      </h4>
+                      <p className="text-[10px] font-bold text-slate-600 truncate mt-0.5 flex items-center gap-1">
+                        {acquiringTeam ? (
+                          <>
+                            <span 
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: acquiringTeam.team_color }}
+                            />
+                            <span>{acquiringTeam.name}</span>
+                          </>
+                        ) : (
+                          <span>Assigned Team</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[9px] font-black uppercase text-emerald-800 tracking-wider block">
+                      Sold For
+                    </span>
+                    <strong className="font-mono font-black text-xs sm:text-sm text-emerald-600 block">
+                      {formatINR(player.sold_price || 0)}
+                    </strong>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
     </div>

@@ -397,8 +397,8 @@ export const AdminAuction: React.FC = () => {
                             </div>
                           </div>
                           {p.auction_status === 'SOLD' ? (
-                            <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-rose-950/80 text-rose-300 border border-rose-500/50 shrink-0">
-                              SOLD {pSoldTeam ? `(${pSoldTeam.short_name})` : ''}
+                            <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-950/90 text-emerald-300 border border-emerald-500/60 shrink-0">
+                              SOLD {pSoldTeam ? `(${pSoldTeam.short_name})` : ''} • ₹{(p.sold_price || 0).toLocaleString('en-IN')}
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 via-yellow-400/25 to-amber-500/20 text-yellow-300 border border-yellow-500/40 shrink-0">
