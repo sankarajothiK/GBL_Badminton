@@ -127,6 +127,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool C',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -154,6 +155,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool A',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -181,6 +183,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool B',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -208,6 +211,7 @@ export const initialTeams: Team[] = [
     auction_budget: 400000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool A',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -235,6 +239,7 @@ export const initialTeams: Team[] = [
     auction_budget: 400000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool C',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -262,6 +267,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool B',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -289,6 +295,7 @@ export const initialTeams: Team[] = [
     auction_budget: 400000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool A',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -316,6 +323,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool C',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -343,6 +351,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool A',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -370,6 +379,7 @@ export const initialTeams: Team[] = [
     auction_budget: 400000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool C',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -397,6 +407,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool B',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -424,6 +435,7 @@ export const initialTeams: Team[] = [
     auction_budget: 470000,
     max_auction_slots: 5,
     total_squad_slots: 6,
+    pool: 'Pool B',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }

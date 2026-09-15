@@ -7,6 +7,7 @@ import {
   Player, 
   Standing, 
   TournamentMatch, 
+  TournamentTie,
   GalleryItem, 
   AuditLog 
 } from '../types/database';
@@ -70,16 +71,23 @@ function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
       sanitized[key] = (team as any)[key];
     }
   }
+  let cleanDesc = (sanitized.description || '')
+    .replace(/\[POOL:[^\]]+\]\s*/g, '')
+    .replace(/\[GOAL:[^\]]+\]\s*/g, '')
+    .trim();
   if (team.pool) {
-    let cleanDesc = (sanitized.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
-    sanitized.description = `[POOL:${team.pool}] ${cleanDesc}`.trim();
+    cleanDesc = `[POOL:${team.pool}] ${cleanDesc}`.trim();
   }
+  if (team.goal) {
+    cleanDesc = `[GOAL:${team.goal}] ${cleanDesc}`.trim();
+  }
+  sanitized.description = cleanDesc;
   return sanitized;
 }
 
 /**
  * Filter match payload to strictly valid Supabase table columns, embedding
- * player names and Trump Card metadata inside notes.
+ * player names, category names, tie ID and Trump Card metadata inside notes.
  */
 function sanitizeMatchForDb(match: Partial<TournamentMatch>): Record<string, any> {
   const allowedCols = [
@@ -101,6 +109,10 @@ function sanitizeMatchForDb(match: Partial<TournamentMatch>): Record<string, any
   if (match.is_trump_match) meta.trump = true;
   if (match.trump_team_id) meta.trumpTeam = match.trump_team_id;
   if (match.match_points_awarded !== undefined) meta.pts = match.match_points_awarded;
+  if (match.category_name) meta.cat = match.category_name;
+  if (match.tie_id) meta.tieId = match.tie_id;
+  if (match.team1_trump !== undefined) meta.t1Trump = match.team1_trump;
+  if (match.team2_trump !== undefined) meta.t2Trump = match.team2_trump;
 
   let cleanNotes = (sanitized.notes || '').replace(/\[MATCH_META:[^\]]+\]\s*/g, '').trim();
   if (Object.keys(meta).length > 0) {
@@ -172,6 +184,9 @@ interface TournamentContextType {
   updateCategory: (categoryId: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (categoryId: string) => Promise<void>;
   saveMatchResult: (match: TournamentMatch) => Promise<void>;
+  deleteMatch: (matchId: string) => Promise<void>;
+  saveTieResult: (tie: TournamentTie) => Promise<void>;
+  deleteTie: (tieId: string) => Promise<void>;
   releaseSoldPlayer: (playerId: string) => Promise<{ success: boolean; message: string }>;
   finalizeAuctionSale: (params: {
     playerId: string;
@@ -288,13 +303,22 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 const m = cloudTeam.description.match(/\[POOL:([^\]]+)\]/);
                 if (m) pool = m[1].trim();
               }
-              const cleanDesc = (cloudTeam.description || localTeam?.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
+              let goal = cloudTeam.goal || localTeam?.goal;
+              if (!goal && cloudTeam.description) {
+                const gm = cloudTeam.description.match(/\[GOAL:([^\]]+)\]/);
+                if (gm) goal = gm[1].trim();
+              }
+              const cleanDesc = (cloudTeam.description || localTeam?.description || '')
+                .replace(/\[POOL:[^\]]+\]\s*/g, '')
+                .replace(/\[GOAL:[^\]]+\]\s*/g, '')
+                .trim();
 
               const mergedTeam: Team = {
                 ...(localTeam || {}),
                 ...cloudTeam,
                 description: cleanDesc,
                 pool: pool || 'Unassigned',
+                goal: goal || undefined,
                 logo_url: bestLogo,
                 owner_photo_url: bestOwnerPhoto,
                 owner_is_player: isOwnerPlaying,
@@ -360,6 +384,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             let is_trump_match = cloudM.is_trump_match;
             let trump_team_id = cloudM.trump_team_id;
             let match_points_awarded = cloudM.match_points_awarded;
+            let category_name = cloudM.category_name;
+            let tie_id = cloudM.tie_id;
+            let team1_trump = cloudM.team1_trump;
+            let team2_trump = cloudM.team2_trump;
 
             if (cloudM.notes && cloudM.notes.includes('[MATCH_META:')) {
               const metaMatch = cloudM.notes.match(/\[MATCH_META:({[^\]]+})\]/);
@@ -371,6 +399,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   if (meta.trump !== undefined && is_trump_match === undefined) is_trump_match = meta.trump;
                   if (meta.trumpTeam && !trump_team_id) trump_team_id = meta.trumpTeam;
                   if (meta.pts !== undefined && match_points_awarded === undefined) match_points_awarded = meta.pts;
+                  if (meta.cat && !category_name) category_name = meta.cat;
+                  if (meta.tieId && !tie_id) tie_id = meta.tieId;
+                  if (meta.t1Trump !== undefined && team1_trump === undefined) team1_trump = meta.t1Trump;
+                  if (meta.t2Trump !== undefined && team2_trump === undefined) team2_trump = meta.t2Trump;
                 } catch {}
               }
             }
@@ -382,7 +414,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               player2_names: player2_names || '',
               is_trump_match: !!is_trump_match,
               trump_team_id: trump_team_id || null,
-              match_points_awarded: match_points_awarded ?? (is_trump_match ? 2 : 1)
+              match_points_awarded: match_points_awarded ?? (is_trump_match ? 2 : 1),
+              category_name: category_name || undefined,
+              tie_id: tie_id || undefined,
+              team1_trump: !!team1_trump,
+              team2_trump: !!team2_trump
             } as TournamentMatch;
           });
           setMatches(hydratedMatches);
@@ -994,6 +1030,106 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     realtimeManager.broadcast('CATEGORY_DELETED', { id: categoryId });
   };
 
+  // Delete individual match
+  const deleteMatch = async (matchId: string) => {
+    const remaining = matches.filter(m => m.id !== matchId);
+    setMatches(remaining);
+    saveStoredData(GBL_MATCHES_STORAGE_KEY, remaining);
+
+    try {
+      await supabase.from('tournament_matches').delete().eq('id', matchId);
+    } catch (e) {
+      console.warn('Sync error on deleteMatch:', e);
+    }
+
+    realtimeManager.broadcast('MATCH_DELETED', { id: matchId });
+    recalculateStandings(remaining);
+    logAuditAction('MATCH_DELETED', { matchId });
+  };
+
+  // Delete entire tie (all matches in this tie/clash)
+  const deleteTie = async (tieId: string) => {
+    const toDelete = matches.filter(m => m.tie_id === tieId || (m.notes && m.notes.includes(tieId)));
+    const ids = toDelete.length > 0 ? toDelete.map(m => m.id) : [tieId];
+    const remaining = matches.filter(m => !ids.includes(m.id));
+
+    setMatches(remaining);
+    saveStoredData(GBL_MATCHES_STORAGE_KEY, remaining);
+
+    try {
+      await supabase.from('tournament_matches').delete().in('id', ids);
+    } catch (e) {
+      console.warn('Sync error on deleteTie:', e);
+    }
+
+    realtimeManager.broadcast('MATCHES_DELETED', { ids, tieId });
+    recalculateStandings(remaining);
+    logAuditAction('TIE_DELETED', { tieId, count: ids.length });
+  };
+
+  // Save full tie result (all 6 matches saved atomically)
+  const saveTieResult = async (tie: TournamentTie) => {
+    const convertedMatches: TournamentMatch[] = tie.matches.map((cm, idx) => {
+      const isTrump = Boolean(cm.team1_trump || cm.team2_trump);
+      const trumpTeam = cm.team1_trump && cm.team2_trump ? 'BOTH' : (cm.team1_trump ? tie.team1_id : (cm.team2_trump ? tie.team2_id : null));
+      const scoreSumm = `${cm.set1_team1}-${cm.set1_team2}, ${cm.set2_team1}-${cm.set2_team2}${cm.set3_team1 > 0 || cm.set3_team2 > 0 ? `, ${cm.set3_team1}-${cm.set3_team2}` : ''}`;
+      
+      return {
+        id: cm.id || generateUUID(),
+        tournament_id: tie.tournament_id || tournament.id,
+        category_id: null,
+        round: tie.round,
+        match_number: tie.match_number,
+        team1_id: tie.team1_id,
+        team2_id: tie.team2_id,
+        court: tie.court,
+        match_date: tie.match_date,
+        match_time: tie.match_time,
+        status: tie.status,
+        winner_team_id: cm.winner_team_id,
+        score_summary: scoreSumm,
+        set1_team1: Number(cm.set1_team1 || 0),
+        set1_team2: Number(cm.set1_team2 || 0),
+        set2_team1: Number(cm.set2_team1 || 0),
+        set2_team2: Number(cm.set2_team2 || 0),
+        set3_team1: Number(cm.set3_team1 || 0),
+        set3_team2: Number(cm.set3_team2 || 0),
+        player1_names: cm.player1_names || '',
+        player2_names: cm.player2_names || '',
+        is_trump_match: isTrump,
+        trump_team_id: trumpTeam,
+        match_points_awarded: isTrump ? (cm.team1_trump && cm.team2_trump ? 4 : 2) : 1,
+        category_name: cm.category_name,
+        tie_id: tie.tie_id,
+        team1_trump: cm.team1_trump,
+        team2_trump: cm.team2_trump,
+        notes: null,
+        created_at: tie.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    });
+
+    const matchIds = new Set(convertedMatches.map(m => m.id));
+    const updatedMatches = [
+      ...matches.filter(m => !matchIds.has(m.id) && m.tie_id !== tie.tie_id),
+      ...convertedMatches
+    ];
+
+    setMatches(updatedMatches);
+    saveStoredData(GBL_MATCHES_STORAGE_KEY, updatedMatches);
+
+    try {
+      const sanitizedRows = convertedMatches.map(m => sanitizeMatchForDb(m));
+      await supabase.from('tournament_matches').upsert(sanitizedRows);
+    } catch (e) {
+      console.warn('Sync error on saveTieResult:', e);
+    }
+
+    realtimeManager.broadcast('TIE_SAVED', { tie, matches: convertedMatches });
+    recalculateStandings(updatedMatches);
+    logAuditAction('TIE_RESULT_ENTERED', { tieId: tie.tie_id, matchNumber: tie.match_number, t1: tie.team1_id, t2: tie.team2_id });
+  };
+
   // Save Match Result and Recalculate Standings Automatically
   const saveMatchResult = async (matchData: TournamentMatch) => {
     const ptsAwarded = matchData.is_trump_match ? 2 : 1;
@@ -1002,17 +1138,17 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       match_points_awarded: ptsAwarded
     };
 
+    let updatedMatches: TournamentMatch[] = [];
     setMatches(prev => {
       const idx = prev.findIndex(m => m.id === enrichedMatch.id);
-      let next: TournamentMatch[];
       if (idx >= 0) {
-        next = [...prev];
-        next[idx] = enrichedMatch;
+        updatedMatches = [...prev];
+        updatedMatches[idx] = enrichedMatch;
       } else {
-        next = [...prev, enrichedMatch];
+        updatedMatches = [...prev, enrichedMatch];
       }
-      saveStoredData(GBL_MATCHES_STORAGE_KEY, next);
-      return next;
+      saveStoredData(GBL_MATCHES_STORAGE_KEY, updatedMatches);
+      return updatedMatches;
     });
 
     try {
@@ -1035,7 +1171,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       stats[t.id] = { played: 0, won: 0, lost: 0, points: 0, score_for: 0, score_against: 0 };
     });
 
-    // 1. Accumulate set scores, played, won, lost
+    // 1. Accumulate set scores, played, won, lost per match
     allMatches.forEach(m => {
       if (m.status === 'COMPLETED' && m.winner_team_id) {
         const t1 = m.team1_id;
@@ -1044,88 +1180,104 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const totalT2 = (m.set1_team2 || 0) + (m.set2_team2 || 0) + (m.set3_team2 || 0);
 
         if (stats[t1]) {
-          stats[t1].played += 1;
           stats[t1].score_for += totalT1;
           stats[t1].score_against += totalT2;
-          if (m.winner_team_id === t1) {
-            stats[t1].won += 1;
-          } else {
-            stats[t1].lost += 1;
-          }
         }
 
         if (stats[t2]) {
-          stats[t2].played += 1;
           stats[t2].score_for += totalT2;
           stats[t2].score_against += totalT1;
-          if (m.winner_team_id === t2) {
-            stats[t2].won += 1;
-          } else {
-            stats[t2].lost += 1;
-          }
         }
       }
     });
 
-    // 2. Dynamic points calculation per fixture / clash
+    // 2. Dynamic points calculation per fixture / clash / tie
     // Group completed matches by tie / fixture
     const fixtures: Record<string, TournamentMatch[]> = {};
     allMatches.forEach(m => {
       if (m.status === 'COMPLETED' && m.winner_team_id) {
-        const pairKey = [m.team1_id, m.team2_id].sort().join('_');
-        const fKey = `${m.round || 'Round'}_${pairKey}`;
-        if (!fixtures[fKey]) fixtures[fKey] = [];
-        fixtures[fKey].push(m);
+        const tieKey = m.tie_id || `${m.round || 'Round'}_${[m.team1_id, m.team2_id].sort().join('_')}_${m.match_date || ''}`;
+        if (!fixtures[tieKey]) fixtures[tieKey] = [];
+        fixtures[tieKey].push(m);
       }
     });
 
-    // For each fixture, evaluate normal wins points + trump card wins
+    // For each tie/clash, evaluate match win points table + trump card bonuses
     Object.values(fixtures).forEach(matchList => {
-      // Find involved teams
       const teamsInFixture = new Set<string>();
       matchList.forEach(m => {
         teamsInFixture.add(m.team1_id);
         teamsInFixture.add(m.team2_id);
       });
 
-      teamsInFixture.forEach(teamId => {
-        if (!stats[teamId]) return;
+      const teamList = Array.from(teamsInFixture);
+      if (teamList.length >= 2) {
+        const t1 = teamList[0];
+        const t2 = teamList[1];
 
-        // Normal wins points rule: 1 win -> 1 pt, 2 wins -> 2 pts, 3 wins -> 3 pts, 4 wins -> 5 pts
-        const normalWins = matchList.filter(m => !m.is_trump_match && m.winner_team_id === teamId).length;
-        let normalPoints = 0;
-        if (normalWins === 1) normalPoints = 1;
-        else if (normalWins === 2) normalPoints = 2;
-        else if (normalWins === 3) normalPoints = 3;
-        else if (normalWins === 4) normalPoints = 5;
-        else if (normalWins > 4) normalPoints = 5 + (normalWins - 4);
+        if (stats[t1]) stats[t1].played += 1;
+        if (stats[t2]) stats[t2].played += 1;
 
-        // Trump Card match: winning team gets 2 points, losing team loses 1 point (-1)
-        let trumpPoints = 0;
+        const t1Wins = matchList.filter(m => m.winner_team_id === t1).length;
+        const t2Wins = matchList.filter(m => m.winner_team_id === t2).length;
+
+        if (t1Wins > t2Wins) {
+          if (stats[t1]) stats[t1].won += 1;
+          if (stats[t2]) stats[t2].lost += 1;
+        } else if (t2Wins > t1Wins) {
+          if (stats[t2]) stats[t2].won += 1;
+          if (stats[t1]) stats[t1].lost += 1;
+        }
+
+        // Exact GBL Point Table:
+        // 1 win -> 1 pt
+        // 2 wins -> 2 pts
+        // 3 wins -> 3 pts
+        // 4 wins -> 5 pts
+        // 5 wins -> 6 pts
+        // 6 wins -> 7 pts
+        const getBasePoints = (wins: number) => {
+          if (wins === 1) return 1;
+          if (wins === 2) return 2;
+          if (wins === 3) return 3;
+          if (wins === 4) return 5;
+          if (wins === 5) return 6;
+          if (wins >= 6) return 7;
+          return 0;
+        };
+
+        const t1Base = getBasePoints(t1Wins);
+        const t2Base = getBasePoints(t2Wins);
+
+        // Trump Bonus points calculation (+2 per trump win, +4 if dual trump)
+        let t1TrumpBonus = 0;
+        let t2TrumpBonus = 0;
+
         matchList.forEach(m => {
-          if (m.is_trump_match) {
-            if (m.trump_team_id) {
-              if (m.trump_team_id === teamId) {
-                // This team nominated Trump
-                if (m.winner_team_id === teamId) {
-                  trumpPoints += 2; // Won Trump match: +2 points
-                } else {
-                  trumpPoints -= 1; // Lost Trump match: -1 point penalty
-                }
-              }
-            } else {
-              // Fallback if trump_team_id wasn't explicitly specified
-              if (m.winner_team_id === teamId) {
-                trumpPoints += 2;
-              } else if (m.team1_id === teamId || m.team2_id === teamId) {
-                trumpPoints -= 1;
-              }
-            }
+          const isT1Trump = m.team1_trump || (m.is_trump_match && m.trump_team_id === t1);
+          const isT2Trump = m.team2_trump || (m.is_trump_match && m.trump_team_id === t2);
+          const isDualTrump = (isT1Trump && isT2Trump) || (m.is_trump_match && m.trump_team_id === 'BOTH');
+
+          if (isDualTrump) {
+            if (m.winner_team_id === t1) t1TrumpBonus += 4;
+            else if (m.winner_team_id === t2) t2TrumpBonus += 4;
+          } else {
+            if (isT1Trump && m.winner_team_id === t1) t1TrumpBonus += 2;
+            if (isT2Trump && m.winner_team_id === t2) t2TrumpBonus += 2;
           }
         });
 
-        stats[teamId].points += (normalPoints + trumpPoints);
-      });
+        if (stats[t1]) stats[t1].points += (t1Base + t1TrumpBonus);
+        if (stats[t2]) stats[t2].points += (t2Base + t2TrumpBonus);
+      } else if (teamList.length === 1) {
+        const tid = teamList[0];
+        if (stats[tid]) {
+          stats[tid].played += 1;
+          const wins = matchList.filter(m => m.winner_team_id === tid).length;
+          const base = wins === 1 ? 1 : wins === 2 ? 2 : wins === 3 ? 3 : wins === 4 ? 5 : wins === 5 ? 6 : wins >= 6 ? 7 : 0;
+          stats[tid].points += base;
+        }
+      }
     });
 
     // Rank teams by Points DESC, then Score Diff DESC
@@ -1718,6 +1870,9 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateCategory,
         deleteCategory,
         saveMatchResult,
+        deleteMatch,
+        saveTieResult,
+        deleteTie,
         releaseSoldPlayer,
         finalizeAuctionSale,
         finalizeAuctionUnsold,

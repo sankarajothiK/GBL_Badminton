@@ -30,6 +30,17 @@ export interface Tournament {
   updated_at: string;
 }
 
+export const MATCH_CATEGORIES = [
+  'Veterans Doubles',
+  '80+ Combined Doubles',
+  'Super Doubles',
+  'Futures Doubles',
+  'Challengers Doubles',
+  '35+ Doubles'
+] as const;
+
+export type MatchCategory = typeof MATCH_CATEGORIES[number];
+
 export const ELIGIBLE_CATEGORIES = [
   '35',
   '80',
@@ -116,7 +127,8 @@ export interface Team {
   auction_budget?: number;
   max_auction_slots?: number;
   total_squad_slots?: number;
-  pool?: 'Pool A' | 'Pool B' | 'Unassigned' | string;
+  pool?: 'Pool A' | 'Pool B' | 'Pool C' | 'Unassigned' | string;
+  goal?: string;
 }
 
 export interface Player {
@@ -216,6 +228,52 @@ export interface TournamentMatch {
   is_trump_match?: boolean;
   trump_team_id?: string | null;
   match_points_awarded?: number;
+  category_name?: string;
+  tie_id?: string;
+  team1_trump?: boolean;
+  team2_trump?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TieCategoryMatch {
+  id: string;
+  category_name: MatchCategory | string;
+  match_index: number;
+  player1_names: string;
+  player2_names: string;
+  player1_ids?: string[];
+  player2_ids?: string[];
+  set1_team1: number;
+  set1_team2: number;
+  set2_team1: number;
+  set2_team2: number;
+  set3_team1: number;
+  set3_team2: number;
+  winner_team_id: string | null;
+  team1_trump: boolean;
+  team2_trump: boolean;
+  is_trump_match?: boolean;
+  trump_team_id?: string | null;
+}
+
+export interface TournamentTie {
+  tie_id: string;
+  tournament_id: string;
+  match_number: number;
+  round: string;
+  team1_id: string;
+  team2_id: string;
+  court: string;
+  match_date: string;
+  match_time: string;
+  status: 'SCHEDULED' | 'LIVE' | 'COMPLETED';
+  matches: TieCategoryMatch[];
+  team1_score: number;
+  team2_score: number;
+  team1_points: number;
+  team2_points: number;
+  winner_team_id: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -63,10 +63,21 @@ export const TeamDetailPage: React.FC = () => {
                 </div>
               )}
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold text-gbl-orange-400 uppercase tracking-wider">
                     Team #{team.team_number}
                   </span>
+                  {team.pool && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                      team.pool === 'Pool A'
+                        ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
+                        : team.pool === 'Pool B'
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    }`}>
+                      {team.pool}
+                    </span>
+                  )}
                   {metrics.ownerIsPlayer ? (
                     <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">
                       Playing Owner
@@ -80,7 +91,13 @@ export const TeamDetailPage: React.FC = () => {
                 <h1 className="text-2xl sm:text-4xl font-black text-white font-sports uppercase tracking-tight mt-1">
                   {team.name}
                 </h1>
-                <p className="text-xs text-slate-400 mt-1 max-w-lg">{team.description}</p>
+                {team.goal && (
+                  <p className="text-xs text-amber-300 mt-1 font-semibold flex items-center gap-1.5">
+                    <span>🎯</span>
+                    <span>Team Goal: <strong className="text-white">{team.goal}</strong></span>
+                  </p>
+                )}
+                {team.description && <p className="text-xs text-slate-400 mt-1 max-w-lg">{team.description}</p>}
                 <div className="flex flex-wrap gap-4 text-xs text-slate-300 mt-3">
                   <span><strong>Team Owner:</strong> {team.owner_name}</span>
                   <span>•</span>

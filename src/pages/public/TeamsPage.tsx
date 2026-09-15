@@ -115,9 +115,22 @@ export const TeamsPage: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 block">
-                        Team #{team.team_number}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 block">
+                          Team #{team.team_number}
+                        </span>
+                        {team.pool && (
+                          <span className={`px-2 py-0.2 rounded-full text-[9px] font-black uppercase ${
+                            team.pool === 'Pool A'
+                              ? 'bg-sky-100 text-sky-800'
+                              : team.pool === 'Pool B'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {team.pool}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-lg font-black text-slate-950 leading-tight">
                         {team.name}
                       </h3>
@@ -129,6 +142,14 @@ export const TeamsPage: React.FC = () => {
                     <span>{squad.length} / {team.total_squad_slots || 6}</span>
                   </span>
                 </div>
+
+                {/* Team Goal if set */}
+                {team.goal && (
+                  <div className="p-2 rounded-xl bg-amber-50/70 border border-amber-200/60 text-xs text-amber-900 flex items-center gap-1.5 font-medium">
+                    <span>🎯</span>
+                    <span><strong>Goal:</strong> {team.goal}</span>
+                  </div>
+                )}
 
                 {/* Owner & Captain */}
                 <div className="space-y-1 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">

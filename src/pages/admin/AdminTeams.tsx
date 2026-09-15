@@ -27,6 +27,8 @@ export const AdminTeams: React.FC = () => {
   const [ownerName, setOwnerName] = useState('');
   const [captainName, setCaptainName] = useState('');
   const [teamColor, setTeamColor] = useState('#FF5E00');
+  const [pool, setPool] = useState<'Pool A' | 'Pool B' | 'Pool C' | 'Unassigned'>('Pool A');
+  const [goal, setGoal] = useState('');
   const [description, setDescription] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [ownerPhotoUrl, setOwnerPhotoUrl] = useState<string | null>(null);
@@ -39,6 +41,8 @@ export const AdminTeams: React.FC = () => {
     setOwnerName('');
     setCaptainName('');
     setTeamColor('#FF5E00');
+    setPool('Pool A');
+    setGoal('');
     setDescription('');
     setLogoUrl(null);
     setOwnerPhotoUrl(null);
@@ -55,6 +59,8 @@ export const AdminTeams: React.FC = () => {
     setOwnerName(team.owner_name || '');
     setCaptainName(team.captain_name || '');
     setTeamColor(team.team_color || '#FF5E00');
+    setPool((team.pool as any) || 'Pool A');
+    setGoal(team.goal || '');
     setDescription(team.description || '');
     setLogoUrl(team.logo_url || null);
     setOwnerPhotoUrl(team.owner_photo_url || null);
@@ -105,6 +111,8 @@ export const AdminTeams: React.FC = () => {
       owner_name: ownerName.trim(),
       captain_name: captainName.trim(),
       team_color: teamColor,
+      pool,
+      goal: goal.trim(),
       description: description.trim(),
       logo_url: logoUrl,
       owner_photo_url: ownerPhotoUrl,
@@ -144,6 +152,8 @@ export const AdminTeams: React.FC = () => {
       captain_photo_url: null,
       team_color: teamColor,
       accent_color: '#FFFFFF',
+      pool,
+      goal: goal.trim(),
       description: description.trim(),
       initial_budget: 500000,
       owner_reserved_points: ownerPoints,
@@ -245,10 +255,21 @@ export const AdminTeams: React.FC = () => {
                     </div>
                   )}
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] uppercase font-bold text-gbl-orange-400 tracking-wider">
                         Team #{team.team_number}
                       </span>
+                      {team.pool && (
+                        <span className={`px-2 py-0.2 rounded-full text-[9px] font-bold uppercase border ${
+                          team.pool === 'Pool A'
+                            ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
+                            : team.pool === 'Pool B'
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                        }`}>
+                          {team.pool}
+                        </span>
+                      )}
                       {metrics.ownerIsPlayer ? (
                         <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold uppercase">
                           Playing Owner
@@ -260,6 +281,11 @@ export const AdminTeams: React.FC = () => {
                       )}
                     </div>
                     <h3 className="text-xl font-bold text-white">{team.name}</h3>
+                    {team.goal && (
+                      <p className="text-[11px] text-gbl-orange-300 font-medium">
+                        🎯 Goal: <span className="text-slate-200">{team.goal}</span>
+                      </p>
+                    )}
                     <p className="text-xs text-slate-400 mt-0.5">
                       Team Owner: <strong className="text-slate-200">{team.owner_name || 'Not assigned'}</strong>
                     </p>
@@ -531,17 +557,43 @@ export const AdminTeams: React.FC = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">Team Brand Color</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={teamColor}
-                onChange={(e) => setTeamColor(e.target.value)}
-                className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
-              />
-              <span className="font-mono text-white text-xs">{teamColor}</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Assigned Pool</label>
+              <select
+                value={pool}
+                onChange={(e) => setPool(e.target.value as any)}
+                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none font-bold"
+              >
+                <option value="Pool A">Pool A</option>
+                <option value="Pool B">Pool B</option>
+                <option value="Pool C">Pool C</option>
+                <option value="Unassigned">Unassigned</option>
+              </select>
             </div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Team Brand Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={teamColor}
+                  onChange={(e) => setTeamColor(e.target.value)}
+                  className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
+                />
+                <span className="font-mono text-white text-xs">{teamColor}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-slate-300 font-semibold mb-1">Team Goal / Target</label>
+            <input
+              type="text"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="e.g. Win Championship 2026, Top 4 Qualification"
+              className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
+            />
           </div>
 
           <div>
@@ -737,17 +789,43 @@ export const AdminTeams: React.FC = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">Team Brand Color</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={teamColor}
-                onChange={(e) => setTeamColor(e.target.value)}
-                className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
-              />
-              <span className="font-mono text-white text-xs">{teamColor}</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Assigned Pool</label>
+              <select
+                value={pool}
+                onChange={(e) => setPool(e.target.value as any)}
+                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none font-bold"
+              >
+                <option value="Pool A">Pool A</option>
+                <option value="Pool B">Pool B</option>
+                <option value="Pool C">Pool C</option>
+                <option value="Unassigned">Unassigned</option>
+              </select>
             </div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Team Brand Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={teamColor}
+                  onChange={(e) => setTeamColor(e.target.value)}
+                  className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
+                />
+                <span className="font-mono text-white text-xs">{teamColor}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-slate-300 font-semibold mb-1">Team Goal / Target</label>
+            <input
+              type="text"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="e.g. Win Championship 2026, Top 4 Qualification"
+              className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3.5 py-2 text-white focus:border-gbl-orange-500 focus:outline-none"
+            />
           </div>
 
           <div>

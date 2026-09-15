@@ -298,6 +298,8 @@ export const AdminStandings: React.FC = () => {
                           ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
                           : pool === 'Pool B'
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : pool === 'Pool C'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                           : 'bg-slate-800 text-slate-400'
                       }`}>
                         {pool}

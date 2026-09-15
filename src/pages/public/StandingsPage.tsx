@@ -274,10 +274,10 @@ export const StandingsPage: React.FC = () => {
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap justify-between items-center gap-3 text-xs text-slate-600">
           <div className="space-y-1">
             <p className="font-semibold text-slate-800">
-              Points System: Normal Match Wins (1 win → 1 pt, 2 wins → 2 pts, 3 wins → 3 pts, 4 wins → 5 pts bonus).
+              Points System: Match Wins (1 win → 1 pt, 2 wins → 2 pts, 3 wins → 3 pts, 4 wins → 5 pts, 5 wins → 6 pts, 6 wins → 7 pts).
             </p>
             <p className="text-slate-500 text-[11px]">
-              Trump Card Match: Winning a Trump Card match awards <strong>2 points</strong> to the victor. Tie-breakers determined by Set &amp; Point Differential.
+              Trump Card Match: Winning a designated Trump Card match awards <strong>+2 points</strong> (or <strong>+4 points</strong> if both teams called Trump on the match).
             </p>
           </div>
           <div className="flex items-center gap-4 text-xs font-semibold">
