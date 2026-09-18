@@ -1,46 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Users, Wallet, ChevronRight, Award, UserCheck, ArrowUpDown, TrendingUp } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
+import { Team } from '../../types/database';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { calculateMaxLegalBid } from '../../lib/maxBid';
 
 export const TeamsPage: React.FC = () => {
   const { teams, players, settings } = useTournament();
   const [sortBy, setSortBy] = useState<'name' | 'balance' | 'squad'>('name');
+  const [selectedPool, setSelectedPool] = useState<string>('ALL');
 
-  const sortedTeams = [...teams].sort((a, b) => {
-    if (sortBy === 'balance') {
-      return (b.current_balance ?? 0) - (a.current_balance ?? 0);
-    }
-    if (sortBy === 'squad') {
-      const aSquad = players.filter(p => p.sold_team_id === a.id).length;
-      const bSquad = players.filter(p => p.sold_team_id === b.id).length;
-      return bSquad - aSquad;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const filteredTeams = useMemo(() => {
+    return teams.filter(t => {
+      if (selectedPool === 'ALL') return true;
+      return (t.pool || '').toLowerCase() === selectedPool.toLowerCase();
+    });
+  }, [teams, selectedPool]);
+
+  const sortedTeams = useMemo(() => {
+    return [...filteredTeams].sort((a, b) => {
+      if (sortBy === 'balance') {
+        return (b.current_balance ?? 0) - (a.current_balance ?? 0);
+      }
+      if (sortBy === 'squad') {
+        const aSquad = players.filter(p => p.sold_team_id === a.id).length;
+        const bSquad = players.filter(p => p.sold_team_id === b.id).length;
+        return bSquad - aSquad;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredTeams, sortBy, players]);
 
   return (
-    <div className="mx-auto max-w-[1500px] px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-6 text-slate-950">
+    <div className="mx-auto max-w-[1500px] px-3 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-5 sm:space-y-6 text-slate-950">
       
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-[24px] bg-[#122023] px-6 py-6 sm:px-8 sm:py-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-end gap-5">
-        <div className="text-left max-w-2xl">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.23em] text-lime-300">
+      <div className="relative overflow-hidden rounded-[20px] sm:rounded-[24px] bg-[#122023] px-4 py-5 sm:px-8 sm:py-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sm:gap-5">
+        <div className="text-left max-w-2xl space-y-1">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-lime-300">
             <span className="h-1.5 w-1.5 rounded-full bg-lime-300" />
             Official Tournament Teams • {teams.length} Teams
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-[-0.05em]">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
             Teams &amp; Squad Rosters
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
-            {teams.length} premier teams initialized with ₹5,00,000 budgets. Track purchased squad players, total expenditure, available purse, and maximum legal bids.
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            12 premier teams organized across <strong>Pool A</strong>, <strong>Pool B</strong>, and <strong>Pool C</strong> with ₹5,00,000 tournament budgets.
           </p>
         </div>
 
         {/* Sort Controls */}
-        <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 p-1.5 rounded-xl text-xs shrink-0">
+        <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 p-1 rounded-xl text-xs shrink-0 self-stretch sm:self-auto justify-center">
           <span className="text-[11px] text-slate-400 pl-2 font-semibold flex items-center gap-1">
             <ArrowUpDown className="w-3.5 h-3.5 text-lime-300" />
             <span>Sort:</span>
@@ -74,9 +85,40 @@ export const TeamsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* POOL FILTER BUTTONS (Swipeable on mobile) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {['ALL', 'Pool A', 'Pool B', 'Pool C'].map((p) => {
+          const isActive = selectedPool === p;
+          const count = p === 'ALL' ? teams.length : teams.filter(t => (t.pool || '').toLowerCase() === p.toLowerCase()).length;
+
+          return (
+            <button
+              key={p}
+              onClick={() => setSelectedPool(p)}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 border ${
+                isActive
+                  ? p === 'Pool A'
+                    ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-600/30'
+                    : p === 'Pool B'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/30'
+                    : p === 'Pool C'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/30'
+                    : 'bg-slate-900 text-white border-slate-900 shadow-md'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <span>{p === 'ALL' ? 'All Pools' : p}</span>
+              <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Teams Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-        {sortedTeams.map((team) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {sortedTeams.map((team: Team) => {
           const squad = players.filter(p => p.sold_team_id === team.id);
           const maxBidInfo = calculateMaxLegalBid(team, squad.length, settings);
           const totalBudget = team.initial_budget || 500000;
@@ -86,7 +128,7 @@ export const TeamsPage: React.FC = () => {
           return (
             <div
               key={team.id}
-              className="group relative bg-white border border-slate-200 hover:border-slate-300 rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-200 text-left overflow-hidden"
+              className="group relative bg-white border border-slate-200 hover:border-slate-300 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-200 text-left overflow-hidden"
             >
               {/* Top Accent Stripe */}
               <div 
@@ -94,12 +136,12 @@ export const TeamsPage: React.FC = () => {
                 style={{ backgroundColor: team.team_color }}
               />
 
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                 {/* Crest & Squad Count */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     {team.logo_url ? (
-                      <div className="w-14 h-14 rounded-2xl p-1 bg-slate-900 border border-slate-200 shadow-md flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl p-1 bg-slate-900 border border-slate-200 shadow-md flex items-center justify-center overflow-hidden shrink-0">
                         <img 
                           src={team.logo_url} 
                           alt={team.name} 
@@ -108,30 +150,30 @@ export const TeamsPage: React.FC = () => {
                       </div>
                     ) : (
                       <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-md shrink-0"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-black text-white text-base sm:text-lg shadow-md shrink-0"
                         style={{ backgroundColor: team.team_color }}
                       >
                         {team.short_name}
                       </div>
                     )}
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 block">
                           Team #{team.team_number}
                         </span>
                         {team.pool && (
-                          <span className={`px-2 py-0.2 rounded-full text-[9px] font-black uppercase ${
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase border ${
                             team.pool === 'Pool A'
-                              ? 'bg-sky-100 text-sky-800'
+                              ? 'bg-sky-50 text-sky-800 border-sky-300'
                               : team.pool === 'Pool B'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-300'
                           }`}>
                             {team.pool}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-lg font-black text-slate-950 leading-tight">
+                      <h3 className="text-base sm:text-lg font-black text-slate-950 leading-tight truncate">
                         {team.name}
                       </h3>
                     </div>
