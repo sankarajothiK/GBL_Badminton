@@ -134,7 +134,7 @@ export const StandingsPage: React.FC = () => {
 
       {/* POOL NAVIGATION TABS (Touch-friendly horizontal bar on mobile) */}
       {viewMode === 'TABBED' && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar sm:flex-wrap -mx-1 px-1 touch-pan-x">
           {availablePools.map(poolName => {
             const count = teams.filter(t => (t.pool || '').toLowerCase() === poolName.toLowerCase()).length;
             const isActive = activeTab === poolName;
@@ -143,11 +143,11 @@ export const StandingsPage: React.FC = () => {
               <button
                 key={poolName}
                 onClick={() => setActiveTab(poolName)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 border ${getPoolTabClasses(poolName, isActive)}`}
+                className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 border min-h-[38px] ${getPoolTabClasses(poolName, isActive)}`}
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>{poolName}</span>
-                <span className={`ml-1 px-1.5 py-0.2 rounded-md text-[10px] font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`ml-0.5 sm:ml-1 px-1.5 py-0.2 rounded-md text-[10px] font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
                   {count}
                 </span>
               </button>
@@ -156,7 +156,7 @@ export const StandingsPage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('OVERALL')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 border ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 border min-h-[38px] ${
               activeTab === 'OVERALL'
                 ? 'bg-slate-900 text-white shadow-md border-slate-900'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -164,7 +164,7 @@ export const StandingsPage: React.FC = () => {
           >
             <Trophy className="w-3.5 h-3.5 text-lime-400" />
             <span>Overall Table</span>
-            <span className={`ml-1 px-1.5 py-0.2 rounded-md text-[10px] font-mono ${activeTab === 'OVERALL' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            <span className={`ml-0.5 sm:ml-1 px-1.5 py-0.2 rounded-md text-[10px] font-mono ${activeTab === 'OVERALL' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
               {teams.length}
             </span>
           </button>

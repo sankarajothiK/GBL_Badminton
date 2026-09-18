@@ -103,15 +103,138 @@ export const RulesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. PLAYER CATEGORIES & STARTING BIDS */}
+        {/* 4. OFFICIAL 6-MATCH TIE CLASH ENGINE & POINT SCORING SYSTEM */}
+        <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-gbl-navy-800 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white font-sports">6-MATCH TIE CLASH SYSTEM & POINTS FORMULA</h2>
+              <p className="text-xs text-slate-400">Head-to-head clash format between teams across 6 official categories</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300 leading-relaxed">
+            <div className="space-y-3 bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gbl-orange-400" />
+                <span>The 6 Match Categories per Clash</span>
+              </h3>
+              <ol className="list-decimal list-inside space-y-1.5 text-slate-300 font-medium">
+                <li><strong className="text-white">35+ Jumbled Doubles</strong></li>
+                <li><strong className="text-white">Futures Stars Doubles</strong></li>
+                <li><strong className="text-white">80+ Combined Doubles</strong></li>
+                <li><strong className="text-white">Challengers Doubles</strong></li>
+                <li><strong className="text-white">Super Doubles</strong></li>
+                <li><strong className="text-white">Veterans Doubles</strong></li>
+              </ol>
+              <div className="pt-2 border-t border-gbl-navy-800 text-[11px] text-amber-300/90 font-semibold">
+                ⚠️ Player Limit: A player can participate in a maximum of <strong>2 matches</strong> within the same tie clash against an opponent team.
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Clash Win Points Calculation</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-center">
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-gbl-navy-800">
+                  <span className="text-[10px] text-slate-400 block">1 Win</span>
+                  <span className="text-sm font-bold text-white">1 Point</span>
+                </div>
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-gbl-navy-800">
+                  <span className="text-[10px] text-slate-400 block">2 Wins</span>
+                  <span className="text-sm font-bold text-white">2 Points</span>
+                </div>
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-gbl-navy-800">
+                  <span className="text-[10px] text-slate-400 block">3 Wins</span>
+                  <span className="text-sm font-bold text-white">3 Points</span>
+                </div>
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-emerald-500/30">
+                  <span className="text-[10px] text-emerald-400 block">4 Wins</span>
+                  <span className="text-sm font-bold text-emerald-300">5 Points</span>
+                </div>
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-emerald-500/30">
+                  <span className="text-[10px] text-emerald-400 block">5 Wins</span>
+                  <span className="text-sm font-bold text-emerald-300">6 Points</span>
+                </div>
+                <div className="bg-gbl-navy-900 p-2 rounded-lg border border-emerald-500/30">
+                  <span className="text-[10px] text-emerald-400 block">6 Wins (Clean Sweep)</span>
+                  <span className="text-sm font-bold text-emerald-300">7 Points</span>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-gbl-navy-800 text-[11px] text-slate-300">
+                ★ <strong>Trump Card Match:</strong> Each team nominates 1 match as their Trump Card. If they win that match, <strong>+2 bonus points</strong> are awarded. If both teams nominate the same match and one wins, <strong>+4 bonus points</strong> are awarded.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. 3-POOL TOURNAMENT STRUCTURE */}
+        <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-gbl-navy-800 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white font-sports">3-POOL TOURNAMENT GROUP STRUCTURE</h2>
+              <p className="text-xs text-slate-400">12 tournament teams organized across 3 competitive pools</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div className="bg-gbl-navy-950 p-4 rounded-2xl border border-sky-500/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                Pool A
+              </span>
+              <ul className="space-y-1 text-slate-300 font-medium pt-1">
+                <li>• Tamilaga Asiriyar Kootani</li>
+                <li>• Fire Falcon&apos;s</li>
+                <li>• Smash Squad</li>
+                <li>• Gokulam Super Kings</li>
+              </ul>
+              <p className="text-[10px] text-sky-400 font-bold pt-1 border-t border-gbl-navy-800">Top 2 Teams Qualify</p>
+            </div>
+
+            <div className="bg-gbl-navy-950 p-4 rounded-2xl border border-amber-500/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                Pool B
+              </span>
+              <ul className="space-y-1 text-slate-300 font-medium pt-1">
+                <li>• Gold Warriors</li>
+                <li>• Thangarathinam Gold Boys</li>
+                <li>• Jolly Strikers Cool Bro&apos;s</li>
+                <li>• Feather&apos;s Furry</li>
+              </ul>
+              <p className="text-[10px] text-amber-400 font-bold pt-1 border-t border-gbl-navy-800">Top 2 Teams Qualify</p>
+            </div>
+
+            <div className="bg-gbl-navy-950 p-4 rounded-2xl border border-emerald-500/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                Pool C
+              </span>
+              <ul className="space-y-1 text-slate-300 font-medium pt-1">
+                <li>• Sharavanas Badminton Academy</li>
+                <li>• Turbo Badminton Academy</li>
+                <li>• The Emperor</li>
+                <li>• The Barbarians</li>
+              </ul>
+              <p className="text-[10px] text-emerald-400 font-bold pt-1 border-t border-gbl-navy-800">Top 2 Teams Qualify</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 6. PLAYER CATEGORIES & STARTING BIDS */}
         <div className="bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
           <div className="flex items-center gap-3 border-b border-gbl-navy-800 pb-4">
             <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white font-sports">PLAYER CATEGORIES & BASE BID VALUES</h2>
-              <p className="text-xs text-slate-400">Bidding parameters across all 7 official tournament categories</p>
+              <h2 className="text-xl font-black text-white font-sports">PLAYER AUCTION BASE BID VALUES</h2>
+              <p className="text-xs text-slate-400">Bidding parameters across tournament categories</p>
             </div>
           </div>
 
