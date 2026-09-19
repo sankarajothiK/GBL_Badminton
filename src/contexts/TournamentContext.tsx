@@ -42,6 +42,7 @@ import {
   saveStoredData,
   clearAllStoredData
 } from '../lib/persistentStorage';
+import { resolveTeamPool } from '../lib/teamPools';
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -71,13 +72,12 @@ function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
       sanitized[key] = (team as any)[key];
     }
   }
+  const assignedPool = resolveTeamPool(team);
   let cleanDesc = (sanitized.description || '')
     .replace(/\[POOL:[^\]]+\]\s*/g, '')
     .replace(/\[GOAL:[^\]]+\]\s*/g, '')
     .trim();
-  if (team.pool) {
-    cleanDesc = `[POOL:${team.pool}] ${cleanDesc}`.trim();
-  }
+  cleanDesc = `[POOL:${assignedPool}] ${cleanDesc}`.trim();
   if (team.goal) {
     cleanDesc = `[GOAL:${team.goal}] ${cleanDesc}`.trim();
   }
@@ -298,11 +298,14 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 ? cloudTeam.current_balance 
                 : (typeof localTeam?.current_balance === 'number' ? localTeam.current_balance : Math.max(0, auctionBudget - totalSpent));
 
-              let pool = cloudTeam.pool || localTeam?.pool;
-              if (!pool && cloudTeam.description) {
-                const m = cloudTeam.description.match(/\[POOL:([^\]]+)\]/);
-                if (m) pool = m[1].trim();
-              }
+              const pool = resolveTeamPool({
+                id: cloudTeam.id,
+                team_number: cloudTeam.team_number,
+                name: cloudTeam.name,
+                short_name: cloudTeam.short_name,
+                pool: cloudTeam.pool || localTeam?.pool,
+                description: cloudTeam.description || localTeam?.description
+              });
               let goal = cloudTeam.goal || localTeam?.goal;
               if (!goal && cloudTeam.description) {
                 const gm = cloudTeam.description.match(/\[GOAL:([^\]]+)\]/);
@@ -317,7 +320,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 ...(localTeam || {}),
                 ...cloudTeam,
                 description: cleanDesc,
-                pool: pool || 'Unassigned',
+                pool: pool,
                 goal: goal || undefined,
                 logo_url: bestLogo,
                 owner_photo_url: bestOwnerPhoto,
@@ -532,13 +535,21 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const unsubscribe = realtimeManager.subscribe((type, payload) => {
       if (type === 'TEAM_UPDATED') {
         setTeams(prev => {
-          const next = prev.map(t => t.id === payload.id ? { ...t, ...payload } : t);
+          const next = prev.map(t => {
+            if (t.id === payload.id) {
+              const updated = { ...t, ...payload };
+              return { ...updated, pool: resolveTeamPool(updated) };
+            }
+            return t;
+          });
           saveStoredData(GBL_TEAMS_STORAGE_KEY, next);
           return next;
         });
       } else if (type === 'TEAM_CREATED') {
         setTeams(prev => {
-          const next = prev.some(t => t.id === payload.id) ? prev : [...prev, payload];
+          if (prev.some(t => t.id === payload.id)) return prev;
+          const newTeam = { ...payload, pool: resolveTeamPool(payload) };
+          const next = [...prev, newTeam];
           saveStoredData(GBL_TEAMS_STORAGE_KEY, next);
           return next;
         });

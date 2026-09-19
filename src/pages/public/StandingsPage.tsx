@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Trophy, CheckCircle, XCircle, Layers, Sparkles, Shield, ChevronRight, Users } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 export const StandingsPage: React.FC = () => {
   const { standings, teams, settings } = useTournament();
@@ -46,7 +47,7 @@ export const StandingsPage: React.FC = () => {
   const availablePools = useMemo(() => {
     const defaultPools = ['Pool A', 'Pool B', 'Pool C'];
     const customPools = teams
-      .map(t => t.pool)
+      .map(t => resolveTeamPool(t))
       .filter((p): p is string => Boolean(p && p !== 'Unassigned' && !defaultPools.includes(p)));
     const uniqueCustom = Array.from(new Set(customPools));
     return [...defaultPools, ...uniqueCustom];
@@ -58,13 +59,13 @@ export const StandingsPage: React.FC = () => {
       return fullStandings.map((s, idx) => ({
         ...s,
         displayRank: idx + 1,
-        poolLabel: teamMap.get(s.team_id)?.pool || 'Unassigned',
+        poolLabel: resolveTeamPool(teamMap.get(s.team_id)),
         isTopInPool: idx < qualifyingCount
       }));
     }
 
     const poolTeamIds = new Set(
-      teams.filter(t => (t.pool || '').toLowerCase() === poolName.toLowerCase()).map(t => t.id)
+      teams.filter(t => resolveTeamPool(t).toLowerCase() === poolName.toLowerCase()).map(t => t.id)
     );
     const poolStandings = fullStandings.filter(s => poolTeamIds.has(s.team_id));
     return poolStandings.map((s, idx) => ({
@@ -136,7 +137,7 @@ export const StandingsPage: React.FC = () => {
       {viewMode === 'TABBED' && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar sm:flex-wrap -mx-1 px-1 touch-pan-x">
           {availablePools.map(poolName => {
-            const count = teams.filter(t => (t.pool || '').toLowerCase() === poolName.toLowerCase()).length;
+            const count = teams.filter(t => resolveTeamPool(t).toLowerCase() === poolName.toLowerCase()).length;
             const isActive = activeTab === poolName;
 
             return (

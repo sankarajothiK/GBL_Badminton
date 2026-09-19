@@ -5,6 +5,7 @@ import { useTournament } from '../../contexts/TournamentContext';
 import { Team } from '../../types/database';
 import { formatINR, formatCompactINR } from '../../lib/currency';
 import { calculateMaxLegalBid } from '../../lib/maxBid';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 export const TeamsPage: React.FC = () => {
   const { teams, players, settings } = useTournament();
@@ -14,7 +15,7 @@ export const TeamsPage: React.FC = () => {
   const filteredTeams = useMemo(() => {
     return teams.filter(t => {
       if (selectedPool === 'ALL') return true;
-      return (t.pool || '').toLowerCase() === selectedPool.toLowerCase();
+      return resolveTeamPool(t).toLowerCase() === selectedPool.toLowerCase();
     });
   }, [teams, selectedPool]);
 
@@ -89,7 +90,7 @@ export const TeamsPage: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         {['ALL', 'Pool A', 'Pool B', 'Pool C'].map((p) => {
           const isActive = selectedPool === p;
-          const count = p === 'ALL' ? teams.length : teams.filter(t => (t.pool || '').toLowerCase() === p.toLowerCase()).length;
+          const count = p === 'ALL' ? teams.length : teams.filter(t => resolveTeamPool(t).toLowerCase() === p.toLowerCase()).length;
 
           return (
             <button
@@ -124,6 +125,7 @@ export const TeamsPage: React.FC = () => {
           const totalBudget = team.initial_budget || 500000;
           const currentBal = team.current_balance ?? maxBidInfo.currentBalance;
           const spentPercent = Math.min(100, Math.round(((team.total_spent || 0) / totalBudget) * 100));
+          const teamPool = resolveTeamPool(team);
 
           return (
             <div
@@ -161,15 +163,15 @@ export const TeamsPage: React.FC = () => {
                         <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 block">
                           Team #{team.team_number}
                         </span>
-                        {team.pool && (
+                        {teamPool && (
                           <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase border ${
-                            team.pool === 'Pool A'
+                            teamPool === 'Pool A'
                               ? 'bg-sky-50 text-sky-800 border-sky-300'
-                              : team.pool === 'Pool B'
+                              : teamPool === 'Pool B'
                               ? 'bg-amber-50 text-amber-800 border-amber-300'
                               : 'bg-emerald-50 text-emerald-800 border-emerald-300'
                           }`}>
-                            {team.pool}
+                            {teamPool}
                           </span>
                         )}
                       </div>

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Trophy, Clock, MapPin, CheckCircle2, ChevronDown, ChevronUp, Star, Sparkles, Users, Layers, Shield } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { TournamentMatch, TournamentTie, TieCategoryMatch, MatchCategory } from '../../types/database';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 const DEFAULT_CATEGORIES: { name: MatchCategory; desc: string }[] = [
   { name: 'Veterans Doubles', desc: 'Experienced senior masters clash' },
@@ -126,8 +127,8 @@ export const ResultsPage: React.FC = () => {
     return recordedTies.filter(tie => {
       if (selectedRound !== 'ALL' && tie.round !== selectedRound) return false;
       if (selectedPool !== 'ALL') {
-        const t1Pool = teamMap.get(tie.team1_id)?.pool;
-        const t2Pool = teamMap.get(tie.team2_id)?.pool;
+        const t1Pool = resolveTeamPool(teamMap.get(tie.team1_id));
+        const t2Pool = resolveTeamPool(teamMap.get(tie.team2_id));
         if (t1Pool !== selectedPool && t2Pool !== selectedPool) return false;
       }
       return true;
@@ -280,7 +281,9 @@ export const ResultsPage: React.FC = () => {
               const isT1Winner = tie.team1_score > tie.team2_score;
               const isT2Winner = tie.team2_score > tie.team1_score;
 
-              const tiePool = team1?.pool || team2?.pool;
+              const t1Pool = resolveTeamPool(team1);
+              const t2Pool = resolveTeamPool(team2);
+              const tiePool = t1Pool || t2Pool;
 
               return (
                 <div
@@ -327,11 +330,11 @@ export const ResultsPage: React.FC = () => {
                         <div className="flex items-center gap-2 sm:gap-3 text-left sm:text-right flex-1 sm:justify-end min-w-0">
                           <div className="truncate">
                             <div className="flex items-center sm:justify-end gap-1.5 flex-wrap">
-                              {team1?.pool && (
+                              {t1Pool && (
                                 <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border ${
-                                  team1.pool === 'Pool A' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : team1.pool === 'Pool B' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                  t1Pool === 'Pool A' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : t1Pool === 'Pool B' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                                 }`}>
-                                  {team1.pool}
+                                  {t1Pool}
                                 </span>
                               )}
                               <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{team1?.name || 'Team 1'}</p>
@@ -381,11 +384,11 @@ export const ResultsPage: React.FC = () => {
                           <div className="truncate">
                             <div className="flex items-center sm:justify-start gap-1.5 flex-wrap justify-end">
                               <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{team2?.name || 'Team 2'}</p>
-                              {team2?.pool && (
+                              {t2Pool && (
                                 <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border ${
-                                  team2.pool === 'Pool A' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : team2.pool === 'Pool B' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                  t2Pool === 'Pool A' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : t2Pool === 'Pool B' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                                 }`}>
-                                  {team2.pool}
+                                  {t2Pool}
                                 </span>
                               )}
                             </div>

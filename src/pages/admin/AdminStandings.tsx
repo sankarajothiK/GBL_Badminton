@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ListOrdered, CheckCircle, XCircle, Save, Award, Download, Layers, Shuffle } from 'lucide-react';
 import { useTournament } from '../../contexts/TournamentContext';
 import { exportStandingsCSV } from '../../lib/csv';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 export const AdminStandings: React.FC = () => {
   const { standings, teams, settings, toggleManualQualifier, setQualifyingTeamsCount, setTeamsPools } = useTournament();
@@ -13,7 +14,7 @@ export const AdminStandings: React.FC = () => {
   const [poolAssignments, setPoolAssignments] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     teams.forEach(t => {
-      init[t.id] = t.pool || 'Unassigned';
+      init[t.id] = resolveTeamPool(t);
     });
     return init;
   });
@@ -22,7 +23,7 @@ export const AdminStandings: React.FC = () => {
     setPoolAssignments(prev => {
       const next = { ...prev };
       teams.forEach(t => {
-        if (!next[t.id]) next[t.id] = t.pool || 'Unassigned';
+        if (!next[t.id]) next[t.id] = resolveTeamPool(t);
       });
       return next;
     });
@@ -76,7 +77,7 @@ export const AdminStandings: React.FC = () => {
     const enriched = standings.map(s => ({
       ...s,
       teamName: teamMap.get(s.team_id)?.name,
-      pool: teamMap.get(s.team_id)?.pool || 'Unassigned'
+      pool: resolveTeamPool(teamMap.get(s.team_id))
     }));
     exportStandingsCSV(enriched);
   };
@@ -274,7 +275,7 @@ export const AdminStandings: React.FC = () => {
               {standings.map((s, index) => {
                 const team = teamMap.get(s.team_id);
                 const isAutoQual = index < qualifyingCount;
-                const pool = team?.pool || 'Unassigned';
+                const pool = resolveTeamPool(team);
 
                 return (
                   <tr key={s.id} className="hover:bg-gbl-navy-800/40 transition-colors">

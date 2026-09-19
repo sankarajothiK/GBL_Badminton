@@ -6,6 +6,7 @@ import { formatINR } from '../../lib/currency';
 import { getTeamAuctionMetrics } from '../../lib/maxBid';
 import { Badge } from '../../components/common/Badge';
 import { TeamCategoryBreakdown } from '../../components/common/TeamCategoryBreakdown';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 export const TeamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ export const TeamDetailPage: React.FC = () => {
     );
   }
 
+  const teamPool = resolveTeamPool(team);
   const squad = players.filter(p => p.sold_team_id === team.id);
   const metrics = getTeamAuctionMetrics(team, squad.length, settings);
 
@@ -67,15 +69,15 @@ export const TeamDetailPage: React.FC = () => {
                   <span className="text-xs font-bold text-gbl-orange-400 uppercase tracking-wider">
                     Team #{team.team_number}
                   </span>
-                  {team.pool && (
+                  {teamPool && (
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
-                      team.pool === 'Pool A'
+                      teamPool === 'Pool A'
                         ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
-                        : team.pool === 'Pool B'
+                        : teamPool === 'Pool B'
                         ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     }`}>
-                      {team.pool}
+                      {teamPool}
                     </span>
                   )}
                   {metrics.ownerIsPlayer ? (

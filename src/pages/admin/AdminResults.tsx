@@ -20,6 +20,7 @@ import {
 import { useTournament } from '../../contexts/TournamentContext';
 import { TournamentMatch, TournamentTie, TieCategoryMatch, MATCH_CATEGORIES, MatchCategory } from '../../types/database';
 import { Modal } from '../../components/common/Modal';
+import { resolveTeamPool } from '../../lib/teamPools';
 
 const DEFAULT_CATEGORIES: { name: MatchCategory; desc: string }[] = [
   { name: 'Veterans Doubles', desc: 'Experienced senior masters clash' },
@@ -765,9 +766,9 @@ export const AdminResults: React.FC = () => {
             <div className="p-4 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 space-y-2">
               <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px] flex items-center justify-between">
                 <span>Team 1 (First Squad)</span>
-                {teamMap.get(team1Id)?.pool && (
+                {teamMap.get(team1Id) && (
                   <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-400">
-                    {teamMap.get(team1Id)?.pool}
+                    {resolveTeamPool(teamMap.get(team1Id))}
                   </span>
                 )}
               </label>
@@ -782,7 +783,7 @@ export const AdminResults: React.FC = () => {
                 className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
               >
                 {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.pool || 'No Pool'})</option>
+                  <option key={t.id} value={t.id}>{t.name} ({resolveTeamPool(t)})</option>
                 ))}
               </select>
               <p className="text-[10px] text-slate-400">
@@ -793,9 +794,9 @@ export const AdminResults: React.FC = () => {
             <div className="p-4 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 space-y-2">
               <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px] flex items-center justify-between">
                 <span>Team 2 (Opponent Squad)</span>
-                {teamMap.get(team2Id)?.pool && (
+                {teamMap.get(team2Id) && (
                   <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                    {teamMap.get(team2Id)?.pool}
+                    {resolveTeamPool(teamMap.get(team2Id))}
                   </span>
                 )}
               </label>
@@ -805,7 +806,7 @@ export const AdminResults: React.FC = () => {
                 className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
               >
                 {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.pool || 'No Pool'})</option>
+                  <option key={t.id} value={t.id}>{t.name} ({resolveTeamPool(t)})</option>
                 ))}
               </select>
               <p className="text-[10px] text-slate-400">
