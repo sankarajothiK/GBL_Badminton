@@ -22,24 +22,14 @@ import { TournamentMatch, TournamentTie, TieCategoryMatch, MATCH_CATEGORIES, Mat
 import { Modal } from '../../components/common/Modal';
 import { resolveTeamPool } from '../../lib/teamPools';
 
-const DEFAULT_CATEGORIES: { name: MatchCategory; desc: string }[] = [
-  { name: 'Veterans Doubles', desc: 'Experienced senior masters clash' },
-  { name: '80+ Combined Doubles', desc: 'Combined player age total 80+ years' },
-  { name: 'Super Doubles', desc: 'Premier doubles power clash' },
-  { name: 'Futures Doubles', desc: 'Rising future stars category' },
-  { name: 'Challengers Doubles', desc: 'High-intensity challengers battle' },
-  { name: '35+ Doubles', desc: 'Veteran players aged 35 and above' }
+const DEFAULT_CATEGORIES: { name: MatchCategory; label: string; desc: string; index: number }[] = [
+  { name: 'Veterans Doubles', label: 'Match 1 — Veterans Doubles', desc: 'Veterans Doubles (40+ & 45+)', index: 1 },
+  { name: 'Super Doubles', label: 'Match 2 — Super Doubles', desc: 'Super Doubles (Open + Non-Medalist)', index: 2 },
+  { name: 'Tariff/Tarifits', label: 'Match 3 — Tariff/Tarifits', desc: 'Tariff / 35+ Jumbled Doubles', index: 3 },
+  { name: '80+ Competition', label: 'Match 4 — 80+ Competition', desc: '80+ Combined (Both Age Cal)', index: 4 },
+  { name: 'Orange Doubles', label: 'Match 5 — Orange Doubles', desc: 'Orange Doubles / Challengers (40+ & Non-Medalist)', index: 5 },
+  { name: 'Future Star Doubles', label: 'Match 6 — Future Star Doubles', desc: 'Future Star Doubles (Non-Medalist & Non-Medalist)', index: 6 }
 ];
-
-function calculateBaseWinPoints(wins: number): number {
-  if (wins === 1) return 1;
-  if (wins === 2) return 2;
-  if (wins === 3) return 3;
-  if (wins === 4) return 5;
-  if (wins === 5) return 6;
-  if (wins >= 6) return 7;
-  return 0;
-}
 
 export const AdminResults: React.FC = () => {
   const { matches, teams, players, saveTieResult, deleteTie } = useTournament();
@@ -58,7 +48,7 @@ export const AdminResults: React.FC = () => {
   const [team1Id, setTeam1Id] = useState(teams[0]?.id || '');
   const [team2Id, setTeam2Id] = useState(teams[1]?.id || '');
 
-  // 6 Match Categories state
+  // 6 Match Categories state (Single Set 15-Point Match Format)
   const [categoryMatches, setCategoryMatches] = useState<TieCategoryMatch[]>(() => {
     return DEFAULT_CATEGORIES.map((cat, idx) => ({
       id: `cm_${idx}_${Date.now()}`,
@@ -66,10 +56,10 @@ export const AdminResults: React.FC = () => {
       match_index: idx + 1,
       player1_names: '',
       player2_names: '',
-      set1_team1: 21,
-      set1_team2: 18,
-      set2_team1: 21,
-      set2_team2: 19,
+      set1_team1: 15,
+      set1_team2: 10,
+      set2_team1: 0,
+      set2_team2: 0,
       set3_team1: 0,
       set3_team2: 0,
       winner_team_id: teams[0]?.id || '',
@@ -121,40 +111,21 @@ export const AdminResults: React.FC = () => {
         player2_names: m.player2_names || '',
         set1_team1: m.set1_team1,
         set1_team2: m.set1_team2,
-        set2_team1: m.set2_team1,
-        set2_team2: m.set2_team2,
-        set3_team1: m.set3_team1,
-        set3_team2: m.set3_team2,
+        set2_team1: 0,
+        set2_team2: 0,
+        set3_team1: 0,
+        set3_team2: 0,
         winner_team_id: m.winner_team_id,
-        team1_trump: Boolean(m.team1_trump || (m.is_trump_match && m.trump_team_id === t1)),
-        team2_trump: Boolean(m.team2_trump || (m.is_trump_match && m.trump_team_id === t2)),
-        is_trump_match: m.is_trump_match,
-        trump_team_id: m.trump_team_id
+        team1_trump: false,
+        team2_trump: false
       }));
 
-      // Calculate score and points
+      // Calculate score and points (Strictly +2 points per match win, 0 for loss)
       const t1Wins = catMatches.filter(cm => cm.winner_team_id === t1).length;
       const t2Wins = catMatches.filter(cm => cm.winner_team_id === t2).length;
 
-      const t1Base = calculateBaseWinPoints(t1Wins);
-      const t2Base = calculateBaseWinPoints(t2Wins);
-
-      let t1Trump = 0;
-      let t2Trump = 0;
-
-      catMatches.forEach(cm => {
-        const isDual = (cm.team1_trump && cm.team2_trump) || cm.trump_team_id === 'BOTH';
-        if (isDual) {
-          if (cm.winner_team_id === t1) t1Trump += 4;
-          else if (cm.winner_team_id === t2) t2Trump += 4;
-        } else {
-          if (cm.team1_trump && cm.winner_team_id === t1) t1Trump += 2;
-          if (cm.team2_trump && cm.winner_team_id === t2) t2Trump += 2;
-        }
-      });
-
-      const team1Points = t1Base + t1Trump;
-      const team2Points = t2Base + t2Trump;
+      const team1Points = t1Wins * 2;
+      const team2Points = t2Wins * 2;
 
       return {
         tie_id: tieKey,
@@ -198,37 +169,16 @@ export const AdminResults: React.FC = () => {
     return counts;
   }, [categoryMatches]);
 
-  // Live tie calculations for current modal form
+  // Live tie calculations for current modal form (Strictly +2 points per match win, 0 for loss)
   const currentTieSummary = useMemo(() => {
     const t1Wins = categoryMatches.filter(cm => cm.winner_team_id === team1Id).length;
     const t2Wins = categoryMatches.filter(cm => cm.winner_team_id === team2Id).length;
 
-    const t1Base = calculateBaseWinPoints(t1Wins);
-    const t2Base = calculateBaseWinPoints(t2Wins);
-
-    let t1Trump = 0;
-    let t2Trump = 0;
-
-    categoryMatches.forEach(cm => {
-      const isDual = cm.team1_trump && cm.team2_trump;
-      if (isDual) {
-        if (cm.winner_team_id === team1Id) t1Trump += 4;
-        else if (cm.winner_team_id === team2Id) t2Trump += 4;
-      } else {
-        if (cm.team1_trump && cm.winner_team_id === team1Id) t1Trump += 2;
-        if (cm.team2_trump && cm.winner_team_id === team2Id) t2Trump += 2;
-      }
-    });
-
     return {
       t1Wins,
       t2Wins,
-      t1Base,
-      t2Base,
-      t1Trump,
-      t2Trump,
-      t1Total: t1Base + t1Trump,
-      t2Total: t2Base + t2Trump
+      t1Total: t1Wins * 2,
+      t2Total: t2Wins * 2
     };
   }, [categoryMatches, team1Id, team2Id]);
 
@@ -253,10 +203,10 @@ export const AdminResults: React.FC = () => {
         match_index: idx + 1,
         player1_names: '',
         player2_names: '',
-        set1_team1: 21,
-        set1_team2: 18,
-        set2_team1: 21,
-        set2_team2: 19,
+        set1_team1: 15,
+        set1_team2: 10,
+        set2_team1: 0,
+        set2_team2: 0,
         set3_team1: 0,
         set3_team2: 0,
         winner_team_id: t1,
@@ -287,7 +237,13 @@ export const AdminResults: React.FC = () => {
         return {
           ...existing,
           category_name: cat.name,
-          match_index: idx + 1
+          match_index: idx + 1,
+          set2_team1: 0,
+          set2_team2: 0,
+          set3_team1: 0,
+          set3_team2: 0,
+          team1_trump: false,
+          team2_trump: false
         };
       }
       return {
@@ -296,10 +252,10 @@ export const AdminResults: React.FC = () => {
         match_index: idx + 1,
         player1_names: '',
         player2_names: '',
-        set1_team1: 21,
-        set1_team2: 18,
-        set2_team1: 21,
-        set2_team2: 19,
+        set1_team1: 15,
+        set1_team2: 10,
+        set2_team1: 0,
+        set2_team2: 0,
         set3_team1: 0,
         set3_team2: 0,
         winner_team_id: tie.team1_id,
@@ -312,7 +268,7 @@ export const AdminResults: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Handle match category changes
+  // Handle match category changes (Single Set 15-Point Format)
   const updateMatchField = <K extends keyof TieCategoryMatch>(
     idx: number,
     field: K,
@@ -322,50 +278,20 @@ export const AdminResults: React.FC = () => {
       const next = [...prev];
       const match = { ...next[idx], [field]: val };
 
-      // Auto compute winner if set scores changed
-      if (field === 'set1_team1' || field === 'set1_team2' || field === 'set2_team1' || field === 'set2_team2' || field === 'set3_team1' || field === 'set3_team2') {
-        let t1Sets = 0;
-        let t2Sets = 0;
-
+      // Auto compute winner when Set 1 score changes
+      if (field === 'set1_team1' || field === 'set1_team2') {
         const s1_t1 = field === 'set1_team1' ? Number(val) : match.set1_team1;
         const s1_t2 = field === 'set1_team2' ? Number(val) : match.set1_team2;
-        if (s1_t1 > s1_t2) t1Sets++;
-        else if (s1_t2 > s1_t1) t2Sets++;
 
-        const s2_t1 = field === 'set2_team1' ? Number(val) : match.set2_team1;
-        const s2_t2 = field === 'set2_team2' ? Number(val) : match.set2_team2;
-        if (s2_t1 > s2_t2) t1Sets++;
-        else if (s2_t2 > s2_t1) t2Sets++;
-
-        const s3_t1 = field === 'set3_team1' ? Number(val) : match.set3_team1;
-        const s3_t2 = field === 'set3_team2' ? Number(val) : match.set3_team2;
-        if (s3_t1 > 0 || s3_t2 > 0) {
-          if (s3_t1 > s3_t2) t1Sets++;
-          else if (s3_t2 > s3_t1) t2Sets++;
+        if (s1_t1 > s1_t2) {
+          match.winner_team_id = team1Id;
+        } else if (s1_t2 > s1_t1) {
+          match.winner_team_id = team2Id;
         }
-
-        if (t1Sets > t2Sets) match.winner_team_id = team1Id;
-        else if (t2Sets > t1Sets) match.winner_team_id = team2Id;
       }
 
       next[idx] = match;
       return next;
-    });
-  };
-
-  // Toggle Trump selection for a team (enforces at most 1 trump per team in tie)
-  const toggleTeamTrump = (idx: number, team: 'team1' | 'team2') => {
-    setCategoryMatches(prev => {
-      const currentVal = team === 'team1' ? prev[idx].team1_trump : prev[idx].team2_trump;
-      const newVal = !currentVal;
-
-      return prev.map((m, i) => {
-        if (team === 'team1') {
-          return { ...m, team1_trump: i === idx ? newVal : false };
-        } else {
-          return { ...m, team2_trump: i === idx ? newVal : false };
-        }
-      });
     });
   };
 
@@ -467,13 +393,13 @@ export const AdminResults: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-gbl-orange-400 uppercase tracking-widest mb-1">
             <Trophy className="w-4 h-4" />
-            <span>Official Clashes &amp; Scoring Engine</span>
+            <span>Official Clashes &amp; Scoring Engine (15-Pt Single Set)</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-white font-sports uppercase tracking-tight">
             MATCH RESULTS &amp; FIXTURES
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-            Record complete 6-match tie clashes with doubles player pairs, 3 set scores, Trump Card multipliers, and automatic tournament points calculations.
+            Record 6-match tie clashes with doubles lineups and single 15-point set scores. Each match win strictly awards <strong>+2 tournament points</strong> (+0 for loss).
           </p>
         </div>
 
@@ -490,15 +416,15 @@ export const AdminResults: React.FC = () => {
       <div className="bg-gbl-navy-950/80 border border-gbl-navy-800 rounded-2xl p-4 flex flex-wrap gap-4 text-xs text-slate-300">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-amber-400" />
-          <span><strong>Point Table:</strong> 1W=1pt • 2W=2pt • 3W=3pt • 4W=5pt • 5W=6pt • 6W=7pt</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span><strong>Trump Rules:</strong> +2 Pts for Trump win • +4 Pts if both teams call Trump on same match</span>
+          <span><strong>Point Rule:</strong> 1 Match Win = +2 Points | Loser = 0 Points (Single 15-Point Match)</span>
         </div>
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-sky-400" />
           <span><strong>Player Rule:</strong> Max 2 matches per player per tie</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-emerald-400" />
+          <span><strong>6 Categories:</strong> Veterans • Super • Tariff • 80+ • Orange • Future Star</span>
         </div>
       </div>
 
@@ -630,52 +556,43 @@ export const AdminResults: React.FC = () => {
                     <div className="border-t border-gbl-navy-800 bg-gbl-navy-950/60 p-4 sm:p-6 space-y-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                         <Trophy className="w-3.5 h-3.5 text-gbl-orange-400" />
-                        <span>Individual Match Category Breakdown (6 Matches)</span>
+                        <span>Individual Match Category Breakdown (6 Matches — 15 Points Format)</span>
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {tie.matches.map((m, idx) => {
                           const isW1 = m.winner_team_id === tie.team1_id;
                           const isW2 = m.winner_team_id === tie.team2_id;
-                          const isTrump1 = m.team1_trump;
-                          const isTrump2 = m.team2_trump;
 
                           return (
                             <div 
                               key={m.id || idx}
-                              className={`p-3.5 rounded-2xl border transition-all space-y-2 text-xs ${
-                                (isTrump1 || isTrump2)
-                                  ? 'bg-amber-950/20 border-amber-500/40 shadow-sm'
-                                  : 'bg-gbl-navy-900 border-gbl-navy-800'
-                              }`}
+                              className="p-3.5 rounded-2xl border transition-all space-y-2 text-xs bg-gbl-navy-900 border-gbl-navy-800"
                             >
                               <div className="flex justify-between items-start gap-1">
                                 <div>
                                   <span className="font-bold text-white block">
-                                    {idx + 1}. {m.category_name}
+                                    {DEFAULT_CATEGORIES[idx]?.label || `${idx + 1}. ${m.category_name}`}
                                   </span>
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    Set 1: {m.set1_team1}-{m.set1_team2} • Set 2: {m.set2_team1}-{m.set2_team2}
-                                    {m.set3_team1 > 0 ? ` • Set 3: ${m.set3_team1}-${m.set3_team2}` : ''}
+                                  <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                                    Set 1: {m.set1_team1} - {m.set1_team2} (15 Pts)
                                   </span>
                                 </div>
 
-                                {(isTrump1 || isTrump2) && (
-                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
-                                    ★ TRUMP
-                                  </span>
-                                )}
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                                  +2 PTS WIN
+                                </span>
                               </div>
 
                               {/* Players */}
                               <div className="space-y-1 pt-1 border-t border-gbl-navy-800/80">
                                 <div className={`flex justify-between items-center ${isW1 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
                                   <span className="truncate">{t1?.short_name}: {m.player1_names || 'T1 Pair'}</span>
-                                  {isW1 && <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />}
+                                  {isW1 && <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> +2 Pts</span>}
                                 </div>
                                 <div className={`flex justify-between items-center ${isW2 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
                                   <span className="truncate">{t2?.short_name}: {m.player2_names || 'T2 Pair'}</span>
-                                  {isW2 && <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />}
+                                  {isW2 && <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> +2 Pts</span>}
                                 </div>
                               </div>
                             </div>
@@ -697,7 +614,7 @@ export const AdminResults: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingTieId ? "EDIT CLASH RESULT (6 MATCHES)" : "RECORD TOURNAMENT CLASH (6 MATCHES)"}
-        subtitle="Enter doubles pairs, 3 set scores, and Trump Card nominations for all 6 categories"
+        subtitle="Enter doubles pairs and Set 1 score (15 Points Match) for all 6 categories (+2 Pts per win)"
       >
         <form onSubmit={handleSaveTie} className="space-y-6 text-xs max-h-[80vh] overflow-y-auto pr-1">
           
@@ -777,7 +694,6 @@ export const AdminResults: React.FC = () => {
                 onChange={(e) => {
                   const newT1 = e.target.value;
                   setTeam1Id(newT1);
-                  // Update default winners if needed
                   setCategoryMatches(prev => prev.map(m => ({ ...m, winner_team_id: newT1 })));
                 }}
                 className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
@@ -820,34 +736,33 @@ export const AdminResults: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-white font-sports uppercase tracking-wider flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-gbl-orange-400" />
-                <span>Six Match Categories &amp; Doubles Lineups</span>
+                <span>Six Match Categories &amp; Doubles Lineups (Single 15-Point Set)</span>
               </h3>
-              <span className="text-[11px] text-slate-400">
-                Each match has independent players, 3 sets &amp; Trump option
+              <span className="text-[11px] text-emerald-400 font-bold">
+                1 Win = +2 Pts | Single Set Match (15 Points)
               </span>
             </div>
 
             <div className="space-y-4">
               {categoryMatches.map((m, idx) => {
-                const isT1Trump = m.team1_trump;
-                const isT2Trump = m.team2_trump;
                 const t1Name = teamMap.get(team1Id)?.name || 'Team 1';
                 const t2Name = teamMap.get(team2Id)?.name || 'Team 2';
+                const t1Short = teamMap.get(team1Id)?.short_name || 'T1';
+                const t2Short = teamMap.get(team2Id)?.short_name || 'T2';
 
                 // Parse current player selections
                 const t1Players = m.player1_names ? m.player1_names.split('&').map(s => s.trim()).filter(Boolean) : [];
                 const t2Players = m.player2_names ? m.player2_names.split('&').map(s => s.trim()).filter(Boolean) : [];
 
+                const isWinnerT1 = m.winner_team_id === team1Id;
+                const isWinnerT2 = m.winner_team_id === team2Id;
+
                 return (
                   <div
                     key={m.id || idx}
-                    className={`p-4 sm:p-5 rounded-2xl border space-y-4 transition-all ${
-                      (isT1Trump || isT2Trump)
-                        ? 'bg-amber-950/20 border-amber-500/50 shadow-lg shadow-amber-500/5'
-                        : 'bg-gbl-navy-950 border-gbl-navy-800'
-                    }`}
+                    className="p-4 sm:p-5 rounded-2xl border space-y-4 transition-all bg-gbl-navy-950 border-gbl-navy-800"
                   >
-                    {/* Category Title & Trump Toggles */}
+                    {/* Category Title & Live Winner Status */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gbl-navy-800">
                       <div>
                         <div className="flex items-center gap-2">
@@ -855,7 +770,7 @@ export const AdminResults: React.FC = () => {
                             {idx + 1}
                           </span>
                           <h4 className="text-sm font-black text-white uppercase tracking-tight font-sports">
-                            {m.category_name}
+                            {DEFAULT_CATEGORIES[idx]?.label || m.category_name}
                           </h4>
                         </div>
                         <p className="text-[10px] text-slate-400 mt-0.5">
@@ -863,33 +778,23 @@ export const AdminResults: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Trump Card Options */}
-                      <div className="flex items-center gap-3 bg-gbl-navy-900/80 p-2 rounded-xl border border-gbl-navy-800">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isT1Trump}
-                            onChange={() => toggleTeamTrump(idx, 'team1')}
-                            className="w-4 h-4 rounded text-amber-500 accent-amber-500"
-                          />
-                          <span className={`text-[11px] font-bold ${isT1Trump ? 'text-amber-300' : 'text-slate-400'}`}>
-                            {teamMap.get(team1Id)?.short_name || 'T1'} Trump
+                      {/* Live Outcome Badge */}
+                      <div className="flex items-center gap-2 bg-gbl-navy-900/90 px-3 py-1.5 rounded-xl border border-gbl-navy-800">
+                        {isWinnerT1 ? (
+                          <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Winner: <strong>{t1Short} (+2 Pts)</strong></span>
                           </span>
-                        </label>
-
-                        <span className="text-slate-600">|</span>
-
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isT2Trump}
-                            onChange={() => toggleTeamTrump(idx, 'team2')}
-                            className="w-4 h-4 rounded text-amber-500 accent-amber-500"
-                          />
-                          <span className={`text-[11px] font-bold ${isT2Trump ? 'text-amber-300' : 'text-slate-400'}`}>
-                            {teamMap.get(team2Id)?.short_name || 'T2'} Trump
+                        ) : isWinnerT2 ? (
+                          <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Winner: <strong>{t2Short} (+2 Pts)</strong></span>
                           </span>
-                        </label>
+                        ) : (
+                          <span className="text-[11px] font-bold text-slate-400">
+                            Score tied or pending
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -1002,85 +907,55 @@ export const AdminResults: React.FC = () => {
 
                     </div>
 
-                    {/* 3 Sets Scores per match & Winner */}
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-gbl-navy-900/60 p-3 rounded-xl border border-gbl-navy-800">
+                    {/* Single Set 15-Point Match Score & Winner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gbl-navy-900/80 p-3.5 rounded-xl border border-gbl-navy-800 items-center">
                       
-                      {/* Set 1 */}
+                      {/* Set 1 Score (15 Points Format) */}
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">
-                          Set 1 ({teamMap.get(team1Id)?.short_name} - {teamMap.get(team2Id)?.short_name})
+                        <label className="block text-[10px] font-bold text-slate-300 mb-1">
+                          Set 1 Score — 15 Points ({t1Short} vs {t2Short})
                         </label>
-                        <div className="flex gap-1">
-                          <input
-                            type="number"
-                            value={m.set1_team1}
-                            onChange={(e) => updateMatchField(idx, 'set1_team1', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
-                          <input
-                            type="number"
-                            value={m.set1_team2}
-                            onChange={(e) => updateMatchField(idx, 'set1_team2', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <span className="text-[10px] text-slate-400 block mb-0.5">{t1Short} Score</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={m.set1_team1}
+                              onChange={(e) => updateMatchField(idx, 'set1_team1', Number(e.target.value))}
+                              className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-2 text-center font-mono text-white text-sm font-black focus:outline-none focus:border-gbl-orange-500"
+                            />
+                          </div>
+                          <span className="text-slate-500 font-bold text-sm pt-4">-</span>
+                          <div className="flex-1">
+                            <span className="text-[10px] text-slate-400 block mb-0.5">{t2Short} Score</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={m.set1_team2}
+                              onChange={(e) => updateMatchField(idx, 'set1_team2', Number(e.target.value))}
+                              className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-2 text-center font-mono text-white text-sm font-black focus:outline-none focus:border-gbl-orange-500"
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      {/* Set 2 */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">
-                          Set 2 ({teamMap.get(team1Id)?.short_name} - {teamMap.get(team2Id)?.short_name})
-                        </label>
-                        <div className="flex gap-1">
-                          <input
-                            type="number"
-                            value={m.set2_team1}
-                            onChange={(e) => updateMatchField(idx, 'set2_team1', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
-                          <input
-                            type="number"
-                            value={m.set2_team2}
-                            onChange={(e) => updateMatchField(idx, 'set2_team2', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Set 3 */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">
-                          Set 3 (Optional)
-                        </label>
-                        <div className="flex gap-1">
-                          <input
-                            type="number"
-                            value={m.set3_team1}
-                            onChange={(e) => updateMatchField(idx, 'set3_team1', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
-                          <input
-                            type="number"
-                            value={m.set3_team2}
-                            onChange={(e) => updateMatchField(idx, 'set3_team2', Number(e.target.value))}
-                            className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-lg p-1 text-center font-mono text-white text-xs font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Match Winner */}
+                      {/* Match Winner Selector */}
                       <div>
                         <label className="block text-[10px] font-bold text-emerald-400 mb-1">
-                          Match Winner
+                          Match Winner (+2 Tournament Points)
                         </label>
                         <select
                           value={m.winner_team_id || team1Id}
                           onChange={(e) => updateMatchField(idx, 'winner_team_id', e.target.value)}
-                          className="w-full bg-gbl-navy-950 border border-emerald-500/40 text-emerald-400 font-bold rounded-lg p-1.5 text-xs focus:outline-none"
+                          className="w-full bg-gbl-navy-950 border border-emerald-500/40 text-emerald-400 font-bold rounded-lg p-2 text-xs focus:outline-none"
                         >
-                          <option value={team1Id}>{teamMap.get(team1Id)?.name} (Team 1)</option>
-                          <option value={team2Id}>{teamMap.get(team2Id)?.name} (Team 2)</option>
+                          <option value={team1Id}>{teamMap.get(team1Id)?.name} (+2 Pts)</option>
+                          <option value={team2Id}>{teamMap.get(team2Id)?.name} (+2 Pts)</option>
                         </select>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Auto-selected based on higher Set 1 score.
+                        </p>
                       </div>
 
                     </div>
@@ -1095,43 +970,27 @@ export const AdminResults: React.FC = () => {
           <div className="bg-gradient-to-r from-gbl-navy-900 via-gbl-navy-950 to-gbl-navy-900 p-4 sm:p-5 rounded-2xl border border-emerald-500/40 space-y-3 shadow-xl">
             <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Live Tournament Points &amp; Tie Outcome Preview</span>
+              <span>Live Tournament Points &amp; Tie Outcome Preview (+2 Pts / Win)</span>
             </h4>
 
             <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1">
-                <p className="font-bold text-white truncate">{teamMap.get(team1Id)?.name || 'Team 1'}</p>
-                <p className="text-slate-400 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1.5">
+                <p className="font-bold text-white truncate text-sm">{teamMap.get(team1Id)?.name || 'Team 1'}</p>
+                <p className="text-slate-400 text-xs">
                   Matches Won: <strong>{currentTieSummary.t1Wins} / 6</strong>
                 </p>
-                <p className="text-slate-400 text-[11px]">
-                  Base Win Points: <strong>+{currentTieSummary.t1Base} Pts</strong>
-                </p>
-                {currentTieSummary.t1Trump > 0 && (
-                  <p className="text-amber-400 text-[11px] font-bold">
-                    Trump Bonus: +{currentTieSummary.t1Trump} Pts
-                  </p>
-                )}
-                <p className="text-sm font-black font-mono text-emerald-400 pt-1 border-t border-gbl-navy-800">
-                  Total Awarded: {currentTieSummary.t1Total} Pts
+                <p className="text-sm font-black font-mono text-emerald-400 pt-1.5 border-t border-gbl-navy-800">
+                  Total Points Awarded: {currentTieSummary.t1Total} Pts
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1">
-                <p className="font-bold text-white truncate">{teamMap.get(team2Id)?.name || 'Team 2'}</p>
-                <p className="text-slate-400 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1.5">
+                <p className="font-bold text-white truncate text-sm">{teamMap.get(team2Id)?.name || 'Team 2'}</p>
+                <p className="text-slate-400 text-xs">
                   Matches Won: <strong>{currentTieSummary.t2Wins} / 6</strong>
                 </p>
-                <p className="text-slate-400 text-[11px]">
-                  Base Win Points: <strong>+{currentTieSummary.t2Base} Pts</strong>
-                </p>
-                {currentTieSummary.t2Trump > 0 && (
-                  <p className="text-amber-400 text-[11px] font-bold">
-                    Trump Bonus: +{currentTieSummary.t2Trump} Pts
-                  </p>
-                )}
-                <p className="text-sm font-black font-mono text-emerald-400 pt-1 border-t border-gbl-navy-800">
-                  Total Awarded: {currentTieSummary.t2Total} Pts
+                <p className="text-sm font-black font-mono text-emerald-400 pt-1.5 border-t border-gbl-navy-800">
+                  Total Points Awarded: {currentTieSummary.t2Total} Pts
                 </p>
               </div>
             </div>

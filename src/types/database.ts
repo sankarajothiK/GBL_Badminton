@@ -32,14 +32,23 @@ export interface Tournament {
 
 export const MATCH_CATEGORIES = [
   'Veterans Doubles',
-  '80+ Combined Doubles',
   'Super Doubles',
-  'Futures Doubles',
-  'Challengers Doubles',
-  '35+ Doubles'
+  'Tariff/Tarifits',
+  '80+ Competition',
+  'Orange Doubles',
+  'Future Star Doubles'
 ] as const;
 
 export type MatchCategory = typeof MATCH_CATEGORIES[number];
+
+export const OFFICIAL_MATCH_CATEGORIES: { name: MatchCategory; label: string; desc: string; index: number }[] = [
+  { name: 'Veterans Doubles', label: 'Match 1 — Veterans Doubles', desc: 'Veterans Doubles (40+ & 45+)', index: 1 },
+  { name: 'Super Doubles', label: 'Match 2 — Super Doubles', desc: 'Super Doubles (Open + Non-Medalist)', index: 2 },
+  { name: 'Tariff/Tarifits', label: 'Match 3 — Tariff/Tarifits', desc: 'Tariff / 35+ Jumbled Doubles', index: 3 },
+  { name: '80+ Competition', label: 'Match 4 — 80+ Competition', desc: '80+ Combined (Both Age Cal)', index: 4 },
+  { name: 'Orange Doubles', label: 'Match 5 — Orange Doubles', desc: 'Orange Doubles / Challengers (40+ & Non-Medalist)', index: 5 },
+  { name: 'Future Star Doubles', label: 'Match 6 — Future Star Doubles', desc: 'Future Star Doubles (Non-Medalist & Non-Medalist)', index: 6 }
+];
 
 export const ELIGIBLE_CATEGORIES = [
   '35',
