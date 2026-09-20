@@ -232,10 +232,10 @@ export const StandingsPage: React.FC = () => {
       <div className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-wrap justify-between items-center gap-3 text-xs text-slate-600 shadow-sm">
         <div className="space-y-1">
           <p className="font-semibold text-slate-900">
-            Points System: 1 Match Win = <strong>+2 Points</strong> • Loser = <strong>0 Points</strong> (Single 15-Point Set Match).
+            Points Table: 1W = <strong>1 pt</strong> • 2W = <strong>2 pts</strong> • 3W = <strong>3 pts</strong> • 4W = <strong>5 pts</strong> • 5W = <strong>6 pts</strong> • 6W = <strong>7 pts</strong> (+2 Trump Bonus Points).
           </p>
           <p className="text-slate-500 text-[11px]">
-            6 Official Match Categories: Veterans • Super • Tariff/Tarifits • 80+ Competition • Orange • Future Star Doubles.
+            6 Official Categories: Veterans • Super • Tariff/Tarifits • 80+ Competition • Orange • Future Star Doubles. Single 15-point set format.
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs font-semibold">

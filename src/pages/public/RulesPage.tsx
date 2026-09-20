@@ -137,24 +137,48 @@ export const RulesPage: React.FC = () => {
             <div className="space-y-3 bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>Match Points &amp; Single-Set Format</span>
+                <span>Base Points Progression &amp; Trump Card System</span>
               </h3>
               <div className="space-y-2.5">
-                <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1">
-                  <p className="font-bold text-emerald-400 text-sm">Winner Points: +2 Points per Win</p>
-                  <p className="text-slate-300 text-xs leading-relaxed">
-                    Every individual category match won awards strictly <strong>+2 tournament points</strong> to the winning team. The losing team receives <strong>0 points</strong>.
-                  </p>
+                <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1.5">
+                  <p className="font-bold text-emerald-400 text-xs uppercase tracking-wider">Base Match-Win Points Table:</p>
+                  <div className="grid grid-cols-3 gap-2 font-mono text-center text-xs">
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">1 Win</span>
+                      <strong className="text-white">1 Point</strong>
+                    </div>
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">2 Wins</span>
+                      <strong className="text-white">2 Points</strong>
+                    </div>
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">3 Wins</span>
+                      <strong className="text-white">3 Points</strong>
+                    </div>
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">4 Wins</span>
+                      <strong className="text-emerald-400">5 Points</strong>
+                    </div>
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">5 Wins</span>
+                      <strong className="text-emerald-400">6 Points</strong>
+                    </div>
+                    <div className="bg-gbl-navy-900 p-1.5 rounded-lg border border-gbl-navy-800">
+                      <span className="text-slate-400 block text-[10px]">6 Wins</span>
+                      <strong className="text-emerald-400">7 Points</strong>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-sky-950/30 border border-sky-500/40 space-y-1">
-                  <p className="font-bold text-sky-400 text-sm">Single Set 15-Point Match</p>
+
+                <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-1">
+                  <p className="font-bold text-amber-400 text-xs uppercase tracking-wider">Trump Card Bonus Rules:</p>
                   <p className="text-slate-300 text-xs leading-relaxed">
-                    Each match is played as a single set of 15 points (e.g., 15–10, 15–12). The team that reaches 15 points first (or has higher score) wins the match and secures the +2 points.
+                    Each team can nominate <strong>1 Trump Card match</strong> per tie clash. If the nominating team wins that match, they receive <strong>+2 bonus points</strong> on top of their base score. If both teams nominate the same match, the winner earns <strong>+4 bonus points</strong>.
                   </p>
                 </div>
               </div>
               <div className="pt-2 border-t border-gbl-navy-800 text-[11px] text-slate-400">
-                Total available points in a 6-match clash: <strong>12 Points</strong> (6 wins × 2 pts).
+                Single set 15-point match format (e.g. 15–10, 15–12).
               </div>
             </div>
           </div>

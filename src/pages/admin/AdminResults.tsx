@@ -31,6 +31,16 @@ const DEFAULT_CATEGORIES: { name: MatchCategory; label: string; desc: string; in
   { name: 'Future Star Doubles', label: 'Match 6 — Future Star Doubles', desc: 'Future Star Doubles (Non-Medalist & Non-Medalist)', index: 6 }
 ];
 
+function calculateBaseWinPoints(wins: number): number {
+  if (wins === 1) return 1;
+  if (wins === 2) return 2;
+  if (wins === 3) return 3;
+  if (wins === 4) return 5;
+  if (wins === 5) return 6;
+  if (wins >= 6) return 7;
+  return 0;
+}
+
 export const AdminResults: React.FC = () => {
   const { matches, teams, players, saveTieResult, deleteTie } = useTournament();
 
@@ -103,29 +113,52 @@ export const AdminResults: React.FC = () => {
         return (catIdxA >= 0 ? catIdxA : 0) - (catIdxB >= 0 ? catIdxB : 0);
       });
 
-      const catMatches: TieCategoryMatch[] = sortedMatches.map((m, idx) => ({
-        id: m.id,
-        category_name: m.category_name || DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length].name,
-        match_index: idx + 1,
-        player1_names: m.player1_names || '',
-        player2_names: m.player2_names || '',
-        set1_team1: m.set1_team1,
-        set1_team2: m.set1_team2,
-        set2_team1: 0,
-        set2_team2: 0,
-        set3_team1: 0,
-        set3_team2: 0,
-        winner_team_id: m.winner_team_id,
-        team1_trump: false,
-        team2_trump: false
-      }));
+      const catMatches: TieCategoryMatch[] = sortedMatches.map((m, idx) => {
+        const isT1Trump = Boolean(m.team1_trump || (m.is_trump_match && m.trump_team_id === t1));
+        const isT2Trump = Boolean(m.team2_trump || (m.is_trump_match && m.trump_team_id === t2));
+        const isDual = (isT1Trump && isT2Trump) || (m.is_trump_match && m.trump_team_id === 'BOTH');
+        return {
+          id: m.id,
+          category_name: m.category_name || DEFAULT_CATEGORIES[idx % DEFAULT_CATEGORIES.length].name,
+          match_index: idx + 1,
+          player1_names: m.player1_names || '',
+          player2_names: m.player2_names || '',
+          set1_team1: m.set1_team1,
+          set1_team2: m.set1_team2,
+          set2_team1: 0,
+          set2_team2: 0,
+          set3_team1: 0,
+          set3_team2: 0,
+          winner_team_id: m.winner_team_id,
+          team1_trump: isDual ? true : isT1Trump,
+          team2_trump: isDual ? true : isT2Trump,
+          is_trump_match: m.is_trump_match || isT1Trump || isT2Trump,
+          trump_team_id: m.trump_team_id
+        };
+      });
 
-      // Calculate score and points (Strictly +2 points per match win, 0 for loss)
+      // Calculate score and points (Base Table + Trump Bonus)
       const t1Wins = catMatches.filter(cm => cm.winner_team_id === t1).length;
       const t2Wins = catMatches.filter(cm => cm.winner_team_id === t2).length;
 
-      const team1Points = t1Wins * 2;
-      const team2Points = t2Wins * 2;
+      const t1Base = calculateBaseWinPoints(t1Wins);
+      const t2Base = calculateBaseWinPoints(t2Wins);
+
+      let t1TrumpBonus = 0;
+      let t2TrumpBonus = 0;
+      catMatches.forEach(cm => {
+        const isDual = (cm.team1_trump && cm.team2_trump) || cm.trump_team_id === 'BOTH';
+        if (isDual) {
+          if (cm.winner_team_id === t1) t1TrumpBonus += 4;
+          else if (cm.winner_team_id === t2) t2TrumpBonus += 4;
+        } else {
+          if (cm.team1_trump && cm.winner_team_id === t1) t1TrumpBonus += 2;
+          if (cm.team2_trump && cm.winner_team_id === t2) t2TrumpBonus += 2;
+        }
+      });
+
+      const team1Points = t1Base + t1TrumpBonus;
+      const team2Points = t2Base + t2TrumpBonus;
 
       return {
         tie_id: tieKey,
@@ -169,18 +202,64 @@ export const AdminResults: React.FC = () => {
     return counts;
   }, [categoryMatches]);
 
-  // Live tie calculations for current modal form (Strictly +2 points per match win, 0 for loss)
+  // Live tie calculations for current modal form (Base Points + Trump Card Bonus)
   const currentTieSummary = useMemo(() => {
     const t1Wins = categoryMatches.filter(cm => cm.winner_team_id === team1Id).length;
     const t2Wins = categoryMatches.filter(cm => cm.winner_team_id === team2Id).length;
 
+    const t1Base = calculateBaseWinPoints(t1Wins);
+    const t2Base = calculateBaseWinPoints(t2Wins);
+
+    let t1Trump = 0;
+    let t2Trump = 0;
+
+    categoryMatches.forEach(cm => {
+      const isDual = cm.team1_trump && cm.team2_trump;
+      if (isDual) {
+        if (cm.winner_team_id === team1Id) t1Trump += 4;
+        else if (cm.winner_team_id === team2Id) t2Trump += 4;
+      } else {
+        if (cm.team1_trump && cm.winner_team_id === team1Id) t1Trump += 2;
+        if (cm.team2_trump && cm.winner_team_id === team2Id) t2Trump += 2;
+      }
+    });
+
     return {
       t1Wins,
       t2Wins,
-      t1Total: t1Wins * 2,
-      t2Total: t2Wins * 2
+      t1Base,
+      t2Base,
+      t1Trump,
+      t2Trump,
+      t1Total: t1Base + t1Trump,
+      t2Total: t2Base + t2Trump
     };
   }, [categoryMatches, team1Id, team2Id]);
+
+  // Toggle Trump nomination for a team on a match (Enforces max 1 trump match per team per tie)
+  const toggleTeamTrump = (matchIdx: number, team: 'team1' | 'team2') => {
+    setCategoryMatches(prev => {
+      const isCurrentlyActive = team === 'team1' ? prev[matchIdx].team1_trump : prev[matchIdx].team2_trump;
+      return prev.map((m, idx) => {
+        if (team === 'team1') {
+          if (idx === matchIdx) {
+            return { ...m, team1_trump: !isCurrentlyActive };
+          } else if (!isCurrentlyActive) {
+            // Deselect other matches for team1 to enforce 1 trump limit per tie
+            return { ...m, team1_trump: false };
+          }
+        } else {
+          if (idx === matchIdx) {
+            return { ...m, team2_trump: !isCurrentlyActive };
+          } else if (!isCurrentlyActive) {
+            // Deselect other matches for team2 to enforce 1 trump limit per tie
+            return { ...m, team2_trump: false };
+          }
+        }
+        return m;
+      });
+    });
+  };
 
   // Open Create Modal
   const openAdd = () => {
@@ -242,8 +321,8 @@ export const AdminResults: React.FC = () => {
           set2_team2: 0,
           set3_team1: 0,
           set3_team2: 0,
-          team1_trump: false,
-          team2_trump: false
+          team1_trump: Boolean(existing.team1_trump || (existing.is_trump_match && existing.trump_team_id === tie.team1_id)),
+          team2_trump: Boolean(existing.team2_trump || (existing.is_trump_match && existing.trump_team_id === tie.team2_id))
         };
       }
       return {
@@ -399,7 +478,7 @@ export const AdminResults: React.FC = () => {
             MATCH RESULTS &amp; FIXTURES
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-            Record 6-match tie clashes with doubles lineups and single 15-point set scores. Each match win strictly awards <strong>+2 tournament points</strong> (+0 for loss).
+            Record 6-match tie clashes with doubles lineups, single 15-point set scores, and Trump Card nominations (1W=1, 2W=2, 3W=3, 4W=5, 5W=6, 6W=7 pts + 2 Trump bonus).
           </p>
         </div>
 
@@ -415,15 +494,19 @@ export const AdminResults: React.FC = () => {
       {/* Rules Notice */}
       <div className="bg-gbl-navy-950/80 border border-gbl-navy-800 rounded-2xl p-4 flex flex-wrap gap-4 text-xs text-slate-300">
         <div className="flex items-center gap-2">
-          <Star className="w-4 h-4 text-amber-400" />
-          <span><strong>Point Rule:</strong> 1 Match Win = +2 Points | Loser = 0 Points (Single 15-Point Match)</span>
+          <Star className="w-4 h-4 text-amber-400 shrink-0" />
+          <span><strong>Point Table:</strong> 1W=1pt • 2W=2pt • 3W=3pt • 4W=5pt • 5W=6pt • 6W=7pt</span>
         </div>
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-sky-400" />
+          <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+          <span><strong>Trump Rule:</strong> +2 Pts for Trump win • +4 Pts for Dual Trump win</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-sky-400 shrink-0" />
           <span><strong>Player Rule:</strong> Max 2 matches per player per tie</span>
         </div>
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-emerald-400" />
+          <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
           <span><strong>6 Categories:</strong> Veterans • Super • Tariff • 80+ • Orange • Future Star</span>
         </div>
       </div>
@@ -563,11 +646,20 @@ export const AdminResults: React.FC = () => {
                         {tie.matches.map((m, idx) => {
                           const isW1 = m.winner_team_id === tie.team1_id;
                           const isW2 = m.winner_team_id === tie.team2_id;
+                          const isDual = (m.team1_trump && m.team2_trump) || m.trump_team_id === 'BOTH';
+                          const isT1Trump = isDual || m.team1_trump;
+                          const isT2Trump = isDual || m.team2_trump;
 
                           return (
                             <div 
                               key={m.id || idx}
-                              className="p-3.5 rounded-2xl border transition-all space-y-2 text-xs bg-gbl-navy-900 border-gbl-navy-800"
+                              className={`p-3.5 rounded-2xl border transition-all space-y-2 text-xs ${
+                                isDual
+                                  ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30'
+                                  : isT1Trump || isT2Trump
+                                  ? 'bg-gbl-navy-900 border-amber-500/30'
+                                  : 'bg-gbl-navy-900 border-gbl-navy-800'
+                              }`}
                             >
                               <div className="flex justify-between items-start gap-1">
                                 <div>
@@ -579,20 +671,47 @@ export const AdminResults: React.FC = () => {
                                   </span>
                                 </div>
 
-                                <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
-                                  +2 PTS WIN
-                                </span>
+                                {isDual ? (
+                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3" />
+                                    <span>DUAL TRUMP (4 PTS)</span>
+                                  </span>
+                                ) : isT1Trump ? (
+                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                    <span>{t1?.short_name} TRUMP</span>
+                                  </span>
+                                ) : isT2Trump ? (
+                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                    <span>{t2?.short_name} TRUMP</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                                    REGULAR MATCH
+                                  </span>
+                                )}
                               </div>
 
                               {/* Players */}
                               <div className="space-y-1 pt-1 border-t border-gbl-navy-800/80">
                                 <div className={`flex justify-between items-center ${isW1 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
                                   <span className="truncate">{t1?.short_name}: {m.player1_names || 'T1 Pair'}</span>
-                                  {isW1 && <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> +2 Pts</span>}
+                                  {isW1 && (
+                                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      <span>Won {isDual ? '(+4 Trump)' : isT1Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
+                                    </span>
+                                  )}
                                 </div>
                                 <div className={`flex justify-between items-center ${isW2 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
                                   <span className="truncate">{t2?.short_name}: {m.player2_names || 'T2 Pair'}</span>
-                                  {isW2 && <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> +2 Pts</span>}
+                                  {isW2 && (
+                                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      <span>Won {isDual ? '(+4 Trump)' : isT2Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -614,7 +733,7 @@ export const AdminResults: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingTieId ? "EDIT CLASH RESULT (6 MATCHES)" : "RECORD TOURNAMENT CLASH (6 MATCHES)"}
-        subtitle="Enter doubles pairs and Set 1 score (15 Points Match) for all 6 categories (+2 Pts per win)"
+        subtitle="Enter doubles pairs, Set 1 score (15 Points Match), and select Trump Card for each team"
       >
         <form onSubmit={handleSaveTie} className="space-y-6 text-xs max-h-[80vh] overflow-y-auto pr-1">
           
@@ -736,10 +855,10 @@ export const AdminResults: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-white font-sports uppercase tracking-wider flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-gbl-orange-400" />
-                <span>Six Match Categories &amp; Doubles Lineups (Single 15-Point Set)</span>
+                <span>Six Match Categories, Lineups &amp; Trump Selection</span>
               </h3>
-              <span className="text-[11px] text-emerald-400 font-bold">
-                1 Win = +2 Pts | Single Set Match (15 Points)
+              <span className="text-[11px] text-amber-400 font-bold">
+                1 Trump Card per team per tie (+2 Bonus Pts)
               </span>
             </div>
 
@@ -757,10 +876,20 @@ export const AdminResults: React.FC = () => {
                 const isWinnerT1 = m.winner_team_id === team1Id;
                 const isWinnerT2 = m.winner_team_id === team2Id;
 
+                const isT1Trump = Boolean(m.team1_trump);
+                const isT2Trump = Boolean(m.team2_trump);
+                const isDualTrump = isT1Trump && isT2Trump;
+
                 return (
                   <div
                     key={m.id || idx}
-                    className="p-4 sm:p-5 rounded-2xl border space-y-4 transition-all bg-gbl-navy-950 border-gbl-navy-800"
+                    className={`p-4 sm:p-5 rounded-2xl border space-y-4 transition-all ${
+                      isDualTrump
+                        ? 'bg-amber-950/20 border-amber-500/60 ring-1 ring-amber-500/40'
+                        : isT1Trump || isT2Trump
+                        ? 'bg-gbl-navy-950 border-amber-500/40'
+                        : 'bg-gbl-navy-950 border-gbl-navy-800'
+                    }`}
                   >
                     {/* Category Title & Live Winner Status */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gbl-navy-800">
@@ -772,6 +901,17 @@ export const AdminResults: React.FC = () => {
                           <h4 className="text-sm font-black text-white uppercase tracking-tight font-sports">
                             {DEFAULT_CATEGORIES[idx]?.label || m.category_name}
                           </h4>
+                          {isDualTrump ? (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              <span>DUAL TRUMP (4 PTS)</span>
+                            </span>
+                          ) : (isT1Trump || isT2Trump) ? (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                              <span>TRUMP ACTIVE (+2 PTS)</span>
+                            </span>
+                          ) : null}
                         </div>
                         <p className="text-[10px] text-slate-400 mt-0.5">
                           {DEFAULT_CATEGORIES[idx]?.desc || 'Official tournament category'}
@@ -783,12 +923,12 @@ export const AdminResults: React.FC = () => {
                         {isWinnerT1 ? (
                           <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Winner: <strong>{t1Short} (+2 Pts)</strong></span>
+                            <span>Winner: <strong>{t1Short}</strong> {isDualTrump ? '(+4 Trump Pts)' : isT1Trump ? '(+2 Trump Pts)' : '(+1 Win)'}</span>
                           </span>
                         ) : isWinnerT2 ? (
                           <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Winner: <strong>{t2Short} (+2 Pts)</strong></span>
+                            <span>Winner: <strong>{t2Short}</strong> {isDualTrump ? '(+4 Trump Pts)' : isT2Trump ? '(+2 Trump Pts)' : '(+1 Win)'}</span>
                           </span>
                         ) : (
                           <span className="text-[11px] font-bold text-slate-400">
@@ -943,21 +1083,61 @@ export const AdminResults: React.FC = () => {
                       {/* Match Winner Selector */}
                       <div>
                         <label className="block text-[10px] font-bold text-emerald-400 mb-1">
-                          Match Winner (+2 Tournament Points)
+                          Match Winner
                         </label>
                         <select
                           value={m.winner_team_id || team1Id}
                           onChange={(e) => updateMatchField(idx, 'winner_team_id', e.target.value)}
                           className="w-full bg-gbl-navy-950 border border-emerald-500/40 text-emerald-400 font-bold rounded-lg p-2 text-xs focus:outline-none"
                         >
-                          <option value={team1Id}>{teamMap.get(team1Id)?.name} (+2 Pts)</option>
-                          <option value={team2Id}>{teamMap.get(team2Id)?.name} (+2 Pts)</option>
+                          <option value={team1Id}>{teamMap.get(team1Id)?.name}</option>
+                          <option value={team2Id}>{teamMap.get(team2Id)?.name}</option>
                         </select>
                         <p className="text-[10px] text-slate-400 mt-1">
                           Auto-selected based on higher Set 1 score.
                         </p>
                       </div>
 
+                    </div>
+
+                    {/* Trump Card Nomination Buttons (Max 1 Trump per team per tie) */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gbl-navy-800/80">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Trump Card Nomination:</span>
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        {/* Team 1 Trump Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => toggleTeamTrump(idx, 'team1')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                            isT1Trump
+                              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black'
+                              : 'bg-gbl-navy-900 hover:bg-gbl-navy-800 text-slate-400 border-gbl-navy-700'
+                          }`}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${isT1Trump ? 'fill-slate-950 text-slate-950' : 'text-slate-500'}`} />
+                          <span>{t1Short} Trump</span>
+                          {isT1Trump && <span className="text-[9px] bg-slate-950/20 px-1 rounded font-mono">+2</span>}
+                        </button>
+
+                        {/* Team 2 Trump Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => toggleTeamTrump(idx, 'team2')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                            isT2Trump
+                              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black'
+                              : 'bg-gbl-navy-900 hover:bg-gbl-navy-800 text-slate-400 border-gbl-navy-700'
+                          }`}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${isT2Trump ? 'fill-slate-950 text-slate-950' : 'text-slate-500'}`} />
+                          <span>{t2Short} Trump</span>
+                          {isT2Trump && <span className="text-[9px] bg-slate-950/20 px-1 rounded font-mono">+2</span>}
+                        </button>
+                      </div>
                     </div>
 
                   </div>
@@ -970,27 +1150,31 @@ export const AdminResults: React.FC = () => {
           <div className="bg-gradient-to-r from-gbl-navy-900 via-gbl-navy-950 to-gbl-navy-900 p-4 sm:p-5 rounded-2xl border border-emerald-500/40 space-y-3 shadow-xl">
             <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Live Tournament Points &amp; Tie Outcome Preview (+2 Pts / Win)</span>
+              <span>Live Tournament Points Breakdown (Base Wins + Trump Bonus)</span>
             </h4>
 
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="p-3.5 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1.5">
                 <p className="font-bold text-white truncate text-sm">{teamMap.get(team1Id)?.name || 'Team 1'}</p>
-                <p className="text-slate-400 text-xs">
-                  Matches Won: <strong>{currentTieSummary.t1Wins} / 6</strong>
-                </p>
+                <div className="text-slate-400 text-xs space-y-0.5">
+                  <p>Matches Won: <strong>{currentTieSummary.t1Wins} / 6</strong></p>
+                  <p>Base Win Points: <strong className="text-slate-200">+{currentTieSummary.t1Base} Pts</strong></p>
+                  <p>Trump Bonus: <strong className="text-amber-400">+{currentTieSummary.t1Trump} Pts</strong></p>
+                </div>
                 <p className="text-sm font-black font-mono text-emerald-400 pt-1.5 border-t border-gbl-navy-800">
-                  Total Points Awarded: {currentTieSummary.t1Total} Pts
+                  Total Points: {currentTieSummary.t1Total} Pts ({currentTieSummary.t1Base} + {currentTieSummary.t1Trump})
                 </p>
               </div>
 
               <div className="p-3.5 rounded-xl bg-gbl-navy-900 border border-gbl-navy-800 space-y-1.5">
                 <p className="font-bold text-white truncate text-sm">{teamMap.get(team2Id)?.name || 'Team 2'}</p>
-                <p className="text-slate-400 text-xs">
-                  Matches Won: <strong>{currentTieSummary.t2Wins} / 6</strong>
-                </p>
+                <div className="text-slate-400 text-xs space-y-0.5">
+                  <p>Matches Won: <strong>{currentTieSummary.t2Wins} / 6</strong></p>
+                  <p>Base Win Points: <strong className="text-slate-200">+{currentTieSummary.t2Base} Pts</strong></p>
+                  <p>Trump Bonus: <strong className="text-amber-400">+{currentTieSummary.t2Trump} Pts</strong></p>
+                </div>
                 <p className="text-sm font-black font-mono text-emerald-400 pt-1.5 border-t border-gbl-navy-800">
-                  Total Points Awarded: {currentTieSummary.t2Total} Pts
+                  Total Points: {currentTieSummary.t2Total} Pts ({currentTieSummary.t2Base} + {currentTieSummary.t2Trump})
                 </p>
               </div>
             </div>

@@ -1084,12 +1084,16 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const s1 = Number(cm.set1_team1 || 0);
       const s2 = Number(cm.set1_team2 || 0);
       
-      // Winner automatically calculated from Set 1 score
+      // Winner automatically calculated from Set 1 score (or manual override)
       let winnerId = cm.winner_team_id;
       if (s1 > s2) winnerId = tie.team1_id;
       else if (s2 > s1) winnerId = tie.team2_id;
 
       const scoreSumm = `${s1} - ${s2}`;
+      const isT1Trump = Boolean(cm.team1_trump);
+      const isT2Trump = Boolean(cm.team2_trump);
+      const isTrump = isT1Trump || isT2Trump;
+      const trumpTeam = isT1Trump && isT2Trump ? 'BOTH' : (isT1Trump ? tie.team1_id : (isT2Trump ? tie.team2_id : null));
       
       return {
         id: cm.id || generateUUID(),
@@ -1113,13 +1117,13 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         set3_team2: 0,
         player1_names: cm.player1_names || '',
         player2_names: cm.player2_names || '',
-        is_trump_match: false,
-        trump_team_id: null,
-        match_points_awarded: 2,
+        is_trump_match: isTrump,
+        trump_team_id: trumpTeam,
+        match_points_awarded: isTrump ? (isT1Trump && isT2Trump ? 4 : 2) : 1,
         category_name: cm.category_name,
         tie_id: tie.tie_id,
-        team1_trump: false,
-        team2_trump: false,
+        team1_trump: isT1Trump,
+        team2_trump: isT2Trump,
         notes: null,
         created_at: tie.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -1155,6 +1159,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (s1 > s2) winnerId = matchData.team1_id;
     else if (s2 > s1) winnerId = matchData.team2_id;
 
+    const isT1Trump = Boolean(matchData.team1_trump);
+    const isT2Trump = Boolean(matchData.team2_trump);
+    const isTrump = Boolean(matchData.is_trump_match || isT1Trump || isT2Trump);
+    const trumpTeam = isT1Trump && isT2Trump ? 'BOTH' : (isT1Trump ? matchData.team1_id : (isT2Trump ? matchData.team2_id : matchData.trump_team_id || null));
+
     const enrichedMatch: TournamentMatch = {
       ...matchData,
       winner_team_id: winnerId,
@@ -1165,7 +1174,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       set3_team1: 0,
       set3_team2: 0,
       score_summary: `${s1} - ${s2}`,
-      match_points_awarded: 2,
+      is_trump_match: isTrump,
+      trump_team_id: trumpTeam,
+      team1_trump: isT1Trump,
+      team2_trump: isT2Trump,
+      match_points_awarded: isTrump ? 2 : 1,
       status: matchData.status || 'COMPLETED',
       updated_at: new Date().toISOString()
     };
@@ -1192,7 +1205,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     realtimeManager.broadcast('MATCH_SAVED', enrichedMatch);
     recalculateStandings([...matches.filter(m => m.id !== enrichedMatch.id), enrichedMatch]);
-    logAuditAction('MATCH_RESULT_ENTERED', { matchNumber: enrichedMatch.match_number, winner: winnerId });
+    logAuditAction('MATCH_RESULT_ENTERED', { matchNumber: enrichedMatch.match_number, winner: winnerId, trump: enrichedMatch.is_trump_match });
   };
 
   const recalculateStandings = (allMatches: TournamentMatch[]) => {
@@ -1202,36 +1215,110 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       stats[t.id] = { played: 0, won: 0, lost: 0, points: 0, score_for: 0, score_against: 0 };
     });
 
-    // 1. Process each completed match: +2 points strictly to winner, +0 to loser
+    // Group completed matches by tie / fixture
+    const fixtures: Record<string, TournamentMatch[]> = {};
+    const standaloneMatches: TournamentMatch[] = [];
+
     allMatches.forEach(m => {
       if (m.status === 'COMPLETED' && m.winner_team_id) {
-        const t1 = m.team1_id;
-        const t2 = m.team2_id;
-        const winnerId = m.winner_team_id;
-        const loserId = winnerId === t1 ? t2 : t1;
+        const tieKey = m.tie_id || `${m.round || 'Round'}_${[m.team1_id, m.team2_id].sort().join('_')}_${m.match_date || ''}`;
+        if (m.tie_id) {
+          if (!fixtures[tieKey]) fixtures[tieKey] = [];
+          fixtures[tieKey].push(m);
+        } else {
+          // If no explicit tie_id, group by composite key
+          if (!fixtures[tieKey]) fixtures[tieKey] = [];
+          fixtures[tieKey].push(m);
+        }
+      }
+    });
+
+    // Base point table progression:
+    // 1 win -> 1 pt
+    // 2 wins -> 2 pts
+    // 3 wins -> 3 pts
+    // 4 wins -> 5 pts
+    // 5 wins -> 6 pts
+    // 6 wins -> 7 pts
+    const getBasePoints = (wins: number): number => {
+      if (wins === 1) return 1;
+      if (wins === 2) return 2;
+      if (wins === 3) return 3;
+      if (wins === 4) return 5;
+      if (wins === 5) return 6;
+      if (wins >= 6) return 7;
+      return 0;
+    };
+
+    // Calculate standings for each tie fixture
+    Object.values(fixtures).forEach(matchList => {
+      const teamsInFixture = new Set<string>();
+      matchList.forEach(m => {
+        teamsInFixture.add(m.team1_id);
+        teamsInFixture.add(m.team2_id);
 
         const s1 = Number(m.set1_team1 || 0);
         const s2 = Number(m.set1_team2 || 0);
 
-        if (stats[t1]) {
-          stats[t1].played += 1;
-          stats[t1].score_for += s1;
-          stats[t1].score_against += s2;
+        if (stats[m.team1_id]) {
+          stats[m.team1_id].score_for += s1;
+          stats[m.team1_id].score_against += s2;
+        }
+        if (stats[m.team2_id]) {
+          stats[m.team2_id].score_for += s2;
+          stats[m.team2_id].score_against += s1;
+        }
+      });
+
+      const teamList = Array.from(teamsInFixture);
+      if (teamList.length >= 2) {
+        const t1 = teamList[0];
+        const t2 = teamList[1];
+
+        if (stats[t1]) stats[t1].played += 1;
+        if (stats[t2]) stats[t2].played += 1;
+
+        const t1Wins = matchList.filter(m => m.winner_team_id === t1).length;
+        const t2Wins = matchList.filter(m => m.winner_team_id === t2).length;
+
+        if (t1Wins > t2Wins) {
+          if (stats[t1]) stats[t1].won += 1;
+          if (stats[t2]) stats[t2].lost += 1;
+        } else if (t2Wins > t1Wins) {
+          if (stats[t2]) stats[t2].won += 1;
+          if (stats[t1]) stats[t1].lost += 1;
         }
 
-        if (stats[t2]) {
-          stats[t2].played += 1;
-          stats[t2].score_for += s2;
-          stats[t2].score_against += s1;
-        }
+        const t1Base = getBasePoints(t1Wins);
+        const t2Base = getBasePoints(t2Wins);
 
-        // Exact +2 points to winner, 0 points to loser
-        if (stats[winnerId]) {
-          stats[winnerId].won += 1;
-          stats[winnerId].points += 2;
-        }
-        if (stats[loserId]) {
-          stats[loserId].lost += 1;
+        // Trump Bonus Points (+2 bonus points per Trump win, +4 if dual trump)
+        let t1TrumpBonus = 0;
+        let t2TrumpBonus = 0;
+
+        matchList.forEach(m => {
+          const isT1Trump = Boolean(m.team1_trump || (m.is_trump_match && m.trump_team_id === t1));
+          const isT2Trump = Boolean(m.team2_trump || (m.is_trump_match && m.trump_team_id === t2));
+          const isDualTrump = (isT1Trump && isT2Trump) || (m.is_trump_match && m.trump_team_id === 'BOTH');
+
+          if (isDualTrump) {
+            if (m.winner_team_id === t1) t1TrumpBonus += 4;
+            else if (m.winner_team_id === t2) t2TrumpBonus += 4;
+          } else {
+            if (isT1Trump && m.winner_team_id === t1) t1TrumpBonus += 2;
+            if (isT2Trump && m.winner_team_id === t2) t2TrumpBonus += 2;
+          }
+        });
+
+        // Total Points = Base Points + Trump Bonus Points
+        if (stats[t1]) stats[t1].points += (t1Base + t1TrumpBonus);
+        if (stats[t2]) stats[t2].points += (t2Base + t2TrumpBonus);
+      } else if (teamList.length === 1) {
+        const tid = teamList[0];
+        if (stats[tid]) {
+          stats[tid].played += 1;
+          const wins = matchList.filter(m => m.winner_team_id === tid).length;
+          stats[tid].points += getBasePoints(wins);
         }
       }
     });
