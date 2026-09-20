@@ -55,6 +55,15 @@ function generateUUID(): string {
   });
 }
 
+export function isValidUUID(id?: string | null): boolean {
+  if (!id || typeof id !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
+export function ensureUUID(id?: string | null): string {
+  return isValidUUID(id) ? (id as string) : generateUUID();
+}
+
 /**
  * Filter team payload to strictly valid Supabase table columns, avoiding PGRST204 column not found errors
  */
@@ -72,11 +81,10 @@ function sanitizeTeamForDb(team: Partial<Team>): Record<string, any> {
       sanitized[key] = (team as any)[key];
     }
   }
+  // Embed pool inside description tag [POOL:Pool X]
   const assignedPool = resolveTeamPool(team);
-  let cleanDesc = (sanitized.description || '')
-    .replace(/\[POOL:[^\]]+\]\s*/g, '')
-    .replace(/\[GOAL:[^\]]+\]\s*/g, '')
-    .trim();
+  let cleanDesc = (sanitized.description || '').replace(/\[POOL:[^\]]+\]\s*/g, '').trim();
+  cleanDesc = (cleanDesc || '').replace(/\[GOAL:[^\]]+\]\s*/g, '').trim();
   cleanDesc = `[POOL:${assignedPool}] ${cleanDesc}`.trim();
   if (team.goal) {
     cleanDesc = `[GOAL:${team.goal}] ${cleanDesc}`.trim();
@@ -103,6 +111,12 @@ function sanitizeMatchForDb(match: Partial<TournamentMatch>): Record<string, any
       sanitized[key] = (match as any)[key];
     }
   }
+
+  // Ensure strictly valid UUID for primary key and tournament FK
+  sanitized.id = ensureUUID(sanitized.id);
+  sanitized.tournament_id = ensureUUID(sanitized.tournament_id || '00000000-0000-0000-0000-000000000001');
+  sanitized.category_id = null; // Always null to avoid FK mismatch with auction category IDs
+
   const meta: Record<string, any> = {};
   if (match.player1_names) meta.p1 = match.player1_names;
   if (match.player2_names) meta.p2 = match.player2_names;
@@ -1095,17 +1109,19 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const isTrump = isT1Trump || isT2Trump;
       const trumpTeam = isT1Trump && isT2Trump ? 'BOTH' : (isT1Trump ? tie.team1_id : (isT2Trump ? tie.team2_id : null));
       
+      const matchId = ensureUUID(cm.id);
+
       return {
-        id: cm.id || generateUUID(),
-        tournament_id: tie.tournament_id || tournament.id,
+        id: matchId,
+        tournament_id: ensureUUID(tie.tournament_id || tournament.id),
         category_id: null,
-        round: tie.round,
-        match_number: tie.match_number,
+        round: tie.round || 'Group Stage',
+        match_number: Number(tie.match_number) || (idx + 1),
         team1_id: tie.team1_id,
         team2_id: tie.team2_id,
-        court: tie.court,
-        match_date: tie.match_date,
-        match_time: tie.match_time,
+        court: tie.court || 'Court 1',
+        match_date: tie.match_date || new Date().toISOString().slice(0, 10),
+        match_time: tie.match_time || '06:00 PM',
         status: tie.status || 'COMPLETED',
         winner_team_id: winnerId,
         score_summary: scoreSumm,
@@ -1141,7 +1157,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       const sanitizedRows = convertedMatches.map(m => sanitizeMatchForDb(m));
-      await supabase.from('tournament_matches').upsert(sanitizedRows);
+      const { error } = await supabase.from('tournament_matches').upsert(sanitizedRows);
+      if (error) {
+        console.error('Supabase error saving tie matches:', error);
+      }
     } catch (e) {
       console.warn('Sync error on saveTieResult:', e);
     }
@@ -1164,8 +1183,13 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const isTrump = Boolean(matchData.is_trump_match || isT1Trump || isT2Trump);
     const trumpTeam = isT1Trump && isT2Trump ? 'BOTH' : (isT1Trump ? matchData.team1_id : (isT2Trump ? matchData.team2_id : matchData.trump_team_id || null));
 
+    const matchId = ensureUUID(matchData.id);
+
     const enrichedMatch: TournamentMatch = {
       ...matchData,
+      id: matchId,
+      tournament_id: ensureUUID(matchData.tournament_id || tournament.id),
+      category_id: null,
       winner_team_id: winnerId,
       set1_team1: s1,
       set1_team2: s2,
@@ -1178,7 +1202,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       trump_team_id: trumpTeam,
       team1_trump: isT1Trump,
       team2_trump: isT2Trump,
-      match_points_awarded: isTrump ? 2 : 1,
+      match_points_awarded: isTrump ? (isT1Trump && isT2Trump ? 4 : 2) : 1,
       status: matchData.status || 'COMPLETED',
       updated_at: new Date().toISOString()
     };
@@ -1198,7 +1222,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       const payload = sanitizeMatchForDb(enrichedMatch);
-      await supabase.from('tournament_matches').upsert(payload);
+      const { error } = await supabase.from('tournament_matches').upsert(payload);
+      if (error) {
+        console.error('Supabase error saving single match:', error);
+      }
     } catch (e) {
       console.warn('Sync error on saveMatchResult:', e);
     }
@@ -1363,6 +1390,9 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     setStandings(rankedStandings);
     saveStoredData(GBL_STANDINGS_STORAGE_KEY, rankedStandings);
+    try {
+      supabase.from('standings').upsert(rankedStandings, { onConflict: 'id' }).then(undefined, console.warn);
+    } catch {}
     realtimeManager.broadcast('STANDINGS_UPDATED', rankedStandings);
   };
 

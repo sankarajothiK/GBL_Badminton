@@ -41,6 +41,17 @@ function calculateBaseWinPoints(wins: number): number {
   return 0;
 }
 
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export const AdminResults: React.FC = () => {
   const { matches, teams, players, saveTieResult, deleteTie, saveMatchResult, deleteMatch } = useTournament();
 
@@ -48,6 +59,10 @@ export const AdminResults: React.FC = () => {
   const [deleteConfirmTieId, setDeleteConfirmTieId] = useState<string | null>(null);
   const [editingTieId, setEditingTieId] = useState<string | null>(null);
   const [expandedTieIds, setExpandedTieIds] = useState<Set<string>>(new Set());
+
+  // Saving / Loading State and Toast
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   // View Mode: 'TIES' or 'ALL_MATCHES'
   const [viewMode, setViewMode] = useState<'TIES' | 'ALL_MATCHES'>('TIES');
@@ -73,7 +88,7 @@ export const AdminResults: React.FC = () => {
   // 6 Match Categories state (Single Set 15-Point Match Format)
   const [categoryMatches, setCategoryMatches] = useState<TieCategoryMatch[]>(() => {
     return DEFAULT_CATEGORIES.map((cat, idx) => ({
-      id: `cm_${idx}_${Date.now()}`,
+      id: generateUUID(),
       category_name: cat.name,
       match_index: idx + 1,
       player1_names: '',
@@ -289,7 +304,7 @@ export const AdminResults: React.FC = () => {
 
     setCategoryMatches(
       DEFAULT_CATEGORIES.map((cat, idx) => ({
-        id: `cm_${idx}_${Date.now()}`,
+        id: generateUUID(),
         category_name: cat.name,
         match_index: idx + 1,
         player1_names: '',
@@ -327,6 +342,7 @@ export const AdminResults: React.FC = () => {
       if (existing) {
         return {
           ...existing,
+          id: existing.id || generateUUID(),
           category_name: cat.name,
           match_index: idx + 1,
           set2_team1: 0,
@@ -338,7 +354,7 @@ export const AdminResults: React.FC = () => {
         };
       }
       return {
-        id: `cm_${idx}_${Date.now()}`,
+        id: generateUUID(),
         category_name: cat.name,
         match_index: idx + 1,
         player1_names: '',
@@ -456,15 +472,33 @@ export const AdminResults: React.FC = () => {
       updated_at: new Date().toISOString()
     };
 
-    await saveTieResult(tieObj);
-    setIsModalOpen(false);
+    try {
+      setIsSaving(true);
+      await saveTieResult(tieObj);
+      setIsModalOpen(false);
+      setSaveSuccessMessage(`Clash #${matchNumber} result saved successfully! Points & Standings updated.`);
+      setTimeout(() => setSaveSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to save clash result. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Confirm and execute tie delete
   const executeDeleteTie = async () => {
     if (!deleteConfirmTieId) return;
-    await deleteTie(deleteConfirmTieId);
-    setDeleteConfirmTieId(null);
+    try {
+      setIsSaving(true);
+      await deleteTie(deleteConfirmTieId);
+      setDeleteConfirmTieId(null);
+      setSaveSuccessMessage('Clash deleted successfully.');
+      setTimeout(() => setSaveSuccessMessage(null), 4000);
+    } catch (err: any) {
+      alert('Failed to delete tie: ' + (err.message || err));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Open Single Match Edit Modal
@@ -475,7 +509,7 @@ export const AdminResults: React.FC = () => {
       const isT2Trump = Boolean(m.team2_trump);
       const isDual = isT1Trump && isT2Trump;
       setEditingSingleMatch({
-        id: m.id,
+        id: m.id || generateUUID(),
         tournament_id: tieParent.tournament_id,
         category_id: null,
         round: tieParent.round,
@@ -511,6 +545,7 @@ export const AdminResults: React.FC = () => {
       const tm = m as TournamentMatch;
       setEditingSingleMatch({
         ...tm,
+        id: tm.id || generateUUID(),
         notes: tm.notes || '',
         team1_trump: Boolean(tm.team1_trump || (tm.is_trump_match && tm.trump_team_id === tm.team1_id)),
         team2_trump: Boolean(tm.team2_trump || (tm.is_trump_match && tm.trump_team_id === tm.team2_id))
@@ -525,7 +560,7 @@ export const AdminResults: React.FC = () => {
     const t1 = teams[0]?.id || '';
     const t2 = teams[1]?.id || '';
     setEditingSingleMatch({
-      id: `match_${Date.now()}`,
+      id: generateUUID(),
       tournament_id: '00000000-0000-0000-0000-000000000001',
       category_id: null,
       round: 'Group Stage',
@@ -591,16 +626,34 @@ export const AdminResults: React.FC = () => {
       updated_at: new Date().toISOString()
     };
 
-    await saveMatchResult(matchToSave);
-    setIsSingleMatchModalOpen(false);
-    setEditingSingleMatch(null);
+    try {
+      setIsSaving(true);
+      await saveMatchResult(matchToSave);
+      setIsSingleMatchModalOpen(false);
+      setEditingSingleMatch(null);
+      setSaveSuccessMessage(`Match result saved successfully! Points & Standings updated.`);
+      setTimeout(() => setSaveSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setSingleMatchFormError(err.message || 'Failed to save match result. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Confirm and Execute Single Match Delete
   const executeDeleteSingleMatch = async () => {
     if (!deleteConfirmMatchId) return;
-    await deleteMatch(deleteConfirmMatchId);
-    setDeleteConfirmMatchId(null);
+    try {
+      setIsSaving(true);
+      await deleteMatch(deleteConfirmMatchId);
+      setDeleteConfirmMatchId(null);
+      setSaveSuccessMessage('Match deleted successfully.');
+      setTimeout(() => setSaveSuccessMessage(null), 4000);
+    } catch (err: any) {
+      alert('Failed to delete match: ' + (err.message || err));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Filtered individual matches for the All Matches View
@@ -668,6 +721,22 @@ export const AdminResults: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Success Notification Alert */}
+      {saveSuccessMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/50 flex items-center justify-between gap-3 text-emerald-300 text-xs shadow-lg animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="font-semibold text-sm">{saveSuccessMessage}</span>
+          </div>
+          <button
+            onClick={() => setSaveSuccessMessage(null)}
+            className="text-emerald-400 hover:text-white text-xs px-2 py-1 rounded-lg bg-emerald-900/40"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* View Switcher Tabs & Rules Notice */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
@@ -1571,16 +1640,25 @@ export const AdminResults: React.FC = () => {
           <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">
             <button
               type="button"
+              disabled={isSaving}
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white"
+              className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold uppercase tracking-wider shadow-lg shadow-gbl-orange-600/30"
+              disabled={isSaving}
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold uppercase tracking-wider shadow-lg shadow-gbl-orange-600/30 disabled:opacity-50 flex items-center gap-2"
             >
-              Save &amp; Recalculate Standings
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Saving Clash...</span>
+                </>
+              ) : (
+                <span>Save &amp; Recalculate Standings</span>
+              )}
             </button>
           </div>
 
@@ -1880,19 +1958,28 @@ export const AdminResults: React.FC = () => {
             <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={() => {
                   setIsSingleMatchModalOpen(false);
                   setEditingSingleMatch(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white"
+                className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold uppercase tracking-wider shadow-lg shadow-gbl-orange-600/30"
+                disabled={isSaving}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold uppercase tracking-wider shadow-lg shadow-gbl-orange-600/30 disabled:opacity-50 flex items-center gap-2"
               >
-                Save Match Result
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Saving Match...</span>
+                  </>
+                ) : (
+                  <span>Save Match Result</span>
+                )}
               </button>
             </div>
           </form>
