@@ -231,7 +231,7 @@ export interface TournamentMatch {
   set2_team2: number;
   set3_team1: number;
   set3_team2: number;
-  notes: string | null;
+  notes?: string | null;
   player1_names?: string;
   player2_names?: string;
   is_trump_match?: boolean;

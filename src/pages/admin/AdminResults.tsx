@@ -42,12 +42,24 @@ function calculateBaseWinPoints(wins: number): number {
 }
 
 export const AdminResults: React.FC = () => {
-  const { matches, teams, players, saveTieResult, deleteTie } = useTournament();
+  const { matches, teams, players, saveTieResult, deleteTie, saveMatchResult, deleteMatch } = useTournament();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmTieId, setDeleteConfirmTieId] = useState<string | null>(null);
   const [editingTieId, setEditingTieId] = useState<string | null>(null);
   const [expandedTieIds, setExpandedTieIds] = useState<Set<string>>(new Set());
+
+  // View Mode: 'TIES' or 'ALL_MATCHES'
+  const [viewMode, setViewMode] = useState<'TIES' | 'ALL_MATCHES'>('TIES');
+  const [searchMatchQuery, setSearchMatchQuery] = useState('');
+  const [matchRoundFilter, setMatchRoundFilter] = useState('ALL');
+  const [matchCategoryFilter, setMatchCategoryFilter] = useState('ALL');
+
+  // Single Match Edit / Delete State
+  const [isSingleMatchModalOpen, setIsSingleMatchModalOpen] = useState(false);
+  const [editingSingleMatch, setEditingSingleMatch] = useState<TournamentMatch | null>(null);
+  const [deleteConfirmMatchId, setDeleteConfirmMatchId] = useState<string | null>(null);
+  const [singleMatchFormError, setSingleMatchFormError] = useState<string | null>(null);
 
   // Tie metadata form state
   const [round, setRound] = useState('Group Stage');
@@ -448,12 +460,168 @@ export const AdminResults: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Confirm and execute delete
+  // Confirm and execute tie delete
   const executeDeleteTie = async () => {
     if (!deleteConfirmTieId) return;
     await deleteTie(deleteConfirmTieId);
     setDeleteConfirmTieId(null);
   };
+
+  // Open Single Match Edit Modal
+  const openEditSingleMatch = (m: TieCategoryMatch | TournamentMatch, tieParent?: TournamentTie) => {
+    setSingleMatchFormError(null);
+    if (tieParent) {
+      const isT1Trump = Boolean(m.team1_trump);
+      const isT2Trump = Boolean(m.team2_trump);
+      const isDual = isT1Trump && isT2Trump;
+      setEditingSingleMatch({
+        id: m.id,
+        tournament_id: tieParent.tournament_id,
+        category_id: null,
+        round: tieParent.round,
+        match_number: tieParent.match_number,
+        team1_id: tieParent.team1_id,
+        team2_id: tieParent.team2_id,
+        court: tieParent.court,
+        match_date: tieParent.match_date,
+        match_time: tieParent.match_time,
+        status: 'COMPLETED',
+        winner_team_id: m.winner_team_id || tieParent.team1_id,
+        score_summary: `${m.set1_team1} - ${m.set1_team2}`,
+        set1_team1: m.set1_team1,
+        set1_team2: m.set1_team2,
+        set2_team1: 0,
+        set2_team2: 0,
+        set3_team1: 0,
+        set3_team2: 0,
+        player1_names: m.player1_names || '',
+        player2_names: m.player2_names || '',
+        is_trump_match: isT1Trump || isT2Trump,
+        trump_team_id: isDual ? 'BOTH' : (isT1Trump ? tieParent.team1_id : (isT2Trump ? tieParent.team2_id : null)),
+        category_name: m.category_name,
+        notes: (m as any).notes || '',
+        tie_id: tieParent.tie_id,
+        team1_trump: isT1Trump,
+        team2_trump: isT2Trump,
+        match_points_awarded: isDual ? 4 : (isT1Trump || isT2Trump ? 2 : 1),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      const tm = m as TournamentMatch;
+      setEditingSingleMatch({
+        ...tm,
+        notes: tm.notes || '',
+        team1_trump: Boolean(tm.team1_trump || (tm.is_trump_match && tm.trump_team_id === tm.team1_id)),
+        team2_trump: Boolean(tm.team2_trump || (tm.is_trump_match && tm.trump_team_id === tm.team2_id))
+      });
+    }
+    setIsSingleMatchModalOpen(true);
+  };
+
+  // Open Single Match Create Modal
+  const openAddSingleMatch = () => {
+    setSingleMatchFormError(null);
+    const t1 = teams[0]?.id || '';
+    const t2 = teams[1]?.id || '';
+    setEditingSingleMatch({
+      id: `match_${Date.now()}`,
+      tournament_id: '00000000-0000-0000-0000-000000000001',
+      category_id: null,
+      round: 'Group Stage',
+      match_number: matches.length + 1,
+      team1_id: t1,
+      team2_id: t2,
+      court: 'Court 1',
+      match_date: new Date().toISOString().slice(0, 10),
+      match_time: '06:00 PM',
+      status: 'COMPLETED',
+      winner_team_id: t1,
+      score_summary: '15 - 10',
+      set1_team1: 15,
+      set1_team2: 10,
+      set2_team1: 0,
+      set2_team2: 0,
+      set3_team1: 0,
+      set3_team2: 0,
+      notes: '',
+      player1_names: '',
+      player2_names: '',
+      is_trump_match: false,
+      trump_team_id: null,
+      category_name: 'Veterans Doubles',
+      team1_trump: false,
+      team2_trump: false,
+      match_points_awarded: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+    setIsSingleMatchModalOpen(true);
+  };
+
+  // Save Single Match Result
+  const handleSaveSingleMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSingleMatch) return;
+    setSingleMatchFormError(null);
+
+    if (editingSingleMatch.team1_id === editingSingleMatch.team2_id) {
+      setSingleMatchFormError('Team 1 and Team 2 cannot be the same team.');
+      return;
+    }
+
+    const s1 = Number(editingSingleMatch.set1_team1 || 0);
+    const s2 = Number(editingSingleMatch.set1_team2 || 0);
+    let winId = editingSingleMatch.winner_team_id;
+    if (s1 > s2) winId = editingSingleMatch.team1_id;
+    else if (s2 > s1) winId = editingSingleMatch.team2_id;
+
+    const isT1 = Boolean(editingSingleMatch.team1_trump);
+    const isT2 = Boolean(editingSingleMatch.team2_trump);
+    const isDual = isT1 && isT2;
+
+    const matchToSave: TournamentMatch = {
+      ...editingSingleMatch,
+      winner_team_id: winId,
+      score_summary: `${s1} - ${s2}`,
+      is_trump_match: isT1 || isT2,
+      trump_team_id: isDual ? 'BOTH' : (isT1 ? editingSingleMatch.team1_id : (isT2 ? editingSingleMatch.team2_id : null)),
+      match_points_awarded: isDual ? 4 : (isT1 || isT2 ? 2 : 1),
+      status: 'COMPLETED',
+      updated_at: new Date().toISOString()
+    };
+
+    await saveMatchResult(matchToSave);
+    setIsSingleMatchModalOpen(false);
+    setEditingSingleMatch(null);
+  };
+
+  // Confirm and Execute Single Match Delete
+  const executeDeleteSingleMatch = async () => {
+    if (!deleteConfirmMatchId) return;
+    await deleteMatch(deleteConfirmMatchId);
+    setDeleteConfirmMatchId(null);
+  };
+
+  // Filtered individual matches for the All Matches View
+  const filteredIndividualMatches = useMemo(() => {
+    return matches.filter(m => {
+      if (matchRoundFilter !== 'ALL' && m.round !== matchRoundFilter) return false;
+      if (matchCategoryFilter !== 'ALL' && m.category_name !== matchCategoryFilter) return false;
+      if (searchMatchQuery) {
+        const q = searchMatchQuery.toLowerCase();
+        const t1 = teamMap.get(m.team1_id)?.name?.toLowerCase() || '';
+        const t2 = teamMap.get(m.team2_id)?.name?.toLowerCase() || '';
+        const p1 = (m.player1_names || '').toLowerCase();
+        const p2 = (m.player2_names || '').toLowerCase();
+        const cat = (m.category_name || '').toLowerCase();
+        if (!t1.includes(q) && !t2.includes(q) && !p1.includes(q) && !p2.includes(q) && !cat.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    }).sort((a, b) => (b.match_number || 0) - (a.match_number || 0));
+  }, [matches, matchRoundFilter, matchCategoryFilter, searchMatchQuery, teamMap]);
 
   const toggleExpand = (tieId: string) => {
     setExpandedTieIds(prev => {
@@ -472,261 +640,480 @@ export const AdminResults: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-gbl-orange-400 uppercase tracking-widest mb-1">
             <Trophy className="w-4 h-4" />
-            <span>Official Clashes &amp; Scoring Engine (15-Pt Single Set)</span>
+            <span>Official Clashes &amp; Match Management (15-Pt Single Set)</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-white font-sports uppercase tracking-tight">
             MATCH RESULTS &amp; FIXTURES
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-            Record 6-match tie clashes with doubles lineups, single 15-point set scores, and Trump Card nominations (1W=1, 2W=2, 3W=3, 4W=5, 5W=6, 6W=7 pts + 2 Trump bonus).
+            Record, edit, or delete 6-match tie clashes and individual category matches with live score calculations and standings sync.
           </p>
         </div>
 
-        <button
-          onClick={openAdd}
-          className="px-5 py-3 rounded-2xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-xl shadow-gbl-orange-600/30 hover:scale-105 active:scale-95 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Record New Tie (6 Matches)</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={openAddSingleMatch}
+            className="px-4 py-2.5 rounded-2xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-200 hover:text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all border border-gbl-navy-700 shadow-md"
+          >
+            <Plus className="w-4 h-4 text-emerald-400" />
+            <span>Single Match</span>
+          </button>
 
-      {/* Rules Notice */}
-      <div className="bg-gbl-navy-950/80 border border-gbl-navy-800 rounded-2xl p-4 flex flex-wrap gap-4 text-xs text-slate-300">
-        <div className="flex items-center gap-2">
-          <Star className="w-4 h-4 text-amber-400 shrink-0" />
-          <span><strong>Point Table:</strong> 1W=1pt • 2W=2pt • 3W=3pt • 4W=5pt • 5W=6pt • 6W=7pt</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
-          <span><strong>Trump Rule:</strong> +2 Pts for Trump win • +4 Pts for Dual Trump win</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-sky-400 shrink-0" />
-          <span><strong>Player Rule:</strong> Max 2 matches per player per tie</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span><strong>6 Categories:</strong> Veterans • Super • Tariff • 80+ • Orange • Future Star</span>
+          <button
+            onClick={openAdd}
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-xl shadow-gbl-orange-600/30 hover:scale-105 active:scale-95 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Record New Tie (6 Matches)</span>
+          </button>
         </div>
       </div>
 
-      {/* Recorded Ties List */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-white font-sports uppercase tracking-wider flex items-center gap-2">
-          <span>Official Recorded Clashes</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-gbl-navy-800 text-slate-300 text-xs font-mono font-bold">
-            {recordedTies.length}
-          </span>
-        </h2>
+      {/* View Switcher Tabs & Rules Notice */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        
+        {/* Switcher */}
+        <div className="flex items-center gap-1.5 bg-gbl-navy-900 p-1.5 rounded-2xl border border-gbl-navy-800 self-start">
+          <button
+            onClick={() => setViewMode('TIES')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              viewMode === 'TIES'
+                ? 'bg-gbl-orange-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Clashes / Ties View ({recordedTies.length})</span>
+          </button>
 
-        {recordedTies.length === 0 ? (
-          <div className="text-center py-16 bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl space-y-3">
-            <Trophy className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-base font-bold text-white">No clash results recorded yet</h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Click "Record New Tie (6 Matches)" above to enter the first full 6-category fixture scores.
-            </p>
+          <button
+            onClick={() => setViewMode('ALL_MATCHES')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              viewMode === 'ALL_MATCHES'
+                ? 'bg-gbl-orange-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>All Matches List ({matches.length})</span>
+          </button>
+        </div>
+
+        {/* Scoring summary pill */}
+        <div className="bg-gbl-navy-950/80 border border-gbl-navy-800 rounded-2xl px-4 py-2 flex items-center gap-3 text-xs text-slate-300">
+          <div className="flex items-center gap-1.5 text-amber-400">
+            <Star className="w-4 h-4" />
+            <span>1W=1 • 2W=2 • 3W=3 • 4W=5 • 5W=6 • 6W=7</span>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {recordedTies.map((tie) => {
-              const t1 = teamMap.get(tie.team1_id);
-              const t2 = teamMap.get(tie.team2_id);
-              const isExpanded = expandedTieIds.has(tie.tie_id);
-              const isT1Winner = tie.team1_score > tie.team2_score;
-              const isT2Winner = tie.team2_score > tie.team1_score;
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1.5 text-amber-300">
+            <Sparkles className="w-4 h-4" />
+            <span>+2 Trump Bonus</span>
+          </div>
+        </div>
 
-              return (
-                <div 
-                  key={tie.tie_id}
-                  className="bg-gbl-navy-900 border border-gbl-navy-800 hover:border-gbl-navy-700 rounded-3xl overflow-hidden shadow-xl transition-all"
-                >
-                  {/* Tie Summary Header */}
-                  <div className="p-5 sm:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-gradient-to-r from-gbl-navy-900 via-gbl-navy-950/40 to-gbl-navy-900">
-                    
-                    {/* Left: Round & Clash Info */}
-                    <div className="space-y-1 min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gbl-orange-600/20 text-gbl-orange-400 border border-gbl-orange-500/30">
-                          Tie #{tie.match_number} • {tie.round}
-                        </span>
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
-                          <Clock className="w-3 h-3" />
-                          {tie.match_time}
-                        </span>
+      </div>
+
+      {/* VIEW MODE 1: CLASHES / TIES VIEW */}
+      {viewMode === 'TIES' && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-white font-sports uppercase tracking-wider flex items-center gap-2">
+            <span>Official Recorded Clashes</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-gbl-navy-800 text-slate-300 text-xs font-mono font-bold">
+              {recordedTies.length}
+            </span>
+          </h2>
+
+          {recordedTies.length === 0 ? (
+            <div className="text-center py-16 bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl space-y-3">
+              <Trophy className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">No clash results recorded yet</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Click "Record New Tie (6 Matches)" above to enter the first full 6-category fixture scores.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recordedTies.map((tie) => {
+                const t1 = teamMap.get(tie.team1_id);
+                const t2 = teamMap.get(tie.team2_id);
+                const isExpanded = expandedTieIds.has(tie.tie_id);
+                const isT1Winner = tie.team1_score > tie.team2_score;
+                const isT2Winner = tie.team2_score > tie.team1_score;
+
+                return (
+                  <div 
+                    key={tie.tie_id}
+                    className="bg-gbl-navy-900 border border-gbl-navy-800 hover:border-gbl-navy-700 rounded-3xl overflow-hidden shadow-xl transition-all"
+                  >
+                    {/* Tie Summary Header */}
+                    <div className="p-5 sm:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-gradient-to-r from-gbl-navy-900 via-gbl-navy-950/40 to-gbl-navy-900">
+                      
+                      {/* Left: Round & Clash Info */}
+                      <div className="space-y-1 min-w-[200px]">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gbl-orange-600/20 text-gbl-orange-400 border border-gbl-orange-500/30">
+                            Tie #{tie.match_number} • {tie.round}
+                          </span>
+                          <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
+                            <Clock className="w-3 h-3" />
+                            {tie.match_time}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{tie.court} • {tie.match_date}</span>
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{tie.court} • {tie.match_date}</span>
-                      </p>
+
+                      {/* Middle: Teams vs Teams Clash Score */}
+                      <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-center w-full lg:w-auto">
+                        {/* Team 1 */}
+                        <div className="flex items-center gap-3 text-right flex-1 justify-end min-w-0">
+                          <div className="truncate">
+                            <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{t1?.name || 'Team 1'}</p>
+                            <p className="text-[11px] text-emerald-400 font-mono font-bold">+{tie.team1_points} Pts</p>
+                          </div>
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md"
+                            style={{ backgroundColor: t1?.team_color || '#333' }}
+                          >
+                            {t1?.short_name || 'T1'}
+                          </div>
+                        </div>
+
+                        {/* Score Badge */}
+                        <div className="px-4 py-2 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 text-center shrink-0">
+                          <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-white">
+                            <span className={isT1Winner ? 'text-emerald-400' : ''}>{tie.team1_score}</span>
+                            <span className="text-slate-500 mx-2">-</span>
+                            <span className={isT2Winner ? 'text-emerald-400' : ''}>{tie.team2_score}</span>
+                          </div>
+                          <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
+                            6 Matches
+                          </span>
+                        </div>
+
+                        {/* Team 2 */}
+                        <div className="flex items-center gap-3 text-left flex-1 justify-start min-w-0">
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md"
+                            style={{ backgroundColor: t2?.team_color || '#333' }}
+                          >
+                            {t2?.short_name || 'T2'}
+                          </div>
+                          <div className="truncate">
+                            <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{t2?.name || 'Team 2'}</p>
+                            <p className="text-[11px] text-emerald-400 font-mono font-bold">+{tie.team2_points} Pts</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                        <button
+                          onClick={() => toggleExpand(tie.tie_id)}
+                          className="px-3 py-1.5 rounded-xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <span>{isExpanded ? 'Hide Matches' : 'View / Edit 6 Matches'}</span>
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <button
+                          onClick={() => openEdit(tie)}
+                          className="px-3 py-1.5 rounded-xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          title="Edit Full Clash"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Edit Clash</span>
+                        </button>
+
+                        <button
+                          onClick={() => setDeleteConfirmTieId(tie.tie_id)}
+                          className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                          title="Delete Full Clash"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
                     </div>
 
-                    {/* Middle: Teams vs Teams Clash Score */}
-                    <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-center w-full lg:w-auto">
-                      {/* Team 1 */}
-                      <div className="flex items-center gap-3 text-right flex-1 justify-end min-w-0">
-                        <div className="truncate">
-                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{t1?.name || 'Team 1'}</p>
-                          <p className="text-[11px] text-emerald-400 font-mono font-bold">+{tie.team1_points} Pts</p>
+                    {/* Expandable 6-Match Breakdown with per-match Edit & Delete */}
+                    {isExpanded && (
+                      <div className="border-t border-gbl-navy-800 bg-gbl-navy-950/60 p-4 sm:p-6 space-y-3">
+                        <div className="flex justify-between items-center flex-wrap gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <Trophy className="w-3.5 h-3.5 text-gbl-orange-400" />
+                            <span>Individual Match Category Breakdown (6 Matches — 15 Points Format)</span>
+                          </h4>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            Click 'Edit Match' on any card to modify players or score
+                          </span>
                         </div>
-                        <div 
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md"
-                          style={{ backgroundColor: t1?.team_color || '#333' }}
-                        >
-                          {t1?.short_name || 'T1'}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {tie.matches.map((m, idx) => {
+                            const isW1 = m.winner_team_id === tie.team1_id;
+                            const isW2 = m.winner_team_id === tie.team2_id;
+                            const isDual = (m.team1_trump && m.team2_trump) || m.trump_team_id === 'BOTH';
+                            const isT1Trump = isDual || m.team1_trump;
+                            const isT2Trump = isDual || m.team2_trump;
+
+                            return (
+                              <div 
+                                key={m.id || idx}
+                                className={`p-3.5 rounded-2xl border transition-all space-y-2 text-xs flex flex-col justify-between ${
+                                  isDual
+                                    ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30'
+                                    : isT1Trump || isT2Trump
+                                    ? 'bg-gbl-navy-900 border-amber-500/30'
+                                    : 'bg-gbl-navy-900 border-gbl-navy-800'
+                                }`}
+                              >
+                                <div className="space-y-2">
+                                  <div className="flex justify-between items-start gap-1">
+                                    <div>
+                                      <span className="font-bold text-white block">
+                                        {DEFAULT_CATEGORIES[idx]?.label || `${idx + 1}. ${m.category_name}`}
+                                      </span>
+                                      <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                                        Set 1: {m.set1_team1} - {m.set1_team2} (15 Pts)
+                                      </span>
+                                    </div>
+
+                                    {isDual ? (
+                                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                        <Sparkles className="w-3 h-3" />
+                                        <span>DUAL TRUMP (4 PTS)</span>
+                                      </span>
+                                    ) : isT1Trump ? (
+                                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                        <span>{t1?.short_name} TRUMP</span>
+                                      </span>
+                                    ) : isT2Trump ? (
+                                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                        <span>{t2?.short_name} TRUMP</span>
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                                        REGULAR
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Players */}
+                                  <div className="space-y-1 pt-1 border-t border-gbl-navy-800/80">
+                                    <div className={`flex justify-between items-center ${isW1 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
+                                      <span className="truncate">{t1?.short_name}: {m.player1_names || 'T1 Pair'}</span>
+                                      {isW1 && (
+                                        <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                                          <CheckCircle2 className="w-3 h-3" />
+                                          <span>Won {isDual ? '(+4 Trump)' : isT1Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className={`flex justify-between items-center ${isW2 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
+                                      <span className="truncate">{t2?.short_name}: {m.player2_names || 'T2 Pair'}</span>
+                                      {isW2 && (
+                                        <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                                          <CheckCircle2 className="w-3 h-3" />
+                                          <span>Won {isDual ? '(+4 Trump)' : isT2Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Match Action Buttons */}
+                                <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-gbl-navy-800/60 mt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditSingleMatch(m, tie)}
+                                    className="px-2.5 py-1 rounded-lg bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1 transition-colors border border-gbl-navy-700"
+                                    title="Edit This Match"
+                                  >
+                                    <Edit2 className="w-3 h-3 text-sky-400" />
+                                    <span>Edit</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmMatchId(m.id)}
+                                    className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                                    title="Delete This Match"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW MODE 2: ALL INDIVIDUAL MATCHES VIEW */}
+      {viewMode === 'ALL_MATCHES' && (
+        <div className="space-y-4">
+          {/* Filters Bar */}
+          <div className="bg-gbl-navy-900 border border-gbl-navy-800 p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="text"
+                placeholder="Search matches by team name, player or category..."
+                value={searchMatchQuery}
+                onChange={(e) => setSearchMatchQuery(e.target.value)}
+                className="w-full bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-gbl-orange-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={matchRoundFilter}
+                onChange={(e) => setMatchRoundFilter(e.target.value)}
+                className="bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              >
+                <option value="ALL">All Rounds</option>
+                <option value="Group Stage">Group Stage</option>
+                <option value="Quarter Final">Quarter Final</option>
+                <option value="Semi Final">Semi Final</option>
+                <option value="Grand Final">Grand Final</option>
+              </select>
+
+              <select
+                value={matchCategoryFilter}
+                onChange={(e) => setMatchCategoryFilter(e.target.value)}
+                className="bg-gbl-navy-950 border border-gbl-navy-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              >
+                <option value="ALL">All Categories</option>
+                {DEFAULT_CATEGORIES.map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Individual Matches List */}
+          {filteredIndividualMatches.length === 0 ? (
+            <div className="text-center py-16 bg-gbl-navy-900 border border-gbl-navy-800 rounded-3xl space-y-3">
+              <Trophy className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-white">No individual matches found</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Try adjusting your search query or record a new match using the buttons above.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredIndividualMatches.map((m) => {
+                const t1 = teamMap.get(m.team1_id);
+                const t2 = teamMap.get(m.team2_id);
+                const isW1 = m.winner_team_id === m.team1_id;
+                const isW2 = m.winner_team_id === m.team2_id;
+                const isDual = (m.team1_trump && m.team2_trump) || m.trump_team_id === 'BOTH';
+                const isT1Trump = isDual || m.team1_trump || (m.is_trump_match && m.trump_team_id === m.team1_id);
+                const isT2Trump = isDual || m.team2_trump || (m.is_trump_match && m.trump_team_id === m.team2_id);
+
+                return (
+                  <div
+                    key={m.id}
+                    className="p-4 sm:p-5 rounded-3xl bg-gbl-navy-900 border border-gbl-navy-800 hover:border-gbl-navy-700 space-y-3 shadow-xl transition-all flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      {/* Top Header */}
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-gbl-orange-600/20 text-gbl-orange-400 border border-gbl-orange-500/30">
+                            #{m.match_number} • {m.round}
+                          </span>
+                          <h4 className="font-bold text-white text-sm mt-1">
+                            {m.category_name || 'Doubles Match'}
+                          </h4>
+                        </div>
+
+                        {isDual ? (
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span>DUAL TRUMP (4 PTS)</span>
+                          </span>
+                        ) : isT1Trump ? (
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span>{t1?.short_name} TRUMP</span>
+                          </span>
+                        ) : isT2Trump ? (
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
+                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span>{t2?.short_name} TRUMP</span>
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Match Score Row */}
+                      <div className="p-3 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800/80 flex items-center justify-between gap-2">
+                        <div className={`text-left flex-1 min-w-0 ${isW1 ? 'font-black text-emerald-400' : 'text-slate-300'}`}>
+                          <p className="text-xs truncate">{t1?.name || 'Team 1'}</p>
+                          <p className="text-[10px] text-slate-400 truncate">{m.player1_names || 'Pair 1'}</p>
+                        </div>
+
+                        <div className="px-3 py-1 rounded-xl bg-gbl-navy-900 border border-gbl-navy-700 font-mono font-black text-white text-sm text-center shrink-0">
+                          {m.set1_team1} - {m.set1_team2}
+                        </div>
+
+                        <div className={`text-right flex-1 min-w-0 ${isW2 ? 'font-black text-emerald-400' : 'text-slate-300'}`}>
+                          <p className="text-xs truncate">{t2?.name || 'Team 2'}</p>
+                          <p className="text-[10px] text-slate-400 truncate">{m.player2_names || 'Pair 2'}</p>
                         </div>
                       </div>
 
-                      {/* Score Badge */}
-                      <div className="px-4 py-2 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 text-center shrink-0">
-                        <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-white">
-                          <span className={isT1Winner ? 'text-emerald-400' : ''}>{tie.team1_score}</span>
-                          <span className="text-slate-500 mx-2">-</span>
-                          <span className={isT2Winner ? 'text-emerald-400' : ''}>{tie.team2_score}</span>
-                        </div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
-                          6 Matches
-                        </span>
-                      </div>
-
-                      {/* Team 2 */}
-                      <div className="flex items-center gap-3 text-left flex-1 justify-start min-w-0">
-                        <div 
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md"
-                          style={{ backgroundColor: t2?.team_color || '#333' }}
-                        >
-                          {t2?.short_name || 'T2'}
-                        </div>
-                        <div className="truncate">
-                          <p className="text-xs sm:text-sm font-black text-white uppercase truncate">{t2?.name || 'Team 2'}</p>
-                          <p className="text-[11px] text-emerald-400 font-mono font-bold">+{tie.team2_points} Pts</p>
-                        </div>
+                      {/* Meta info */}
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>{m.court} • {m.match_time}</span>
+                        <span>{m.match_date}</span>
                       </div>
                     </div>
 
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                    {/* Actions Bar */}
+                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-gbl-navy-800/80">
                       <button
-                        onClick={() => toggleExpand(tie.tie_id)}
-                        className="px-3 py-1.5 rounded-xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                        type="button"
+                        onClick={() => openEditSingleMatch(m)}
+                        className="px-3 py-1.5 rounded-xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-200 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors border border-gbl-navy-700"
+                        title="Edit Match"
                       >
-                        <span>{isExpanded ? 'Hide Matches' : 'View 6 Matches'}</span>
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <Edit2 className="w-3.5 h-3.5 text-sky-400" />
+                        <span>Edit Match</span>
                       </button>
 
                       <button
-                        onClick={() => openEdit(tie)}
-                        className="p-2 rounded-xl bg-gbl-navy-800 hover:bg-gbl-navy-700 text-slate-300 hover:text-white transition-colors"
-                        title="Edit Clash"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setDeleteConfirmTieId(tie.tie_id)}
-                        className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
-                        title="Delete Clash"
+                        type="button"
+                        onClick={() => setDeleteConfirmMatchId(m.id)}
+                        className="p-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                        title="Delete Match"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
                   </div>
+                );
+              })}
+            </div>
+          )}
 
-                  {/* Expandable 6-Match Breakdown Table */}
-                  {isExpanded && (
-                    <div className="border-t border-gbl-navy-800 bg-gbl-navy-950/60 p-4 sm:p-6 space-y-3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                        <Trophy className="w-3.5 h-3.5 text-gbl-orange-400" />
-                        <span>Individual Match Category Breakdown (6 Matches — 15 Points Format)</span>
-                      </h4>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {tie.matches.map((m, idx) => {
-                          const isW1 = m.winner_team_id === tie.team1_id;
-                          const isW2 = m.winner_team_id === tie.team2_id;
-                          const isDual = (m.team1_trump && m.team2_trump) || m.trump_team_id === 'BOTH';
-                          const isT1Trump = isDual || m.team1_trump;
-                          const isT2Trump = isDual || m.team2_trump;
-
-                          return (
-                            <div 
-                              key={m.id || idx}
-                              className={`p-3.5 rounded-2xl border transition-all space-y-2 text-xs ${
-                                isDual
-                                  ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30'
-                                  : isT1Trump || isT2Trump
-                                  ? 'bg-gbl-navy-900 border-amber-500/30'
-                                  : 'bg-gbl-navy-900 border-gbl-navy-800'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start gap-1">
-                                <div>
-                                  <span className="font-bold text-white block">
-                                    {DEFAULT_CATEGORIES[idx]?.label || `${idx + 1}. ${m.category_name}`}
-                                  </span>
-                                  <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                                    Set 1: {m.set1_team1} - {m.set1_team2} (15 Pts)
-                                  </span>
-                                </div>
-
-                                {isDual ? (
-                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" />
-                                    <span>DUAL TRUMP (4 PTS)</span>
-                                  </span>
-                                ) : isT1Trump ? (
-                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
-                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                    <span>{t1?.short_name} TRUMP</span>
-                                  </span>
-                                ) : isT2Trump ? (
-                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 flex items-center gap-1">
-                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                    <span>{t2?.short_name} TRUMP</span>
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-                                    REGULAR MATCH
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Players */}
-                              <div className="space-y-1 pt-1 border-t border-gbl-navy-800/80">
-                                <div className={`flex justify-between items-center ${isW1 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
-                                  <span className="truncate">{t1?.short_name}: {m.player1_names || 'T1 Pair'}</span>
-                                  {isW1 && (
-                                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                                      <CheckCircle2 className="w-3 h-3" />
-                                      <span>Won {isDual ? '(+4 Trump)' : isT1Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
-                                    </span>
-                                  )}
-                                </div>
-                                <div className={`flex justify-between items-center ${isW2 ? 'font-bold text-emerald-400' : 'text-slate-300'}`}>
-                                  <span className="truncate">{t2?.short_name}: {m.player2_names || 'T2 Pair'}</span>
-                                  {isW2 && (
-                                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                                      <CheckCircle2 className="w-3 h-3" />
-                                      <span>Won {isDual ? '(+4 Trump)' : isT2Trump ? '(+2 Trump)' : '(+1 Win)'}</span>
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* RECORD / EDIT 6-MATCH TIE MODAL */}
       <Modal
@@ -1229,6 +1616,318 @@ export const AdminResults: React.FC = () => {
             <button
               type="button"
               onClick={executeDeleteTie}
+              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider shadow-lg shadow-red-600/30"
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* SINGLE MATCH EDIT / RECORD MODAL */}
+      <Modal
+        isOpen={isSingleMatchModalOpen && Boolean(editingSingleMatch)}
+        onClose={() => {
+          setIsSingleMatchModalOpen(false);
+          setEditingSingleMatch(null);
+        }}
+        title={editingSingleMatch?.id && matches.some(m => m.id === editingSingleMatch.id) ? "EDIT INDIVIDUAL MATCH" : "RECORD INDIVIDUAL MATCH"}
+        subtitle="Update category, doubles players, Set 1 score (15 points match), and Trump Card nomination"
+      >
+        {editingSingleMatch && (
+          <form onSubmit={handleSaveSingleMatch} className="space-y-5 text-xs max-h-[80vh] overflow-y-auto pr-1">
+            {singleMatchFormError && (
+              <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/50 flex items-start gap-2.5 text-red-300 text-xs">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Validation Error</p>
+                  <p className="text-[11px] mt-0.5">{singleMatchFormError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Match Metadata */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800">
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Match #</label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  value={editingSingleMatch.match_number || 1}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, match_number: Number(e.target.value) } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-gbl-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Round Stage</label>
+                <select
+                  value={editingSingleMatch.round || 'Group Stage'}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, round: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none"
+                >
+                  <option value="Group Stage">Group Stage (Pool Match)</option>
+                  <option value="Quarter Final">Quarter Final</option>
+                  <option value="Semi Final">Semi Final</option>
+                  <option value="Grand Final">Grand Final</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Court</label>
+                <input
+                  type="text"
+                  value={editingSingleMatch.court || 'Court 1'}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, court: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gbl-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Match Time</label>
+                <input
+                  type="text"
+                  value={editingSingleMatch.match_time || '06:00 PM'}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, match_time: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gbl-orange-500"
+                />
+              </div>
+            </div>
+
+            {/* Category Selector */}
+            <div className="bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800 space-y-2">
+              <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+                Match Category (1 of 6 Official Categories)
+              </label>
+              <select
+                value={editingSingleMatch.category_name || 'Veterans Doubles'}
+                onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, category_name: e.target.value as MatchCategory } : null)}
+                className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
+              >
+                {DEFAULT_CATEGORIES.map(c => (
+                  <option key={c.name} value={c.name}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Teams & Players */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Team 1 */}
+              <div className="p-4 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 space-y-3">
+                <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+                  Team 1
+                </label>
+                <select
+                  value={editingSingleMatch.team1_id}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, team1_id: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
+                >
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} ({resolveTeamPool(t)})</option>
+                  ))}
+                </select>
+
+                <div>
+                  <label className="block text-slate-400 font-medium mb-1 text-[11px]">Team 1 Doubles Players</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. John Doe & Mike Smith"
+                    value={editingSingleMatch.player1_names || ''}
+                    onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, player1_names: e.target.value } : null)}
+                    className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gbl-orange-500 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Team 2 */}
+              <div className="p-4 rounded-2xl bg-gbl-navy-950 border border-gbl-navy-800 space-y-3">
+                <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+                  Team 2
+                </label>
+                <select
+                  value={editingSingleMatch.team2_id}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, team2_id: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-gbl-orange-500"
+                >
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} ({resolveTeamPool(t)})</option>
+                  ))}
+                </select>
+
+                <div>
+                  <label className="block text-slate-400 font-medium mb-1 text-[11px]">Team 2 Doubles Players</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex Ray & Steve Fox"
+                    value={editingSingleMatch.player2_names || ''}
+                    onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, player2_names: e.target.value } : null)}
+                    className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gbl-orange-500 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Score & Winner */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gbl-navy-950 p-4 rounded-2xl border border-gbl-navy-800">
+              {/* Set 1 Score */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                  Set 1 Score (15 Points Single Set)
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <span className="text-[10px] text-slate-400 block mb-0.5">T1 Score</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editingSingleMatch.set1_team1 ?? 15}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setEditingSingleMatch(prev => {
+                          if (!prev) return null;
+                          const s2 = prev.set1_team2 ?? 0;
+                          return {
+                            ...prev,
+                            set1_team1: val,
+                            winner_team_id: val > s2 ? prev.team1_id : (s2 > val ? prev.team2_id : prev.winner_team_id)
+                          };
+                        });
+                      }}
+                      className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-lg p-2 text-center font-mono text-white text-sm font-black focus:outline-none focus:border-gbl-orange-500"
+                    />
+                  </div>
+                  <span className="text-slate-500 font-bold text-sm pt-4">-</span>
+                  <div className="flex-1">
+                    <span className="text-[10px] text-slate-400 block mb-0.5">T2 Score</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editingSingleMatch.set1_team2 ?? 10}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setEditingSingleMatch(prev => {
+                          if (!prev) return null;
+                          const s1 = prev.set1_team1 ?? 0;
+                          return {
+                            ...prev,
+                            set1_team2: val,
+                            winner_team_id: s1 > val ? prev.team1_id : (val > s1 ? prev.team2_id : prev.winner_team_id)
+                          };
+                        });
+                      }}
+                      className="w-full bg-gbl-navy-900 border border-gbl-navy-700 rounded-lg p-2 text-center font-mono text-white text-sm font-black focus:outline-none focus:border-gbl-orange-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Match Winner */}
+              <div>
+                <label className="block text-[11px] font-bold text-emerald-400 mb-1">
+                  Match Winner
+                </label>
+                <select
+                  value={editingSingleMatch.winner_team_id || editingSingleMatch.team1_id}
+                  onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, winner_team_id: e.target.value } : null)}
+                  className="w-full bg-gbl-navy-900 border border-emerald-500/40 text-emerald-400 font-bold rounded-lg p-2 text-xs focus:outline-none mt-4"
+                >
+                  <option value={editingSingleMatch.team1_id}>
+                    {teamMap.get(editingSingleMatch.team1_id)?.name || 'Team 1'}
+                  </option>
+                  <option value={editingSingleMatch.team2_id}>
+                    {teamMap.get(editingSingleMatch.team2_id)?.name || 'Team 2'}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            {/* Trump Card Nominations */}
+            <div className="p-4 bg-gbl-navy-950 rounded-2xl border border-gbl-navy-800 space-y-2">
+              <label className="block text-slate-300 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Trump Card Nomination (+2 Pts Bonus / +4 Pts Dual Trump)</span>
+              </label>
+
+              <div className="flex items-center gap-3 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer bg-gbl-navy-900 px-3 py-2 rounded-xl border border-gbl-navy-700 hover:border-amber-500/50">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(editingSingleMatch.team1_trump)}
+                    onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, team1_trump: e.target.checked } : null)}
+                    className="w-4 h-4 text-amber-500 rounded focus:ring-0"
+                  />
+                  <span className="text-white font-semibold">
+                    {teamMap.get(editingSingleMatch.team1_id)?.name || 'Team 1'} Trump
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer bg-gbl-navy-900 px-3 py-2 rounded-xl border border-gbl-navy-700 hover:border-amber-500/50">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(editingSingleMatch.team2_trump)}
+                    onChange={(e) => setEditingSingleMatch(prev => prev ? { ...prev, team2_trump: e.target.checked } : null)}
+                    className="w-4 h-4 text-amber-500 rounded focus:ring-0"
+                  />
+                  <span className="text-white font-semibold">
+                    {teamMap.get(editingSingleMatch.team2_id)?.name || 'Team 2'} Trump
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSingleMatchModalOpen(false);
+                  setEditingSingleMatch(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gbl-orange-600 to-amber-500 hover:from-gbl-orange-500 hover:to-amber-400 text-white font-bold uppercase tracking-wider shadow-lg shadow-gbl-orange-600/30"
+              >
+                Save Match Result
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* SINGLE MATCH DELETE CONFIRMATION MODAL */}
+      <Modal
+        isOpen={Boolean(deleteConfirmMatchId)}
+        onClose={() => setDeleteConfirmMatchId(null)}
+        title="CONFIRM DELETE MATCH RESULT"
+        subtitle="This action will delete this individual match record and recalculate standings"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/40 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="space-y-1 text-slate-200">
+              <p className="font-bold text-red-400 text-sm">Are you sure you want to delete this match?</p>
+              <p className="leading-relaxed">
+                The match record and set score will be removed from the database and persistent storage. Tournament standings and points tables will automatically be recalculated.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gbl-navy-800">
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmMatchId(null)}
+              className="px-4 py-2 rounded-xl bg-gbl-navy-800 text-slate-300 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={executeDeleteSingleMatch}
               className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider shadow-lg shadow-red-600/30"
             >
               Confirm Delete
